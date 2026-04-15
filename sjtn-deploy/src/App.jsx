@@ -256,6 +256,10 @@ const Landing = ({ onSignIn, onBook }) => {
 
 
         <div style={{ maxWidth: 900, margin: "0 auto", position: "relative" }}>
+          {/* Hero logo — large and prominent */}
+          <div style={{ marginBottom: 32 }}>
+            <Logo height={isMobile ? 52 : 72} white />
+          </div>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: B.blush, animation: "pulse 2s infinite" }} />
             <span style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", fontFamily: FONTS.display }}>Now Accepting New Mentees</span>
@@ -290,14 +294,23 @@ const Landing = ({ onSignIn, onBook }) => {
       </section>
 
       {/* ── SECTION TABS ── */}
-      <div style={{ borderBottom: `1px solid ${B.cloud}`, position: "sticky", top: isMobile ? 58 : 64, zIndex: 50, background: B.white }}>
-        <div style={{ display: "flex", maxWidth: 900, margin: "0 auto", padding: "0 24px" }}>
-          {[["mentorship", "Mentorship"], ["academy", "Academy"], ["about", "About Jess"]].map(([id, label]) => (
-            <button key={id} onClick={() => setActiveTab(id)} style={{ padding: "16px 20px", border: "none", background: "none", borderBottom: `3px solid ${activeTab === id ? B.blush : "transparent"}`, color: activeTab === id ? B.black : B.mid, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.1em", textTransform: "uppercase", transition: "all .2s", whiteSpace: "nowrap" }}>
-              {label}
-            </button>
-          ))}
+      <div style={{ background: B.white, borderBottom: `1px solid ${B.cloud}`, position: "sticky", top: isMobile ? 58 : 64, zIndex: 50, boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", padding: isMobile ? "12px 16px" : "16px 40px", display: "flex", gap: isMobile ? 8 : 12, alignItems: "center", justifyContent: isMobile ? "stretch" : "flex-start" }}>
+          {[["mentorship", "Mentorship", "star"], ["academy", "graduationCap", "Academy"], ["about", "user", "About Jess"]].map(([id, label, icon]) => {
+            // fix label/icon swap for academy
+            const tabLabel = id === "academy" ? "Academy" : id === "about" ? "About Jess" : "Mentorship";
+            const tabIcon  = id === "academy" ? "graduationCap" : id === "about" ? "user" : "star";
+            const on = activeTab === id;
+            return (
+              <button key={id} onClick={() => setActiveTab(id)} style={{ flex: isMobile ? 1 : undefined, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: isMobile ? "10px 8px" : "12px 24px", border: `2px solid ${on ? B.blush : B.cloud}`, borderRadius: 40, background: on ? B.blush : B.white, color: on ? B.white : B.steel, fontSize: isMobile ? 11 : 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.05em", transition: "all .2s", whiteSpace: "nowrap", boxShadow: on ? `0 4px 14px ${B.blush}40` : "none" }}>
+                <Ic n={tabIcon} size={isMobile ? 13 : 15} color={on ? B.white : B.steel} />
+                {tabLabel}
+              </button>
+            );
+          })}
+          {!isMobile && <div style={{ marginLeft: "auto", fontSize: 10, color: B.mid, fontWeight: 300, letterSpacing: 1 }}>SELECT A SECTION TO EXPLORE ↑</div>}
         </div>
+        {isMobile && <div style={{ textAlign: "center", paddingBottom: 10, fontSize: 9, color: B.mid, fontWeight: 300, letterSpacing: 1 }}>TAP A TAB TO EXPLORE</div>}
       </div>
 
       {/* ── MENTORSHIP ── */}
