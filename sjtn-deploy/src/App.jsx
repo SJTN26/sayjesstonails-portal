@@ -213,9 +213,9 @@ const Landing = ({ onSignIn, onBook }) => {
   }, []);
 
   const tiers = [
-    { name: "Hourly Session", price: "$250", value: "$750", saving: "Save $500", sub: "One session, total clarity", features: ["60-min live 1:1 with Jess", "Personalized agenda", "Written action plan", "No commitment required"], accent: false },
-    { name: "30-Day Intensive", price: "$1,120", value: "$3,600", saving: "Save $2,480", sub: "Real momentum, one month", features: ["2 live virtual sessions", "8 check-ins (2×/week)", "Personalized 30-day plan", "Pricing + client coaching", "DM support all month"], accent: false },
-    { name: "3-Month Elite", price: "$3,360", value: "$8,550", saving: "Save $5,190", sub: "Complete transformation", features: ["6 live virtual sessions", "Personalized 90-day plan", "Skool community access", "Multiple check-ins/week", "Monthly progress reviews", "End-of-quarter audit"], accent: true },
+    { name: "Hourly Session", price: "$250", value: "$750", saving: "Save $500", sub: "One session, total clarity", features: ["60-min focused session with Jess", "You set the agenda — she brings the answers", "Written action plan after every session", "No commitment required — start here", "Payment plans available"], accent: false },
+    { name: "30-Day Intensive", price: "$1,120", value: "$3,600", saving: "Save $2,480", sub: "Real momentum, one month", features: ["Structured 30-day roadmap built around you", "Live sessions + guided check-ins", "Pricing strategy & client attraction coaching", "Direct access to Jess throughout the month", "Resources and tools curated to your goals", "Payment plans available"], accent: false },
+    { name: "3-Month Elite", price: "$3,360", value: "$8,550", saving: "Save $5,190", sub: "Complete transformation", features: ["Full 90-day personalized growth plan", "Deep-dive sessions at every stage", "Milestone tracking & accountability built in", "Community access for ongoing support", "Monthly reviews to keep you on track", "End-of-quarter strategy audit", "Payment plans available"], accent: true },
   ];
 
   const testimonials = [
@@ -235,13 +235,86 @@ const Landing = ({ onSignIn, onBook }) => {
         input, textarea { font-size: 16px !important; }
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-thumb { background: ${B.cloud}; }
+
+        /* ── Page load animations ── */
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes slideRight { from{opacity:0;transform:translateX(-24px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes scaleIn { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
         @keyframes pop { 0%{transform:scale(.5);opacity:0} 80%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
+        @keyframes lineGrow { from{width:0} to{width:56px} }
+        @keyframes countUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+        /* ── Hero text stagger ── */
+        .hero-badge   { animation: fadeIn .6s ease both; animation-delay: .1s; }
+        .hero-h1      { animation: fadeUp .8s cubic-bezier(.16,1,.3,1) both; animation-delay: .25s; }
+        .hero-line    { animation: lineGrow .6s ease both; animation-delay: .7s; }
+        .hero-body    { animation: fadeUp .7s cubic-bezier(.16,1,.3,1) both; animation-delay: .45s; }
+        .hero-cta     { animation: fadeUp .7s cubic-bezier(.16,1,.3,1) both; animation-delay: .6s; }
+        .hero-stats   { animation: fadeUp .8s cubic-bezier(.16,1,.3,1) both; animation-delay: .75s; }
+        .stat-tile    { animation: scaleIn .5s cubic-bezier(.16,1,.3,1) both; }
+        .stat-tile:nth-child(1){ animation-delay:.8s }
+        .stat-tile:nth-child(2){ animation-delay:.92s }
+        .stat-tile:nth-child(3){ animation-delay:1.04s }
+        .stat-tile:nth-child(4){ animation-delay:1.16s }
+
+        /* ── Section reveal on tab switch ── */
+        .section-reveal { animation: fadeUp .5s cubic-bezier(.16,1,.3,1) both; }
+        .tier-card { animation: slideUp .5s cubic-bezier(.16,1,.3,1) both; }
+        .tier-card:nth-child(1){ animation-delay:.05s }
+        .tier-card:nth-child(2){ animation-delay:.15s }
+        .tier-card:nth-child(3){ animation-delay:.25s }
+
+        /* ── Button hover effects ── */
+        button { transition: all .22s cubic-bezier(.16,1,.3,1) !important; }
+        button:not(:disabled):hover { transform: translateY(-2px); }
+        button:not(:disabled):active { transform: translateY(0px) scale(0.98); }
+
+        /* ── Blush button hover ── */
+        .btn-blush:hover  { background: #a8435e !important; box-shadow: 0 8px 24px ${B.blush}50 !important; }
+        .btn-black:hover  { background: #2a2a2a !important; box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important; }
+        .btn-white:hover  { background: #f0f0f0 !important; }
+        .btn-ghost:hover  { border-color: ${B.blush} !important; color: ${B.blush} !important; }
+        .btn-ghostdark:hover { border-color: #888 !important; color: #fff !important; }
+
+        /* ── Tab hover — only targets INACTIVE tabs, never overrides active ── */
+        .tab-btn-inactive:hover { border-color: ${B.blush} !important; color: ${B.blush} !important; }
+        .tab-btn-active { pointer-events: none; }
+
+        /* ── Card hover ── */
+        .hover-card { transition: transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s ease; }
+        .hover-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.09) !important; }
+
+        /* ── Pricing card hover ── */
+        .pricing-card { transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s ease; }
+        .pricing-card:hover { transform: translateY(-6px); box-shadow: 0 20px 48px rgba(0,0,0,0.12) !important; }
+
+        /* ── Nav link hover ── */
+        .nav-link:hover { color: ${B.blush} !important; }
+
+        /* ── Input focus ── */
+        input:focus, textarea:focus { border-color: ${B.blush} !important; box-shadow: 0 0 0 3px ${B.blush}18 !important; outline: none !important; }
+
+        /* ── Testimonial card ── */
+        .testimonial-card { animation: scaleIn .5s cubic-bezier(.16,1,.3,1) both; }
+        .testimonial-card:nth-child(1){ animation-delay:.1s }
+        .testimonial-card:nth-child(2){ animation-delay:.2s }
+        .testimonial-card:nth-child(3){ animation-delay:.3s }
+
+        /* ── Portal sidebar nav items ── */
+        .sidebar-nav-btn:hover { color: ${B.blushLight} !important; background: ${B.blush}12 !important; border-left-color: ${B.blush}60 !important; }
+
+        /* ── Booking slot hover ── */
+        .slot-btn:hover { border-color: ${B.blush} !important; background: ${B.blushPale} !important; }
+
+        /* ── Smooth scroll area ── */
+        .smooth-scroll { scroll-behavior: smooth; }
       `}</style>
 
       {/* ── NAV ── */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 100, background: scrolled ? "rgba(255,255,255,0.97)" : B.black, borderBottom: scrolled ? `1px solid ${B.cloud}` : "none", backdropFilter: scrolled ? "blur(12px)" : "none", padding: isMobile ? "14px 20px" : "14px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all .35s" }}>
+      <nav style={{ position: "sticky", top: 0, zIndex: 200, background: scrolled ? "rgba(255,255,255,0.97)" : B.black, borderBottom: scrolled ? `1px solid ${B.cloud}` : "none", backdropFilter: scrolled ? "blur(12px)" : "none", padding: isMobile ? "14px 20px" : "14px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all .35s" }}>
         <Logo height={isMobile ? 50 : 60} white={!scrolled} />
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           {!isMobile && <button onClick={onSignIn} style={{ fontSize: 11, color: scrolled ? B.steel : B.white, border: "none", background: "none", cursor: "pointer", fontFamily: FONTS.body, fontWeight: 500, padding: "8px 12px", letterSpacing: "0.08em" }}>SIGN IN</button>}
@@ -262,39 +335,39 @@ const Landing = ({ onSignIn, onBook }) => {
 
           {/* LEFT — headline + CTA */}
           <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 24, padding: "6px 14px", border: `1px solid ${B.blush}40`, borderRadius: 2 }}>
+            <div className="hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 24, padding: "6px 14px", border: `1px solid ${B.blush}40`, borderRadius: 2 }}>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: B.blush, animation: "pulse 2s infinite", flexShrink: 0 }} />
               <span style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>Now Accepting New Mentees</span>
             </div>
 
-            <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 68 : 118, lineHeight: 0.88, color: B.white, marginBottom: 0, textTransform: "uppercase", letterSpacing: "-3px" }}>
+            <h1 className="hero-h1" style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 68 : 118, lineHeight: 0.88, color: B.white, marginBottom: 0, textTransform: "uppercase", letterSpacing: "-3px" }}>
               Turn Your<br/>
               <span style={{ color: B.blush, fontStyle: "italic", fontWeight: 300, letterSpacing: "-2px" }}>Passion</span><br/>
               Into Profit.
             </h1>
 
-            <div style={{ width: 56, height: 3, background: B.blush, margin: "28px 0" }} />
+            <div className="hero-line" style={{ width: 56, height: 3, background: B.blush, margin: "28px 0" }} />
 
-            <p style={{ fontSize: isMobile ? 15 : 17, color: "#888", lineHeight: 1.85, maxWidth: 480, marginBottom: 40, fontWeight: 300 }}>
+            <p className="hero-body" style={{ fontSize: isMobile ? 15 : 17, color: "#888", lineHeight: 1.85, maxWidth: 480, marginBottom: 40, fontWeight: 300 }}>
               Whether you just got your license and don't know where to start — or you've been behind the chair for years and still feel stuck — Jess meets you exactly where you are. No more undercharging. No more empty books. No more wondering if this career can actually support your life. It can. And she'll show you how.
             </p>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div className="hero-cta" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <Btn size="lg" variant="blush" onClick={onBook} icon="calendar">Book Free Discovery Call</Btn>
               <Btn size="lg" variant="ghostDark" onClick={onSignIn} icon="lock">Mentee Portal</Btn>
             </div>
           </div>
 
           {/* RIGHT — stats panel */}
-          <div style={{ marginTop: isMobile ? 52 : 0 }}>
+          <div className="hero-stats" style={{ marginTop: isMobile ? 52 : 0 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               {[
                 { n: "50+",  l: "Nail techs mentored",          sub: "and growing" },
                 { n: "95%",  l: "Raise prices within 30 days",  sub: "of mentees" },
                 { n: "100%", l: "Personalized to you",          sub: "no templates, ever" },
-                { n: "24hr", l: "Response guarantee",           sub: "during your program" },
+                { n: "48hr", l: "Response guarantee",           sub: "during your program" },
               ].map(({ n, l, sub }) => (
-                <div key={l} style={{ padding: isMobile ? "24px 20px" : "32px 28px", border: `1px solid #1e1e1e`, background: "#0a0a0a", position: "relative", overflow: "hidden" }}>
+                <div key={l} className="stat-tile" style={{ padding: isMobile ? "24px 20px" : "32px 28px", border: `1px solid #1e1e1e`, background: "#0a0a0a", position: "relative", overflow: "hidden", transition: "transform .22s cubic-bezier(.16,1,.3,1), border-color .22s" }}>
                   <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: B.blush }} />
                   <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 40 : 52, color: B.white, lineHeight: 1, letterSpacing: "-1px" }}>{n}</div>
                   <div style={{ fontSize: isMobile ? 11 : 12, color: "#888", fontWeight: 400, marginTop: 8, lineHeight: 1.4 }}>{l}</div>
@@ -308,7 +381,7 @@ const Landing = ({ onSignIn, onBook }) => {
       </section>
 
       {/* ── SECTION TABS ── */}
-      <div style={{ background: B.white, borderBottom: `1px solid ${B.cloud}`, position: "sticky", top: isMobile ? 58 : 64, zIndex: 50, boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+      <div style={{ background: B.white, borderBottom: `1px solid ${B.cloud}`, position: "sticky", top: isMobile ? 79 : 89, zIndex: 99, boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", padding: isMobile ? "12px 16px" : "16px 40px", display: "flex", gap: isMobile ? 8 : 12, alignItems: "center", justifyContent: isMobile ? "stretch" : "flex-start" }}>
           {[["mentorship", "Mentorship", "star"], ["academy", "graduationCap", "Academy"], ["about", "user", "About Jess"]].map(([id, label, icon]) => {
             // fix label/icon swap for academy
@@ -316,7 +389,7 @@ const Landing = ({ onSignIn, onBook }) => {
             const tabIcon  = id === "academy" ? "graduationCap" : id === "about" ? "user" : "star";
             const on = activeTab === id;
             return (
-              <button key={id} onClick={() => setActiveTab(id)} style={{ flex: isMobile ? 1 : undefined, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: isMobile ? "10px 8px" : "12px 24px", border: `2px solid ${on ? B.blush : B.cloud}`, borderRadius: 40, background: on ? B.blush : B.white, color: on ? B.white : B.steel, fontSize: isMobile ? 11 : 13, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.05em", transition: "all .2s", whiteSpace: "nowrap", boxShadow: on ? `0 4px 14px ${B.blush}40` : "none" }}>
+              <button key={id} onClick={() => setActiveTab(id)} className={on ? "tab-btn-active" : "tab-btn-inactive"} style={{ flex: isMobile ? 1 : undefined, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: isMobile ? "10px 8px" : "12px 24px", border: `2px solid ${on ? B.blush : B.cloud}`, borderRadius: 40, background: on ? B.blush : B.white, color: on ? B.white : B.steel, fontSize: isMobile ? 11 : 13, fontWeight: 700, cursor: on ? "default" : "pointer", fontFamily: FONTS.body, letterSpacing: "0.05em", transition: "all .2s", whiteSpace: "nowrap", boxShadow: on ? `0 4px 14px ${B.blush}40` : "none" }}>
                 <Ic n={tabIcon} size={isMobile ? 13 : 15} color={on ? B.white : B.steel} />
                 {tabLabel}
               </button>
@@ -330,19 +403,19 @@ const Landing = ({ onSignIn, onBook }) => {
       {/* ── MENTORSHIP ── */}
       {activeTab === "mentorship" && <>
         {/* Pricing */}
-        <section style={{ padding: isMobile ? "60px 24px" : "80px 40px", background: B.white }}>
+        <section className="section-reveal" style={{ padding: isMobile ? "60px 24px" : "80px 40px", background: B.white }}>
           <div style={{ maxWidth: 960, margin: "0 auto" }}>
             <div style={{ marginBottom: 48, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16 }}>
               <div>
                 <Section style={{ marginBottom: 12 }}>Investment</Section>
                 <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 44 : 64, textTransform: "uppercase", lineHeight: 0.95, letterSpacing: "-1px" }}>Three Ways<br/>To Say Yes.</h2>
               </div>
-              <p style={{ color: B.steel, fontSize: 14, maxWidth: 320, lineHeight: 1.7, fontWeight: 300 }}>Every option includes direct access to Jess — not templates, not pre-recorded courses. Real guidance.</p>
+              <p style={{ color: B.steel, fontSize: 14, maxWidth: 320, lineHeight: 1.7, fontWeight: 300 }}>Personalized guidance from Jess — delivered in the format that serves you best. Every program evolves with you.</p>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 2 }}>
               {tiers.map(({ name, price, value, saving, sub, features, accent }) => (
-                <div key={name} style={{ background: accent ? B.black : B.white, border: `1px solid ${B.cloud}`, padding: "36px 28px", position: "relative" }}>
+                <div key={name} className="tier-card pricing-card" style={{ background: accent ? B.black : B.white, border: `1px solid ${B.cloud}`, padding: "36px 28px", position: "relative" }}>
                   {accent && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: B.blush }} />}
                   {accent && <div style={{ position: "absolute", top: 16, right: 16 }}><BlushTag>Most Popular</BlushTag></div>}
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: accent ? B.mid : B.steel, marginBottom: 16, fontFamily: FONTS.display }}>{name}</div>
@@ -367,7 +440,9 @@ const Landing = ({ onSignIn, onBook }) => {
                 </div>
               ))}
             </div>
-            <p style={{ textAlign: "center", color: B.mid, fontSize: 12, marginTop: 20, fontWeight: 300 }}>Not sure which option fits? The discovery call is free — Jess will help you decide.</p>
+            <div style={{ marginTop: 20, textAlign: "center" }}>
+              <p style={{ color: B.mid, fontSize: 12, fontWeight: 300 }}>Not sure which option fits? The discovery call is free — Jess will help you decide.</p>
+            </div>
           </div>
         </section>
 
@@ -378,7 +453,7 @@ const Landing = ({ onSignIn, onBook }) => {
             <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 44 : 60, textTransform: "uppercase", lineHeight: 0.95, letterSpacing: "-1px", marginBottom: 48 }}>What Mentees Say.</h2>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 2 }}>
               {testimonials.map(({ name, tier, q }) => (
-                <div key={name} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "32px 28px" }}>
+                <div key={name} className="testimonial-card hover-card" style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "32px 28px" }}>
                   <div style={{ display: "flex", marginBottom: 16 }}>
                     {[...Array(5)].map((_, i) => <Ic key={i} n="star" size={12} color={B.blush} sw={0} />)}
                   </div>
@@ -1004,7 +1079,7 @@ const MenteePortal = ({ user, onLogout }) => {
           <Section style={{ marginBottom: 8 }}>Direct Messages</Section>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 32, height: 32, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><LogoMark size={20} white /></div>
-            <div><div style={{ fontWeight: 700, fontSize: 13, color: B.black, letterSpacing: "0.03em" }}>Jess</div><div style={{ fontSize: 9, color: B.success, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>● Responds within 24hrs</div></div>
+            <div><div style={{ fontWeight: 700, fontSize: 13, color: B.black, letterSpacing: "0.03em" }}>Jess</div><div style={{ fontSize: 9, color: B.success, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>● Responds within 48hrs</div></div>
           </div>
         </div>
         <Divider />
@@ -1120,7 +1195,7 @@ const MenteePortal = ({ user, onLogout }) => {
 
     more: (
       <div style={{ padding: "20px 18px 96px" }}>
-        <div style={{ marginBottom: 20 }}><Logo height={28} /></div>
+        <div style={{ marginBottom: 20 }}><Logo height={42} /></div>
         <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 32, textTransform: "uppercase", color: B.black, margin: "0 0 18px", letterSpacing: "-0.5px" }}>More</h2>
         {[{ id:"schedule",icon:"calendar",label:"Schedule" }, { id:"progress",icon:"award",label:"My Progress" }, { id:"payments",icon:"card",label:"Payments" }].map(({ id, icon, label }) => (
           <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", border: `1px solid ${B.cloud}`, background: B.white, color: B.charcoal, marginBottom: 2, fontFamily: FONTS.body, fontSize: 13, fontWeight: 600, cursor: "pointer", textAlign: "left", letterSpacing: "0.03em" }}>
@@ -1142,7 +1217,7 @@ const MenteePortal = ({ user, onLogout }) => {
 
       {useSidebar && (
         <div style={{ width: 196, background: B.black, borderRight: `1px solid #1a1a1a`, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
-          <div style={{ padding: "16px 18px 14px", borderBottom: "1px solid #1a1a1a" }}><Logo height={26} white /></div>
+          <div style={{ padding: "16px 18px 14px", borderBottom: "1px solid #1a1a1a" }}><Logo height={38} white /></div>
           <div style={{ padding: "12px 16px", borderBottom: "1px solid #1a1a1a", display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 28, height: 28, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, flexShrink: 0 }}>{user.avatar}</div>
             <div><div style={{ color: B.white, fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>{user.firstName}</div><div style={{ fontSize: 8, color: B.blushLight, fontWeight: 300, letterSpacing: 1, textTransform: "uppercase" }}>{user.tier}</div></div>
@@ -1497,7 +1572,7 @@ const AdminDashboard = ({ onLogout }) => {
 
       {useSidebar && (
         <div style={{ width: 196, background: B.black, borderRight: "1px solid #1a1a1a", display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
-          <div style={{ padding: "16px 18px 14px", borderBottom: "1px solid #1a1a1a" }}><Logo height={26} white /></div>
+          <div style={{ padding: "16px 18px 14px", borderBottom: "1px solid #1a1a1a" }}><Logo height={38} white /></div>
           <div style={{ padding: "12px 16px", borderBottom: "1px solid #1a1a1a", display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 28, height: 28, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, flexShrink: 0 }}>JR</div>
             <div><div style={{ color: B.white, fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>Jess</div><div style={{ fontSize: 8, color: B.blushLight, fontWeight: 300, letterSpacing: 1, textTransform: "uppercase" }}>Admin · Mentor</div></div>
