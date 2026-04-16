@@ -20,6 +20,7 @@ const B = {
   cloud:   "#E8E8E8",
   off:     "#F5F5F5",
   white:   "#FFFFFF",
+  ivory:   "#F5F0EB",   /* warm off-white for text on dark backgrounds */
   // Blush — used strategically, never decoratively
   blush:   "#C4607A",
   blushLight: "#E8A0B0",
@@ -340,7 +341,7 @@ const Landing = ({ onSignIn, onBook }) => {
               <span style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>Now Accepting New Mentees</span>
             </div>
 
-            <h1 className="hero-h1" style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 68 : 118, lineHeight: 0.88, color: B.white, marginBottom: 0, textTransform: "uppercase", letterSpacing: "-3px" }}>
+            <h1 className="hero-h1" style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 68 : 118, lineHeight: 0.88, color: B.ivory, marginBottom: 0, textTransform: "uppercase", letterSpacing: "-3px" }}>
               Turn Your<br/>
               <span style={{ color: B.blush, fontStyle: "italic", fontWeight: 300, letterSpacing: "-2px" }}>Passion</span><br/>
               Into Profit.
@@ -348,7 +349,7 @@ const Landing = ({ onSignIn, onBook }) => {
 
             <div className="hero-line" style={{ width: 56, height: 3, background: B.blush, margin: "28px 0" }} />
 
-            <p className="hero-body" style={{ fontSize: isMobile ? 15 : 17, color: "#888", lineHeight: 1.85, maxWidth: 480, marginBottom: 40, fontWeight: 300 }}>
+            <p className="hero-body" style={{ fontSize: isMobile ? 15 : 17, color: "#9a8880", lineHeight: 1.85, maxWidth: 480, marginBottom: 40, fontWeight: 300 }}>
               Whether you just got your license and don't know where to start — or you've been behind the chair for years and still feel stuck — Jess meets you exactly where you are. No more undercharging. No more empty books. No more wondering if this career can actually support your life. It can. And she'll show you how.
             </p>
 
@@ -369,8 +370,8 @@ const Landing = ({ onSignIn, onBook }) => {
               ].map(({ n, l, sub }) => (
                 <div key={l} className="stat-tile" style={{ padding: isMobile ? "24px 20px" : "32px 28px", border: `1px solid #1e1e1e`, background: "#0a0a0a", position: "relative", overflow: "hidden", transition: "transform .22s cubic-bezier(.16,1,.3,1), border-color .22s" }}>
                   <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: B.blush }} />
-                  <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 40 : 52, color: B.white, lineHeight: 1, letterSpacing: "-1px" }}>{n}</div>
-                  <div style={{ fontSize: isMobile ? 11 : 12, color: "#888", fontWeight: 400, marginTop: 8, lineHeight: 1.4 }}>{l}</div>
+                  <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 40 : 52, color: B.ivory, lineHeight: 1, letterSpacing: "-1px" }}>{n}</div>
+                  <div style={{ fontSize: isMobile ? 11 : 12, color: "#9a8880", fontWeight: 400, marginTop: 8, lineHeight: 1.4 }}>{l}</div>
                   <div style={{ fontSize: 9, color: B.blush, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 4 }}>{sub}</div>
                 </div>
               ))}
@@ -420,7 +421,7 @@ const Landing = ({ onSignIn, onBook }) => {
                   {accent && <div style={{ position: "absolute", top: 16, right: 16 }}><BlushTag>Most Popular</BlushTag></div>}
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: accent ? B.mid : B.steel, marginBottom: 16, fontFamily: FONTS.display }}>{name}</div>
                   <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 54, color: accent ? B.white : B.black, lineHeight: 1 }}>{price}</div>
-                  <div style={{ fontSize: 11, color: accent ? "#666" : B.steel, marginTop: 4, marginBottom: 6, fontWeight: 300 }}>{sub}</div>
+                  <div style={{ fontSize: 11, color: accent ? "#9a8880" : B.steel, marginTop: 4, marginBottom: 6, fontWeight: 300 }}>{sub}</div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 10, color: accent ? B.blushLight : B.steel, fontWeight: 300, textDecoration: "line-through" }}>{value} value</span>
                     <span style={{ fontSize: 10, fontWeight: 700, color: B.blush }}>{saving}</span>
@@ -432,7 +433,7 @@ const Landing = ({ onSignIn, onBook }) => {
                         <div style={{ width: 16, height: 16, borderRadius: "50%", background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
                           <Ic n="check" size={9} color={B.white} sw={2.5} />
                         </div>
-                        <span style={{ fontSize: 12, color: accent ? "#ccc" : B.charcoal, lineHeight: 1.4, fontWeight: 300 }}>{f}</span>
+                        <span style={{ fontSize: 12, color: accent ? B.ivory : B.charcoal, lineHeight: 1.4, fontWeight: 300 }}>{f}</span>
                       </div>
                     ))}
                   </div>
@@ -508,7 +509,7 @@ const Landing = ({ onSignIn, onBook }) => {
               <div style={{ width: 3, background: B.blush, alignSelf: "stretch", flexShrink: 0 }} />
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Florida State Licensing</div>
-                <p style={{ color: "#ccc", fontSize: 14, lineHeight: 1.75, fontWeight: 300, maxWidth: 580 }}>
+                <p style={{ color: B.ivory, fontSize: 14, lineHeight: 1.75, fontWeight: 300, maxWidth: 580 }}>
                   Florida requires a state-issued cosmetology or nail specialty license to perform nail services professionally. Our academy is built around that requirement — and then goes far beyond it. Every student leaves prepared for the Board exam, equipped with real business skills, and connected to a community that keeps showing up for them.
                 </p>
               </div>
@@ -561,11 +562,11 @@ const Landing = ({ onSignIn, onBook }) => {
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
             <Logo height={44} white />
           </div>
-          <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 48 : 72, textTransform: "uppercase", lineHeight: 0.92, color: B.white, marginBottom: 20, letterSpacing: "-1px" }}>
+          <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 48 : 72, textTransform: "uppercase", lineHeight: 0.92, color: B.ivory, marginBottom: 20, letterSpacing: "-1px" }}>
             The First Step Is<br/>
             <span style={{ color: B.blushLight, fontStyle: "italic", fontWeight: 300 }}>Just Saying Yes.</span>
           </h2>
-          <p style={{ color: "#666", fontSize: 15, lineHeight: 1.75, marginBottom: 32, fontWeight: 300 }}>Free 20-minute discovery call. No pitch, no pressure. Just Jess, you, and the conversation that starts everything.</p>
+          <p style={{ color: "#9a8880", fontSize: 15, lineHeight: 1.75, marginBottom: 32, fontWeight: 300 }}>Free 20-minute discovery call. No pitch, no pressure. Just Jess, you, and the conversation that starts everything.</p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Btn size="lg" variant="blush" onClick={onBook} icon="calendar">Book Your Free Call</Btn>
             <Btn size="lg" variant="ghostDark" onClick={onSignIn} icon="lock">Already a mentee?</Btn>
@@ -575,7 +576,7 @@ const Landing = ({ onSignIn, onBook }) => {
 
       <footer style={{ background: "#070707", padding: "24px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <Logo height={24} white />
-        <div style={{ fontSize: 10, color: "#333", fontWeight: 300 }}>sayjesstonails.com · info@sayjesstonails.com · 954-544-2888</div>
+        <div style={{ fontSize: 10, color: "#9a8880", fontWeight: 300 }}>sayjesstonails.com · info@sayjesstonails.com · 954-544-2888</div>
         <div style={{ fontSize: 9, color: "#222", letterSpacing: 1 }}>© 2025 SAYJESSTONAILS · ALL DATA ENCRYPTED</div>
       </footer>
     </div>
@@ -620,16 +621,16 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
         {forgotSent ? (
           <>
             <div style={{ width: 52, height: 52, background: B.successPale, border: `2px solid ${B.success}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 0 20px" }}><Ic n="check" size={24} color={B.success} sw={2.5} /></div>
-            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 32, textTransform: "uppercase", color: B.white, margin: "0 0 8px" }}>Check Your Inbox.</h2>
+            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 32, textTransform: "uppercase", color: B.ivory, margin: "0 0 8px" }}>Check Your Inbox.</h2>
             <p style={{ color: B.steel, fontSize: 13, lineHeight: 1.6, margin: "0 0 24px", fontWeight: 300 }}>Reset link sent to <strong style={{ color: B.blushLight }}>{forgotEmail}</strong>.</p>
             <Btn full variant="white" onClick={() => { setForgot(false); setForgotSent(false); }}>Back to Sign In</Btn>
           </>
         ) : (
           <>
             <button onClick={() => setForgot(false)} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: B.steel, cursor: "pointer", marginBottom: 24, fontFamily: FONTS.body, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase" }}><Ic n="back" size={13} color={B.steel} />Back</button>
-            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 36, textTransform: "uppercase", color: B.white, margin: "0 0 8px" }}>Reset Password.</h2>
+            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 36, textTransform: "uppercase", color: B.ivory, margin: "0 0 8px" }}>Reset Password.</h2>
             <p style={{ color: B.steel, fontSize: 13, lineHeight: 1.6, margin: "0 0 24px", fontWeight: 300 }}>Enter the email tied to your account.</p>
-            <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} type="email" placeholder="your@email.com" style={{ ...inp(false), background: "#1a1a1a", border: `1px solid ${B.charcoal}`, color: B.white, marginBottom: 16 }} />
+            <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} type="email" placeholder="your@email.com" style={{ ...inp(false), background: "#1a1a1a", border: `1px solid ${B.charcoal}`, color: B.ivory, marginBottom: 16 }} />
             <Btn full variant="blush" onClick={() => { setBusy(true); setTimeout(() => { setForgotSent(true); setBusy(false); }, 900); }} disabled={busy || !forgotEmail.includes("@")}>{busy ? "Sending…" : "Send Reset Link"}</Btn>
           </>
         )}
@@ -648,19 +649,19 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
 
         <div>
           <div style={{ marginBottom: isMobile ? 28 : 48 }}><Logo height={isMobile ? 28 : 34} white /></div>
-          <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 40 : 52, textTransform: "uppercase", lineHeight: 0.95, color: B.white, marginBottom: 20, letterSpacing: "-0.5px" }}>
+          <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 40 : 52, textTransform: "uppercase", lineHeight: 0.95, color: B.ivory, marginBottom: 20, letterSpacing: "-0.5px" }}>
             Your career,<br />
             <span style={{ color: B.blushLight, fontStyle: "italic", fontWeight: 300 }}>elevated.</span>
           </h1>
           <div style={{ width: 40, height: 2, background: B.blush, marginBottom: 20 }} />
-          <p style={{ color: "#555", fontSize: 13, lineHeight: 1.8, marginBottom: 28, fontWeight: 300, maxWidth: 340 }}>Access your personalized plan, session recordings, check-ins, and everything Jess built for you.</p>
+          <p style={{ color: "#9a8880", fontSize: 13, lineHeight: 1.8, marginBottom: 28, fontWeight: 300, maxWidth: 340 }}>Access your personalized plan, session recordings, check-ins, and everything Jess built for you.</p>
 
           {!isMobile && (
             <div style={{ display: "flex", flexDirection: "column", gap: 1, marginBottom: 36 }}>
               {[{ icon: "video", t: "Live sessions & recordings" }, { icon: "file", t: "Documents & action plans" }, { icon: "bell", t: "Check-ins & accountability" }, { icon: "shield", t: "256-bit end-to-end encryption" }].map(({ icon, t }) => (
                 <div key={t} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderLeft: icon === "shield" ? `2px solid ${B.blush}` : `2px solid ${B.charcoal}` }}>
                   <Ic n={icon} size={14} color={icon === "shield" ? B.blush : B.steel} />
-                  <span style={{ color: icon === "shield" ? B.blushLight : "#555", fontSize: 12, fontWeight: 300 }}>{t}</span>
+                  <span style={{ color: icon === "shield" ? B.blushLight : "#9a8880", fontSize: 12, fontWeight: 300 }}>{t}</span>
                 </div>
               ))}
             </div>
@@ -669,7 +670,7 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
 
         <div style={{ padding: "20px", background: "#0d0d0d", border: `1px solid ${B.charcoal}`, borderLeft: `3px solid ${B.blush}` }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Not enrolled yet?</div>
-          <div style={{ fontSize: 12, color: "#444", marginBottom: 12, fontWeight: 300 }}>Book a free 20-min discovery call — no pitch, no pressure.</div>
+          <div style={{ fontSize: 12, color: "#9a8880", marginBottom: 12, fontWeight: 300 }}>Book a free 20-min discovery call — no pitch, no pressure.</div>
           <button onClick={onBook} style={{ display: "flex", alignItems: "center", gap: 7, background: B.blush, border: "none", padding: "8px 16px", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
             <Ic n="calendar" size={12} color={B.white} />Book a Discovery Call
           </button>
@@ -686,8 +687,8 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
             <span style={{ fontSize: 10, color: B.steel, letterSpacing: "0.1em", textTransform: "uppercase" }}>Back to homepage</span>
           </div>
 
-          <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 36 : 44, textTransform: "uppercase", color: B.white, margin: "0 0 4px", letterSpacing: "-0.5px" }}>Sign In.</h2>
-          <p style={{ color: "#444", fontSize: 13, margin: "0 0 28px", fontWeight: 300 }}>Use the credentials Jess sent when you enrolled.</p>
+          <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 36 : 44, textTransform: "uppercase", color: B.ivory, margin: "0 0 4px", letterSpacing: "-0.5px" }}>Sign In.</h2>
+          <p style={{ color: "#9a8880", fontSize: 13, margin: "0 0 28px", fontWeight: 300 }}>Use the credentials Jess sent when you enrolled.</p>
 
           <label style={{ display: "block", fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Email</label>
           <input value={email} onChange={e => { setEmail(e.target.value); setErr(""); }} onKeyDown={e => e.key === "Enter" && login()} type="email" placeholder="your@email.com" autoComplete="email" style={{ ...inp(!!err), background: "#141414", border: `1px solid ${err ? B.blush : B.charcoal}`, color: B.white, marginBottom: 16 }} />
@@ -723,7 +724,7 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
                 <div style={{ width: 28, height: 28, background: `${ac}20`, border: `1px solid ${ac}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: ac, flexShrink: 0 }}>{av}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lbl}</div>
-                  <div style={{ fontSize: 9, color: "#333", letterSpacing: "0.05em" }}>{em}</div>
+                  <div style={{ fontSize: 9, color: "#9a8880", letterSpacing: "0.05em" }}>{em}</div>
                 </div>
                 {email === em && <div style={{ width: 5, height: 5, background: ac, flexShrink: 0 }} />}
               </button>
@@ -920,7 +921,7 @@ const Confirmation = ({ form, onHome, onSignIn }) => {
 
         <div style={{ background: B.black, padding: "20px 22px", marginBottom: 24, display: "flex", alignItems: "center", gap: 14, textAlign: "left", borderLeft: `3px solid ${B.blush}` }}>
           <div style={{ flexShrink: 0 }}><LogoMark size={34} white /></div>
-          <div><p style={{ fontSize: 12, color: "#888", fontStyle: "italic", margin: "0 0 5px", lineHeight: 1.5, fontWeight: 300 }}>"I personally review every request and I'm already looking forward to hearing your story."</p><span style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>— Jess</span></div>
+          <div><p style={{ fontSize: 12, color: "#9a8880", fontStyle: "italic", margin: "0 0 5px", lineHeight: 1.5, fontWeight: 300 }}>"I personally review every request and I'm already looking forward to hearing your story."</p><span style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>— Jess</span></div>
         </div>
 
         <div style={{ display: "flex", gap: 2, flexDirection: isMobile ? "column" : "row" }}>
@@ -985,8 +986,8 @@ const MenteePortal = ({ user, onLogout }) => {
         <div style={{ background: B.black, padding: isMobile ? "22px 22px" : "28px 28px", marginBottom: 16, borderLeft: `3px solid ${B.blush}`, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", right: -20, top: -20, width: 100, height: 100, borderRadius: "50%", background: `${B.blush}0A` }} />
           <Section style={{ color: B.blushLight, marginBottom: 10 }}>Next Session</Section>
-          <div style={{ color: B.white, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{user.nextSession?.type}</div>
-          <div style={{ color: "#555", fontSize: 12, marginBottom: 18, fontWeight: 300 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
+          <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{user.nextSession?.type}</div>
+          <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 18, fontWeight: 300 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
           <Btn variant="blush" icon="video" size={isMobile ? "md" : "md"}>Join Session</Btn>
         </div>
 
@@ -1037,8 +1038,8 @@ const MenteePortal = ({ user, onLogout }) => {
       <Pg title="Sessions" sub="Live Sessions">
         <div style={{ background: B.black, padding: "22px 24px", marginBottom: 14, borderLeft: `3px solid ${B.blush}` }}>
           <Section style={{ color: B.blushLight, marginBottom: 8 }}>Up Next</Section>
-          <div style={{ color: B.white, fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.03em" }}>{user.nextSession?.type}</div>
-          <div style={{ color: "#555", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
+          <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.03em" }}>{user.nextSession?.type}</div>
+          <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
           <Btn variant="blush" icon="video">Join Session</Btn>
         </div>
         {Array.from({ length: user.sessionsCompleted || 0 }, (_, i) => (
@@ -1088,10 +1089,10 @@ const MenteePortal = ({ user, onLogout }) => {
             const isJ = m.from === "Jess";
             return (
               <div key={i} style={{ display: "flex", justifyContent: isJ ? "flex-start" : "flex-end", marginBottom: 14 }}>
-                {isJ && <div style={{ width: 24, height: 24, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 8, flexShrink: 0, alignSelf: "flex-end" }}><LogoMark size={16} white /></div>}
+                {isJ && <div style={{ width: 24, height: 24, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 8, flexShrink: 0, alignSelf: "flex-end" }}><LogoMark size={16} white /></div>}
                 <div style={{ maxWidth: "72%" }}>
                   <div style={{ background: isJ ? B.white : B.black, border: isJ ? `1px solid ${B.cloud}` : "none", padding: "10px 14px" }}>
-                    <p style={{ margin: 0, fontSize: 12, color: isJ ? B.charcoal : B.white, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
+                    <p style={{ margin: 0, fontSize: 12, color: isJ ? B.charcoal : B.ivory, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
                   </div>
                   <div style={{ fontSize: 9, color: B.mid, marginTop: 3, textAlign: isJ ? "left" : "right", fontWeight: 300, letterSpacing: "0.05em" }}>{m.time}</div>
                 </div>
@@ -1139,7 +1140,7 @@ const MenteePortal = ({ user, onLogout }) => {
       <Pg title="Progress" sub="My Journey">
         <div style={{ background: B.black, padding: "24px 24px", marginBottom: 16, borderLeft: `3px solid ${B.blush}` }}>
           <Section style={{ color: B.blushLight, marginBottom: 10 }}>Your Goal</Section>
-          <p style={{ fontFamily: FONTS.script, fontStyle: "italic", fontSize: isMobile ? 16 : 19, color: B.white, margin: 0, lineHeight: 1.45, fontWeight: 400 }}>"{user.goal}"</p>
+          <p style={{ fontFamily: FONTS.script, fontStyle: "italic", fontSize: isMobile ? 16 : 19, color: B.ivory, margin: 0, lineHeight: 1.45, fontWeight: 400 }}>"{user.goal}"</p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2, marginBottom: 12 }}>
           <Card style={{ padding: "18px 20px" }}>
@@ -1216,23 +1217,23 @@ const MenteePortal = ({ user, onLogout }) => {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:opacity .15s} button:active{opacity:.75} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}`}</style>
 
       {useSidebar && (
-        <div style={{ width: 196, background: B.black, borderRight: `1px solid #1a1a1a`, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
-          <div style={{ padding: "16px 18px 14px", borderBottom: "1px solid #1a1a1a" }}><Logo height={38} white /></div>
-          <div style={{ padding: "12px 16px", borderBottom: "1px solid #1a1a1a", display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 28, height: 28, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, flexShrink: 0 }}>{user.avatar}</div>
-            <div><div style={{ color: B.white, fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>{user.firstName}</div><div style={{ fontSize: 8, color: B.blushLight, fontWeight: 300, letterSpacing: 1, textTransform: "uppercase" }}>{user.tier}</div></div>
+        <div style={{ width: 220, background: B.white, borderRight: `1px solid ${B.cloud}`, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
+          <div style={{ padding: "16px 20px 14px", borderBottom: `1px solid ${B.cloud}` }}><Logo height={isMobile ? 50 : 60} /></div>
+          <div style={{ padding: "12px 16px", borderBottom: `1px solid ${B.cloud}`, display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 30, height: 30, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, flexShrink: 0 }}>{user.avatar}</div>
+            <div><div style={{ color: B.ink, fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>{user.firstName}</div><div style={{ fontSize: 8, color: B.blush, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>{user.tier}</div></div>
           </div>
-          <nav style={{ flex: 1, padding: "10px 8px", overflowY: "auto" }}>
+          <nav style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
             {NAV.map(({ id, icon, label }) => {
               const on = view === id; const badge = id === "messages" && unread > 0;
-              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 11px", border: "none", background: on ? `${B.blush}18` : "transparent", color: on ? B.blushLight : "#555", marginBottom: 1, fontFamily: FONTS.body, fontSize: 11, fontWeight: on ? 600 : 300, textAlign: "left", cursor: "pointer", borderLeft: `2px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.05em", position: "relative" }}><Ic n={icon} size={13} color={on ? B.blushLight : "#444"} />{label}{badge && <span style={{ marginLeft: "auto", background: B.blush, color: B.white, fontSize: 7, fontWeight: 700, padding: "1px 5px", letterSpacing: 0 }}>{unread}</span>}</button>;
+              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", position: "relative", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on ? B.blush : B.mid} />{label}{badge && <span style={{ marginLeft: "auto", background: B.blush, color: B.white, fontSize: 7, fontWeight: 700, padding: "2px 6px", borderRadius: 10 }}>{unread}</span>}</button>;
             })}
           </nav>
-          <div style={{ padding: "10px 8px", borderTop: "1px solid #1a1a1a" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 11px", marginBottom: 4 }}>
+          <div style={{ padding: "10px 10px", borderTop: `1px solid ${B.cloud}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", marginBottom: 4 }}>
               <Ic n="lock" size={10} color={B.success} /><span style={{ fontSize: 8, color: B.success, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>256-bit encrypted</span>
             </div>
-            <button onClick={onLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 11px", border: "none", background: "transparent", color: "#444", fontFamily: FONTS.body, fontSize: 11, cursor: "pointer", letterSpacing: "0.05em" }}><Ic n="logout" size={13} color="#333" />Sign out</button>
+            <button onClick={onLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", border: "none", background: "transparent", color: B.mid, fontFamily: FONTS.body, fontSize: 11, cursor: "pointer", letterSpacing: "0.05em" }}><Ic n="logout" size={13} color={B.mid} />Sign out</button>
           </div>
         </div>
       )}
@@ -1356,8 +1357,8 @@ const AdminDashboard = ({ onLogout }) => {
           <div key={i} style={{ background: B.black, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: `3px solid ${B.blush}` }}>
             <div>
               <div style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{s.time} EST</div>
-              <div style={{ color: B.white, fontFamily: FONTS.display, fontSize: 16, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em" }}>{s.name}</div>
-              <div style={{ color: "#555", fontSize: 11, fontWeight: 300 }}>{s.session}</div>
+              <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 16, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em" }}>{s.name}</div>
+              <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300 }}>{s.session}</div>
             </div>
             <Btn size="sm" variant="blush" icon="video">Start</Btn>
           </div>
@@ -1422,7 +1423,7 @@ const AdminDashboard = ({ onLogout }) => {
             return (
               <div style={{ padding: "18px 18px", flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                  <div style={{ width: 40, height: 40, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: B.white, flexShrink: 0 }}>{selLead.name.split(" ").map(w => w[0]).join("")}</div>
+                  <div style={{ width: 40, height: 40, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: B.ivory, flexShrink: 0 }}>{selLead.name.split(" ").map(w => w[0]).join("")}</div>
                   <div><div style={{ fontSize: 15, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{selLead.name}</div><span style={{ fontSize: 8, fontWeight: 700, color: sc, letterSpacing: 2, textTransform: "uppercase" }}>{selLead.status}</span></div>
                 </div>
                 {[[selLead.email, "Email"], [selLead.phone, "Phone"], [selLead.ig, "Instagram"], [selLead.licensed, "Licensed"], [selLead.experience, "Experience"], [selLead.tier, "Interested in"], [selLead.how, "Found via"]].filter(([v]) => v).map(([v, l]) => (
@@ -1437,8 +1438,8 @@ const AdminDashboard = ({ onLogout }) => {
                 </div>
                 <div style={{ background: B.black, padding: "14px 16px", marginBottom: 16, borderLeft: `3px solid ${B.blush}` }}>
                   <div style={{ fontSize: 8, fontWeight: 700, color: B.blushLight, letterSpacing: 1.5, marginBottom: 6 }}>REQUESTED TIME</div>
-                  <div style={{ color: B.white, fontSize: 13, fontWeight: 700, letterSpacing: "0.03em" }}>{selLead.slot.day}, {selLead.slot.date}</div>
-                  <div style={{ color: "#555", fontSize: 11, fontWeight: 300 }}>{selLead.slot.time} EST · 20 min · Google Meet</div>
+                  <div style={{ color: B.ivory, fontSize: 13, fontWeight: 700, letterSpacing: "0.03em" }}>{selLead.slot.day}, {selLead.slot.date}</div>
+                  <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300 }}>{selLead.slot.time} EST · 20 min · Google Meet</div>
                   {selLead.status === "accepted" && <div style={{ marginTop: 6, fontSize: 9, color: B.success, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>✓ Confirmed · email sent</div>}
                 </div>
                 {selLead.status === "pending" && (
@@ -1526,7 +1527,7 @@ const AdminDashboard = ({ onLogout }) => {
                 <div key={i} style={{ display: "flex", justifyContent: isJ ? "flex-end" : "flex-start", marginBottom: 12 }}>
                   <div style={{ maxWidth: "70%" }}>
                     <div style={{ background: isJ ? B.black : B.white, border: isJ ? "none" : `1px solid ${B.cloud}`, padding: "10px 14px" }}>
-                      <p style={{ margin: 0, fontSize: 12, color: isJ ? B.white : B.charcoal, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
+                      <p style={{ margin: 0, fontSize: 12, color: isJ ? B.ivory : B.charcoal, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
                     </div>
                     <div style={{ fontSize: 9, color: B.mid, marginTop: 3, textAlign: isJ ? "right" : "left", fontWeight: 300, letterSpacing: "0.05em" }}>{m.t}</div>
                   </div>
@@ -1571,23 +1572,23 @@ const AdminDashboard = ({ onLogout }) => {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:opacity .15s;cursor:pointer} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}}`}</style>
 
       {useSidebar && (
-        <div style={{ width: 196, background: B.black, borderRight: "1px solid #1a1a1a", display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
-          <div style={{ padding: "16px 18px 14px", borderBottom: "1px solid #1a1a1a" }}><Logo height={38} white /></div>
-          <div style={{ padding: "12px 16px", borderBottom: "1px solid #1a1a1a", display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 28, height: 28, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, flexShrink: 0 }}>JR</div>
-            <div><div style={{ color: B.white, fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>Jess</div><div style={{ fontSize: 8, color: B.blushLight, fontWeight: 300, letterSpacing: 1, textTransform: "uppercase" }}>Admin · Mentor</div></div>
+        <div style={{ width: 220, background: B.white, borderRight: `1px solid ${B.cloud}`, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
+          <div style={{ padding: "16px 20px 14px", borderBottom: `1px solid ${B.cloud}` }}><Logo height={isMobile ? 50 : 60} /></div>
+          <div style={{ padding: "12px 16px", borderBottom: `1px solid ${B.cloud}`, display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 30, height: 30, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, flexShrink: 0 }}>JR</div>
+            <div><div style={{ color: B.ink, fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>Jess</div><div style={{ fontSize: 8, color: B.blush, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>Admin · Mentor</div></div>
           </div>
-          <nav style={{ flex: 1, padding: "10px 8px", overflowY: "auto" }}>
+          <nav style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
             {ADMIN_NAV.map(({ id, icon, label }) => {
               const on = view === id; const badge = id === "leads" && pending.length > 0;
-              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 11px", border: "none", background: on ? `${B.blush}18` : "transparent", color: on ? B.blushLight : "#555", marginBottom: 1, fontFamily: FONTS.body, fontSize: 11, fontWeight: on ? 600 : 300, textAlign: "left", borderLeft: `2px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.05em", position: "relative" }}><Ic n={icon} size={13} color={on ? B.blushLight : "#444"} />{label}{badge && <span style={{ marginLeft: "auto", background: B.blush, color: B.white, fontSize: 7, fontWeight: 700, padding: "1px 5px" }}>{pending.length}</span>}</button>;
+              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", position: "relative", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on ? B.blush : B.mid} />{label}{badge && <span style={{ marginLeft: "auto", background: B.blush, color: B.white, fontSize: 7, fontWeight: 700, padding: "2px 6px", borderRadius: 10 }}>{pending.length}</span>}</button>;
             })}
           </nav>
-          <div style={{ padding: "10px 8px", borderTop: "1px solid #1a1a1a" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 11px", marginBottom: 4 }}>
+          <div style={{ padding: "10px 10px", borderTop: `1px solid ${B.cloud}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", marginBottom: 4 }}>
               <Ic n="lock" size={10} color={B.success} /><span style={{ fontSize: 8, color: B.success, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>256-bit encrypted</span>
             </div>
-            <button onClick={onLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 11px", border: "none", background: "transparent", color: "#444", fontFamily: FONTS.body, fontSize: 11, letterSpacing: "0.05em" }}><Ic n="logout" size={13} color="#333" />Sign out</button>
+            <button onClick={onLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", border: "none", background: "transparent", color: B.mid, fontFamily: FONTS.body, fontSize: 11, cursor: "pointer", letterSpacing: "0.05em" }}><Ic n="logout" size={13} color={B.mid} />Sign out</button>
           </div>
         </div>
       )}
