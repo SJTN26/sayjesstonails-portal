@@ -242,7 +242,7 @@ const Landing = ({ onSignIn, onBook }) => {
 
       {/* ── NAV ── */}
       <nav style={{ position: "sticky", top: 0, zIndex: 100, background: scrolled ? "rgba(255,255,255,0.97)" : B.black, borderBottom: scrolled ? `1px solid ${B.cloud}` : "none", backdropFilter: scrolled ? "blur(12px)" : "none", padding: isMobile ? "14px 20px" : "14px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all .35s" }}>
-        <Logo height={isMobile ? 30 : 36} white={!scrolled} />
+        <Logo height={isMobile ? 50 : 60} white={!scrolled} />
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           {!isMobile && <button onClick={onSignIn} style={{ fontSize: 11, color: scrolled ? B.steel : B.white, border: "none", background: "none", cursor: "pointer", fontFamily: FONTS.body, fontWeight: 500, padding: "8px 12px", letterSpacing: "0.08em" }}>SIGN IN</button>}
           <Btn size="sm" variant={scrolled ? "primary" : "white"} onClick={onBook}>Book a Call</Btn>
@@ -276,7 +276,7 @@ const Landing = ({ onSignIn, onBook }) => {
             <div style={{ width: 56, height: 3, background: B.blush, margin: "28px 0" }} />
 
             <p style={{ fontSize: isMobile ? 15 : 17, color: "#888", lineHeight: 1.85, maxWidth: 480, marginBottom: 40, fontWeight: 300 }}>
-              1:1 mentorship for nail techs ready to raise their prices, fill their books, and build a career that lasts. From Jess Ramos — licensed nail tech & Light Elegance educator, Miramar, FL.
+              Whether you just got your license and don't know where to start — or you've been behind the chair for years and still feel stuck — Jess meets you exactly where you are. No more undercharging. No more empty books. No more wondering if this career can actually support your life. It can. And she'll show you how.
             </p>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
