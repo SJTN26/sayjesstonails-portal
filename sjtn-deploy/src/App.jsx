@@ -577,7 +577,7 @@ const Landing = ({ onSignIn, onBook }) => {
       <footer style={{ background: "#070707", padding: "24px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <Logo height={24} white />
         <div style={{ fontSize: 10, color: "#9a8880", fontWeight: 300 }}>sayjesstonails.com · info@sayjesstonails.com · 954-544-2888</div>
-        <div style={{ fontSize: 9, color: "#222", letterSpacing: 1 }}>© 2025 SAYJESSTONAILS · ALL DATA ENCRYPTED</div>
+        <div style={{ fontSize: 9, color: "#9a8880", letterSpacing: 1 }}>© 2025 SAYJESSTONAILS · ALL DATA ENCRYPTED</div>
       </footer>
     </div>
   );
@@ -648,7 +648,7 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
         <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: `linear-gradient(to bottom, ${B.blush}, transparent)` }} />
 
         <div>
-          <div style={{ marginBottom: isMobile ? 28 : 48 }}><Logo height={isMobile ? 28 : 34} white /></div>
+          <div style={{ marginBottom: isMobile ? 28 : 48 }}><Logo height={isMobile ? 48 : 170} white /></div>
           <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 40 : 52, textTransform: "uppercase", lineHeight: 0.95, color: B.ivory, marginBottom: 20, letterSpacing: "-0.5px" }}>
             Your career,<br />
             <span style={{ color: B.blushLight, fontStyle: "italic", fontWeight: 300 }}>elevated.</span>
@@ -681,10 +681,10 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: isMobile ? "32px 28px 48px" : "56px 48px", overflowY: "auto" }}>
         <div style={{ width: "100%", maxWidth: 400 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
-            <button onClick={onBack} style={{ width: 32, height: 32, border: `1px solid ${B.charcoal}`, background: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-              <Ic n="back" size={14} color={B.steel} />
+            <button onClick={onBack} style={{ width: 36, height: 36, border: `1px solid ${B.steel}`, background: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+              <Ic n="back" size={16} color={B.ivory} />
             </button>
-            <span style={{ fontSize: 10, color: B.steel, letterSpacing: "0.1em", textTransform: "uppercase" }}>Back to homepage</span>
+            <span onClick={onBack} style={{ fontSize: 13, color: B.ivory, letterSpacing: "0.05em", fontWeight: 500, cursor: "pointer" }}>Back to homepage</span>
           </div>
 
           <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 36 : 44, textTransform: "uppercase", color: B.ivory, margin: "0 0 4px", letterSpacing: "-0.5px" }}>Sign In.</h2>
@@ -730,7 +730,7 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
               </button>
             ))}
           </div>
-          <p style={{ color: "#222", fontSize: 9, textAlign: "center", marginTop: 20, letterSpacing: "0.05em", lineHeight: 1.6 }}>CREDENTIALS EMAILED AFTER ENROLLMENT · SESSIONS EXPIRE AFTER 8 HOURS</p>
+          <p style={{ color: "#9a8880", fontSize: 9, textAlign: "center", marginTop: 20, letterSpacing: "0.05em", lineHeight: 1.6 }}>CREDENTIALS EMAILED AFTER ENROLLMENT · SESSIONS EXPIRE AFTER 8 HOURS</p>
         </div>
       </div>
     </div>
