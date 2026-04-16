@@ -250,46 +250,60 @@ const Landing = ({ onSignIn, onBook }) => {
       </nav>
 
       {/* ── HERO ── */}
-      <section style={{ background: B.black, padding: isMobile ? "80px 24px 70px" : "100px 40px 90px", position: "relative", overflow: "hidden" }}>
-        {/* Subtle texture grain overlay */}
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E\")", opacity: 0.4 }} />
+      <section style={{ background: B.black, minHeight: isMobile ? "auto" : "88vh", padding: isMobile ? "72px 24px 64px" : "0 80px", position: "relative", overflow: "hidden", display: "flex", alignItems: "center" }}>
+        {/* Grain texture */}
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E\")", opacity: 0.5 }} />
+        {/* Right blush glow — desktop only */}
+        {!isMobile && <div style={{ position: "absolute", right: -120, top: "50%", transform: "translateY(-50%)", width: 500, height: 500, borderRadius: "50%", background: `radial-gradient(circle, ${B.blush}18 0%, transparent 70%)`, pointerEvents: "none" }} />}
+        {/* Bottom fade line */}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 1, background: `linear-gradient(to right, transparent, ${B.blush}40, transparent)` }} />
 
+        <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%", position: "relative", display: isMobile ? "block" : "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center", padding: isMobile ? 0 : "100px 0" }}>
 
-        <div style={{ maxWidth: 900, margin: "0 auto", position: "relative" }}>
-          {/* Hero logo — large and prominent */}
-          <div style={{ marginBottom: 32 }}>
-            <Logo height={isMobile ? 52 : 72} white />
+          {/* LEFT — headline + CTA */}
+          <div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 24, padding: "6px 14px", border: `1px solid ${B.blush}40`, borderRadius: 2 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: B.blush, animation: "pulse 2s infinite", flexShrink: 0 }} />
+              <span style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>Now Accepting New Mentees</span>
+            </div>
+
+            <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 68 : 118, lineHeight: 0.88, color: B.white, marginBottom: 0, textTransform: "uppercase", letterSpacing: "-3px" }}>
+              Turn Your<br/>
+              <span style={{ color: B.blush, fontStyle: "italic", fontWeight: 300, letterSpacing: "-2px" }}>Passion</span><br/>
+              Into Profit.
+            </h1>
+
+            <div style={{ width: 56, height: 3, background: B.blush, margin: "28px 0" }} />
+
+            <p style={{ fontSize: isMobile ? 15 : 17, color: "#888", lineHeight: 1.85, maxWidth: 480, marginBottom: 40, fontWeight: 300 }}>
+              1:1 mentorship for nail techs ready to raise their prices, fill their books, and build a career that lasts. From Jess Ramos — licensed nail tech & Light Elegance educator, Miramar, FL.
+            </p>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <Btn size="lg" variant="blush" onClick={onBook} icon="calendar">Book Free Discovery Call</Btn>
+              <Btn size="lg" variant="ghostDark" onClick={onSignIn} icon="lock">Mentee Portal</Btn>
+            </div>
           </div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: B.blush, animation: "pulse 2s infinite" }} />
-            <span style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", fontFamily: FONTS.display }}>Now Accepting New Mentees</span>
+
+          {/* RIGHT — stats panel */}
+          <div style={{ marginTop: isMobile ? 52 : 0 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              {[
+                { n: "50+",  l: "Nail techs mentored",          sub: "and growing" },
+                { n: "95%",  l: "Raise prices within 30 days",  sub: "of mentees" },
+                { n: "100%", l: "Personalized to you",          sub: "no templates, ever" },
+                { n: "24hr", l: "Response guarantee",           sub: "during your program" },
+              ].map(({ n, l, sub }) => (
+                <div key={l} style={{ padding: isMobile ? "24px 20px" : "32px 28px", border: `1px solid #1e1e1e`, background: "#0a0a0a", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: B.blush }} />
+                  <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 40 : 52, color: B.white, lineHeight: 1, letterSpacing: "-1px" }}>{n}</div>
+                  <div style={{ fontSize: isMobile ? 11 : 12, color: "#888", fontWeight: 400, marginTop: 8, lineHeight: 1.4 }}>{l}</div>
+                  <div style={{ fontSize: 9, color: B.blush, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 4 }}>{sub}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 52 : 84, lineHeight: 0.95, color: B.white, marginBottom: 8, textTransform: "uppercase", letterSpacing: "-1px" }}>
-            Turn Your<br/>
-            <span style={{ color: B.blushLight, fontStyle: "italic", fontWeight: 300 }}>Passion</span><br/>
-            Into Profit.
-          </h1>
-
-          <div style={{ width: 48, height: 2, background: B.blush, margin: "24px 0" }} />
-
-          <p style={{ fontSize: isMobile ? 16 : 18, color: "#999", lineHeight: 1.8, maxWidth: 540, marginBottom: 36, fontWeight: 300 }}>
-            1:1 mentorship for nail techs who are ready to raise their prices, fill their books, and build a career — not just a chair. From Jess Ramos, licensed nail tech & Light Elegance educator, Miramar, FL.
-          </p>
-
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-            <Btn size="lg" variant="blush" onClick={onBook} icon="calendar">Book Free Discovery Call</Btn>
-            <Btn size="lg" variant="ghostDark" onClick={onSignIn} icon="lock">Mentee Portal</Btn>
-          </div>
-
-          <div style={{ marginTop: 32, display: "flex", gap: 24, flexWrap: "wrap" }}>
-            {[["50+", "Nail techs mentored"], ["$8,550", "Value · 3-Month Elite"], ["95%", "Raise prices in 30 days"]].map(([n, l]) => (
-              <div key={l}>
-                <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 28, color: B.white, lineHeight: 1 }}>{n}</div>
-                <div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 3, letterSpacing: 1 }}>{l.toUpperCase()}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
