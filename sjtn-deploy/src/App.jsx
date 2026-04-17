@@ -1061,11 +1061,133 @@ const MenteePg = ({ title, sub, children }) => {
 };
 
 /* ════════════════════════════════════════════════════════════════════════
-   MENTEE PORTAL
+   VIDEO CALL MODAL — shared across all portals
 ════════════════════════════════════════════════════════════════════════ */
+const VideoCallModal = ({ onClose, sessionName = "Session", participantName = "Jess", isHost = false }) => {
+  const [muted, setMuted] = useState(false);
+  const [videoOff, setVideoOff] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [callMsg, setCallMsg] = useState("");
+  const [callMsgs, setCallMsgs] = useState([
+    { from: isHost ? participantName : "Jess", text: "Hey! Ready to dive in?", t: "just now" }
+  ]);
+  useEffect(() => {
+    const t = setInterval(() => setElapsed(s => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const fmt = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+  const sendCallMsg = () => {
+    if (!callMsg.trim()) return;
+    setCallMsgs(p => [...p, { from: isHost ? "Jess" : participantName, text: callMsg, t: "just now" }]);
+    setCallMsg("");
+  };
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.95)", zIndex:9999, display:"flex", flexDirection:"column" }}>
+      <style>{`.vcam{background:#1a1a1a;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}`}</style>
+
+      {/* Top bar */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 20px", background:"#111", flexShrink:0 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ width:8, height:8, borderRadius:"50%", background:"#ef4444" }} />
+          <span style={{ color:B.white, fontSize:13, fontWeight:700, fontFamily:FONTS.body, letterSpacing:"0.05em" }}>{sessionName}</span>
+          <span style={{ color:"#9a8880", fontSize:11, fontFamily:FONTS.body, fontWeight:300 }}>{fmt(elapsed)}</span>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:9, color:"#9a8880", fontFamily:FONTS.body, letterSpacing:2, textTransform:"uppercase" }}>Demo Mode</span>
+          <button onClick={() => setChatOpen(s => !s)} style={{ padding:"6px 12px", background: chatOpen ? B.blush : "#333", border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>
+            Chat {callMsgs.length > 0 && <span style={{ marginLeft:4, background:B.blush, color:B.white, fontSize:8, padding:"1px 5px", borderRadius:8 }}>{callMsgs.length}</span>}
+          </button>
+        </div>
+      </div>
+
+      {/* Main area */}
+      <div style={{ flex:1, display:"flex", gap:2, padding:"12px", overflow:"hidden", minHeight:0 }}>
+
+        {/* Video tiles */}
+        <div style={{ flex:1, display:"flex", flexDirection:"column", gap:8, minWidth:0 }}>
+          {/* Main participant tile */}
+          <div className="vcam" style={{ flex:2 }}>
+            {videoOff
+              ? <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
+                  <div style={{ width:72, height:72, borderRadius:"50%", background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, fontWeight:700, color:B.white }}>{isHost ? "JR" : participantName.split(" ").map(w=>w[0]).join("")}</div>
+                  <span style={{ color:"#9a8880", fontSize:12, fontFamily:FONTS.body }}>Camera off</span>
+                </div>
+              : <div style={{ width:"100%", height:"100%", background:"linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  <div style={{ textAlign:"center" }}>
+                    <div style={{ width:80, height:80, borderRadius:"50%", background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, fontWeight:700, color:B.white, margin:"0 auto 12px", border:"3px solid rgba(196,96,122,0.4)" }}>{isHost ? "JR" : participantName.split(" ").map(w=>w[0]).join("")}</div>
+                    <span style={{ color:"#ccc", fontSize:13, fontFamily:FONTS.body, fontWeight:300 }}>Camera preview</span>
+                  </div>
+                </div>
+            }
+            <div style={{ position:"absolute", bottom:10, left:12, background:"rgba(0,0,0,0.6)", padding:"3px 10px", borderRadius:4 }}>
+              <span style={{ color:B.white, fontSize:10, fontFamily:FONTS.body }}>{isHost ? "Jess (Host)" : participantName}</span>
+            </div>
+          </div>
+
+          {/* Self tile */}
+          <div className="vcam" style={{ flex:1 }}>
+            <div style={{ width:"100%", height:"100%", background:"#222", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <div style={{ textAlign:"center" }}>
+                <div style={{ width:48, height:48, borderRadius:"50%", background:"#444", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:B.white, margin:"0 auto 8px" }}>YOU</div>
+                <span style={{ color:"#666", fontSize:11, fontFamily:FONTS.body }}>Your camera</span>
+              </div>
+            </div>
+            <div style={{ position:"absolute", bottom:8, left:10, background:"rgba(0,0,0,0.6)", padding:"2px 8px", borderRadius:4 }}>
+              <span style={{ color:B.white, fontSize:9, fontFamily:FONTS.body }}>You</span>
+            </div>
+            {muted && <div style={{ position:"absolute", top:8, right:8, background:"#ef4444", borderRadius:"50%", padding:4 }}><Ic n="mic" size={10} color={B.white} /></div>}
+          </div>
+        </div>
+
+        {/* Chat panel */}
+        {chatOpen && (
+          <div style={{ width:260, background:"#111", borderRadius:8, display:"flex", flexDirection:"column", flexShrink:0 }}>
+            <div style={{ padding:"12px 14px", borderBottom:"1px solid #222" }}>
+              <span style={{ color:B.white, fontSize:11, fontWeight:700, fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>In-Call Chat</span>
+            </div>
+            <div style={{ flex:1, overflowY:"auto", padding:"12px 14px", display:"flex", flexDirection:"column", gap:10 }}>
+              {callMsgs.map((m, i) => (
+                <div key={i}>
+                  <div style={{ fontSize:9, color:"#666", fontFamily:FONTS.body, marginBottom:3 }}>{m.from}</div>
+                  <div style={{ background:"#1e1e1e", padding:"8px 10px", borderRadius:6, fontSize:12, color:"#ddd", fontFamily:FONTS.body, lineHeight:1.5 }}>{m.text}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding:"10px 12px", borderTop:"1px solid #222", display:"flex", gap:6 }}>
+              <input value={callMsg} onChange={e=>setCallMsg(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendCallMsg()} placeholder="Message..." style={{ flex:1, background:"#1e1e1e", border:"1px solid #333", color:B.white, padding:"8px 10px", fontSize:12, fontFamily:FONTS.body, outline:"none", borderRadius:4 }} />
+              <button onClick={sendCallMsg} style={{ background:B.blush, border:"none", padding:"8px 10px", cursor:"pointer", borderRadius:4 }}><Ic n="send" size={12} color={B.white} /></button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12, padding:"16px 20px", background:"#111", flexShrink:0 }}>
+        {[
+          { icon: muted ? "mic" : "mic", label: muted ? "Unmute" : "Mute", action: ()=>setMuted(s=>!s), active: muted },
+          { icon: "eye", label: videoOff ? "Start Video" : "Stop Video", action: ()=>setVideoOff(s=>!s), active: videoOff },
+          { icon: "message", label: "Chat", action: ()=>setChatOpen(s=>!s), active: chatOpen },
+        ].map(({ icon, label, action, active }) => (
+          <button key={label} onClick={action} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, background: active ? "#333" : "transparent", border:"1px solid #333", padding:"10px 18px", cursor:"pointer", borderRadius:6, minWidth:70 }}>
+            <Ic n={icon} size={18} color={active ? B.blush : "#aaa"} />
+            <span style={{ fontSize:9, color: active ? B.blush : "#aaa", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>{label}</span>
+          </button>
+        ))}
+        <button onClick={onClose} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, background:"#ef4444", border:"none", padding:"10px 20px", cursor:"pointer", borderRadius:6, minWidth:80 }}>
+          <Ic n="close" size={18} color={B.white} />
+          <span style={{ fontSize:9, color:B.white, fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>End Call</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
 const MenteePortal = ({ user, onLogout }) => {
   const { isMobile, useSidebar } = useLayout();
   const [view, setView] = useState("dashboard");
+  const [callActive, setCallActive] = useState(false);
   const [msgs, setMsgs] = useState(user.messages);
   const [msgInput, setMsgInput] = useState("");
   const [docFilter, setDocFilter] = useState("All");
@@ -1197,7 +1319,7 @@ const MenteePortal = ({ user, onLogout }) => {
           <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{user.nextSession?.type}</div>
           <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Btn variant="blush" icon="video">Join Session</Btn>
+            <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
             {!sessionPrep.submitted && <Btn variant="ghostDark" icon="clipBoard" onClick={() => setView("sessionprep")}>Prepare for Session</Btn>}
             {sessionPrep.submitted && <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: B.success }}><Ic n="check" size={12} color={B.success} />Prep submitted</div>}
           </div>
@@ -1273,7 +1395,7 @@ const MenteePortal = ({ user, onLogout }) => {
           <Section style={{ color: B.blushLight, marginBottom: 8 }}>Up Next</Section>
           <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.03em" }}>{user.nextSession?.type}</div>
           <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
-          <Btn variant="blush" icon="video">Join Session</Btn>
+          <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
         </div>
         {Array.from({ length: user.sessionsCompleted || 0 }, (_, i) => (
           <Card key={i} style={{ padding: "14px 18px", marginBottom: 2 }}>
@@ -1685,6 +1807,7 @@ const MenteePortal = ({ user, onLogout }) => {
 
   return (
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off, position: "relative" }}>
+      {callActive && <VideoCallModal onClose={() => setCallActive(false)} sessionName={user.nextSession?.type || "Session"} participantName="Jess" isHost={false} />}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:all .18s} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}} @keyframes celebPop{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.08) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}} @keyframes celebFade{0%{opacity:1}70%{opacity:1}100%{opacity:0}} @keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(80px) rotate(360deg);opacity:0}}`}</style>
 
       {/* ── Celebration overlays ── */}
@@ -2046,6 +2169,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
 const AdminDashboard = ({ onLogout }) => {
   const { isMobile, useSidebar } = useLayout();
   const [view, setView] = useState("overview");
+  const [adminCall, setAdminCall] = useState(null);
   const [leads, setLeads] = useState(DB.leads);
   const [selLead, setSelLead] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -2125,7 +2249,7 @@ const AdminDashboard = ({ onLogout }) => {
                 <span style={{ fontSize: 9, color: B.blush, fontWeight: 700, letterSpacing: 1 }}>{pct}%</span>
               </div>
               <div style={{ display: "flex", gap: 2 }}>
-                <Btn size="sm" variant="primary" icon="video">Start Call</Btn>
+                <Btn size="sm" variant="primary" icon="video" onClick={() => setAdminCall(m.name)}>Start Call</Btn>
                 <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
               </div>
             </Card>
@@ -2296,7 +2420,7 @@ const AdminDashboard = ({ onLogout }) => {
             </div>
             <PBar value={pct} />
             <div style={{ display: "flex", gap: 2, marginTop: 12, flexWrap: "wrap" }}>
-              <Btn size="sm" icon="video">Start Call</Btn>
+              <Btn size="sm" icon="video" onClick={() => setAdminCall(m.name)}>Start Call</Btn>
               <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
               <Btn size="sm" variant="ghost" icon="file">View Files</Btn>
             </div>
@@ -2471,10 +2595,11 @@ const AdminDashboard = ({ onLogout }) => {
     );
   };
 
-  const viewMap = { overview: Overview, leads: LeadsView, mentees: MenteesView, invoices: <InvoicesView />, messages: MessagesView, settings: SettingsView };
+  const viewMap = { overview: Overview, leads: LeadsView, mentees: MenteesView, messages: MessagesView, settings: SettingsView };
 
   return (
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
+      {adminCall && <VideoCallModal onClose={() => setAdminCall(null)} sessionName={`Session with ${adminCall}`} participantName={adminCall} isHost={true} />}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:opacity .15s;cursor:pointer} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}}`}</style>
 
       {useSidebar && (
@@ -2507,7 +2632,7 @@ const AdminDashboard = ({ onLogout }) => {
             <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white }}>JR</div>
           </div>
         </div>
-        <div style={{ flex: 1, overflowY: "auto" }}>{viewMap[view] || Overview}</div>
+        <div style={{ flex: 1, overflowY: "auto" }}>{view === "invoices" ? <InvoicesView /> : (viewMap[view] || Overview)}</div>
       </div>
 
       {!useSidebar && (
