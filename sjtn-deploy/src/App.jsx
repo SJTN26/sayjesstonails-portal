@@ -612,25 +612,28 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
     }, 800);
   }, [email, pass, onLogin]);
 
-  const inp = (err) => ({ width: "100%", padding: "13px 16px", background: B.off, border: `1px solid ${err ? B.blush : B.cloud}`, borderRadius: 2, fontSize: 15, color: B.black, fontFamily: FONTS.body, outline: "none", boxSizing: "border-box", WebkitAppearance: "none" });
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const inp = (err) => ({ width: "100%", padding: "14px 18px", background: "transparent", border: `1px solid ${err ? B.blush : "#333"}`, fontSize: 15, color: B.ivory, fontFamily: FONTS.body, outline: "none", boxSizing: "border-box", WebkitAppearance: "none", borderRadius: 0 });
 
   if (forgot) return (
     <div style={{ minHeight: "100dvh", background: B.black, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: FONTS.body }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; } input { font-size:16px !important; }`}</style>
-      <div style={{ background: B.ink, border: `1px solid ${B.charcoal}`, padding: "40px", width: "100%", maxWidth: 420 }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} input{font-size:16px!important} button{-webkit-tap-highlight-color:transparent}`}</style>
+      <div style={{ width: "100%", maxWidth: 440, padding: isMobile ? "0" : "0" }}>
+        <div style={{ marginBottom: 40, display: "flex", justifyContent: "center" }}><Logo height={60} white /></div>
         {forgotSent ? (
           <>
-            <div style={{ width: 52, height: 52, background: B.successPale, border: `2px solid ${B.success}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 0 20px" }}><Ic n="check" size={24} color={B.success} sw={2.5} /></div>
-            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 32, textTransform: "uppercase", color: B.ivory, margin: "0 0 8px" }}>Check Your Inbox.</h2>
-            <p style={{ color: B.steel, fontSize: 13, lineHeight: 1.6, margin: "0 0 24px", fontWeight: 300 }}>Reset link sent to <strong style={{ color: B.blushLight }}>{forgotEmail}</strong>.</p>
-            <Btn full variant="white" onClick={() => { setForgot(false); setForgotSent(false); }}>Back to Sign In</Btn>
+            <div style={{ width: 48, height: 48, background: B.successPale, border: `2px solid ${B.success}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 0 20px" }}><Ic n="check" size={22} color={B.success} sw={2.5} /></div>
+            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 40, textTransform: "uppercase", color: B.ivory, margin: "0 0 10px", letterSpacing: "-0.5px" }}>Check Your Inbox.</h2>
+            <p style={{ color: "#9a8880", fontSize: 13, lineHeight: 1.7, margin: "0 0 28px", fontWeight: 300 }}>Reset link sent to <strong style={{ color: B.blushLight }}>{forgotEmail}</strong>.</p>
+            <Btn full variant="blush" onClick={() => { setForgot(false); setForgotSent(false); }}>Back to Sign In</Btn>
           </>
         ) : (
           <>
-            <button onClick={() => setForgot(false)} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: B.steel, cursor: "pointer", marginBottom: 24, fontFamily: FONTS.body, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase" }}><Ic n="back" size={13} color={B.steel} />Back</button>
-            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 36, textTransform: "uppercase", color: B.ivory, margin: "0 0 8px" }}>Reset Password.</h2>
-            <p style={{ color: B.steel, fontSize: 13, lineHeight: 1.6, margin: "0 0 24px", fontWeight: 300 }}>Enter the email tied to your account.</p>
-            <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} type="email" placeholder="your@email.com" style={{ ...inp(false), background: "#1a1a1a", border: `1px solid ${B.charcoal}`, color: B.ivory, marginBottom: 16 }} />
+            <button onClick={() => setForgot(false)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: B.ivory, cursor: "pointer", marginBottom: 32, fontFamily: FONTS.body, fontSize: 13, fontWeight: 500 }}><Ic n="back" size={14} color={B.ivory} />Back to Sign In</button>
+            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 40, textTransform: "uppercase", color: B.ivory, margin: "0 0 10px", letterSpacing: "-0.5px" }}>Reset Password.</h2>
+            <p style={{ color: "#9a8880", fontSize: 13, lineHeight: 1.7, margin: "0 0 28px", fontWeight: 300 }}>Enter the email tied to your account.</p>
+            <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} type="email" placeholder="your@email.com" style={{ ...inp(false), marginBottom: 16 }} />
             <Btn full variant="blush" onClick={() => { setBusy(true); setTimeout(() => { setForgotSent(true); setBusy(false); }, 900); }} disabled={busy || !forgotEmail.includes("@")}>{busy ? "Sending…" : "Send Reset Link"}</Btn>
           </>
         )}
@@ -639,98 +642,153 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
   );
 
   return (
-    <div style={{ minHeight: "100dvh", background: B.black, display: "flex", fontFamily: FONTS.body, flexDirection: isMobile ? "column" : "row" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; } button { -webkit-tap-highlight-color:transparent; } input,textarea { font-size:16px!important; } ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.charcoal}}`}</style>
+    <div style={{ minHeight: "100dvh", background: B.black, fontFamily: FONTS.body, position: "relative", overflow: "hidden" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        button{-webkit-tap-highlight-color:transparent}
+        input,textarea{font-size:16px!important;font-family:inherit}
+        ::-webkit-scrollbar{width:3px}
+        ::-webkit-scrollbar-thumb{background:#333}
+        input::placeholder{color:#555}
+        @keyframes drawerIn{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes drawerOut{from{transform:translateX(0);opacity:1}to{transform:translateX(-100%);opacity:0}}
+        @keyframes fadeInAuth{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        .auth-form{animation:fadeInAuth .5s cubic-bezier(.16,1,.3,1) both}
+        .drawer-panel{animation:drawerIn .35s cubic-bezier(.16,1,.3,1) both}
+      `}</style>
 
-      {/* Left — brand panel */}
-      <div style={{ flex: isMobile ? undefined : "0 0 46%", background: B.ink, borderRight: isMobile ? "none" : `1px solid ${B.charcoal}`, borderBottom: isMobile ? `1px solid ${B.charcoal}` : "none", padding: isMobile ? "40px 28px 32px" : "56px 48px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", overflow: "hidden", minHeight: isMobile ? undefined : "100dvh" }}>
-        {/* Blush accent bar */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: `linear-gradient(to bottom, ${B.blush}, transparent)` }} />
+      {/* ── Top bar — no logo here, just navigation ── */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, display: "flex", justifyContent: "space-between", alignItems: "center", padding: isMobile ? "20px 24px" : "24px 48px" }}>
+        {/* Desktop: About drawer trigger — text only, no logo */}
+        {!isMobile && (
+          <button onClick={() => setDrawerOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", fontFamily: FONTS.body, padding: 0 }}>
+            <Ic n="menu" size={16} color={drawerOpen ? B.blush : "#666"} />
+            <span style={{ fontSize: 10, color: drawerOpen ? B.blush : "#666", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", transition: "color .2s" }}>{drawerOpen ? "Close" : "About"}</span>
+          </button>
+        )}
+        {/* Mobile: empty left side so Homepage sits right */}
+        {isMobile && <div />}
+        <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", fontFamily: FONTS.body }}>
+          <Ic n="back" size={14} color={B.ivory} />
+          <span style={{ fontSize: 12, color: B.ivory, fontWeight: 500, letterSpacing: "0.03em" }}>Homepage</span>
+        </button>
+      </div>
 
-        <div>
-          <div style={{ marginBottom: isMobile ? 28 : 48 }}><Logo height={isMobile ? 48 : 170} white /></div>
-          <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 40 : 52, textTransform: "uppercase", lineHeight: 0.95, color: B.ivory, marginBottom: 20, letterSpacing: "-0.5px" }}>
-            Your career,<br />
-            <span style={{ color: B.blushLight, fontStyle: "italic", fontWeight: 300 }}>elevated.</span>
-          </h1>
-          <div style={{ width: 40, height: 2, background: B.blush, marginBottom: 20 }} />
-          <p style={{ color: "#9a8880", fontSize: 13, lineHeight: 1.8, marginBottom: 28, fontWeight: 300, maxWidth: 340 }}>Access your personalized plan, session recordings, check-ins, and everything Jess built for you.</p>
-
-          {!isMobile && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, marginBottom: 36 }}>
+      {/* ── Brand drawer — slides in from left on desktop ── */}
+      {!isMobile && drawerOpen && (
+        <>
+          {/* Overlay */}
+          <div onClick={() => setDrawerOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 150 }} />
+          {/* Panel */}
+          <div className="drawer-panel" style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: 380, background: B.ink, borderRight: `1px solid #222`, zIndex: 200, display: "flex", flexDirection: "column", padding: "48px 40px", overflowY: "auto" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, width: 3, height: "100%", background: `linear-gradient(to bottom, ${B.blush}, transparent)` }} />
+            <div style={{ marginBottom: 40 }}><Logo height={90} white /></div>
+            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 44, textTransform: "uppercase", lineHeight: 0.92, color: B.ivory, marginBottom: 16, letterSpacing: "-0.5px" }}>
+              Your career,<br />
+              <span style={{ color: B.blushLight, fontStyle: "italic", fontWeight: 300 }}>elevated.</span>
+            </h2>
+            <div style={{ width: 40, height: 2, background: B.blush, marginBottom: 20 }} />
+            <p style={{ color: "#9a8880", fontSize: 13, lineHeight: 1.8, marginBottom: 32, fontWeight: 300 }}>Access your personalized plan, session recordings, check-ins, and everything Jess built for you.</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 40 }}>
               {[{ icon: "video", t: "Live sessions & recordings" }, { icon: "file", t: "Documents & action plans" }, { icon: "bell", t: "Check-ins & accountability" }, { icon: "shield", t: "256-bit end-to-end encryption" }].map(({ icon, t }) => (
-                <div key={t} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderLeft: icon === "shield" ? `2px solid ${B.blush}` : `2px solid ${B.charcoal}` }}>
-                  <Ic n={icon} size={14} color={icon === "shield" ? B.blush : B.steel} />
-                  <span style={{ color: icon === "shield" ? B.blushLight : "#9a8880", fontSize: 12, fontWeight: 300 }}>{t}</span>
+                <div key={t} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderBottom: `1px solid #1a1a1a` }}>
+                  <Ic n={icon} size={15} color={icon === "shield" ? B.blush : "#555"} />
+                  <span style={{ color: icon === "shield" ? B.blushLight : "#9a8880", fontSize: 13, fontWeight: 300 }}>{t}</span>
                 </div>
               ))}
             </div>
-          )}
-        </div>
-
-        <div style={{ padding: "20px", background: "#0d0d0d", border: `1px solid ${B.charcoal}`, borderLeft: `3px solid ${B.blush}` }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Not enrolled yet?</div>
-          <div style={{ fontSize: 12, color: "#9a8880", marginBottom: 12, fontWeight: 300 }}>Book a free 20-min discovery call — no pitch, no pressure.</div>
-          <button onClick={onBook} style={{ display: "flex", alignItems: "center", gap: 7, background: B.blush, border: "none", padding: "8px 16px", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            <Ic n="calendar" size={12} color={B.white} />Book a Discovery Call
-          </button>
-        </div>
-      </div>
-
-      {/* Right — login form */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: isMobile ? "32px 28px 48px" : "56px 48px", overflowY: "auto" }}>
-        <div style={{ width: "100%", maxWidth: 400 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
-            <button onClick={onBack} style={{ width: 36, height: 36, border: `1px solid ${B.steel}`, background: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-              <Ic n="back" size={16} color={B.ivory} />
-            </button>
-            <span onClick={onBack} style={{ fontSize: 13, color: B.ivory, letterSpacing: "0.05em", fontWeight: 500, cursor: "pointer" }}>Back to homepage</span>
-          </div>
-
-          <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 36 : 44, textTransform: "uppercase", color: B.ivory, margin: "0 0 4px", letterSpacing: "-0.5px" }}>Sign In.</h2>
-          <p style={{ color: "#9a8880", fontSize: 13, margin: "0 0 28px", fontWeight: 300 }}>Use the credentials Jess sent when you enrolled.</p>
-
-          <label style={{ display: "block", fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Email</label>
-          <input value={email} onChange={e => { setEmail(e.target.value); setErr(""); }} onKeyDown={e => e.key === "Enter" && login()} type="email" placeholder="your@email.com" autoComplete="email" style={{ ...inp(!!err), background: "#141414", border: `1px solid ${err ? B.blush : B.charcoal}`, color: B.white, marginBottom: 16 }} />
-
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <label style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Password</label>
-            <button onClick={() => setForgot(true)} style={{ fontSize: 10, color: B.steel, background: "none", border: "none", cursor: "pointer", fontFamily: FONTS.body, textDecoration: "underline", textUnderlineOffset: 2 }}>Forgot?</button>
-          </div>
-          <div style={{ position: "relative", marginBottom: err ? 10 : 24 }}>
-            <input value={pass} onChange={e => { setPass(e.target.value); setErr(""); }} onKeyDown={e => e.key === "Enter" && login()} type={showPass ? "text" : "password"} placeholder="••••••••" autoComplete="current-password" style={{ ...inp(!!err), background: "#141414", border: `1px solid ${err ? B.blush : B.charcoal}`, color: B.white, paddingRight: 46 }} />
-            <button onClick={() => setShowPass(s => !s)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
-              <Ic n={showPass ? "eyeOff" : "eye"} size={16} color={B.steel} />
-            </button>
-          </div>
-
-          {err && <div style={{ color: B.blushLight, fontSize: 12, marginBottom: 16, padding: "10px 14px", background: `${B.blush}12`, borderLeft: `3px solid ${B.blush}`, fontWeight: 300 }}>{err}</div>}
-
-          <Btn full variant="blush" onClick={login} disabled={busy || locked}>{busy ? "Signing in…" : locked ? "Account locked — try later" : "Sign In to Portal"}</Btn>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "24px 0" }}>
-            <div style={{ flex: 1, height: 1, background: B.charcoal }} />
-            <span style={{ fontSize: 9, color: B.charcoal, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Demo Accounts</span>
-            <div style={{ flex: 1, height: 1, background: B.charcoal }} />
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {[
-              ["jessica@example.com", "Demo@1234!", "3-Month Elite", "JM", B.blush],
-              ["taylor@example.com", "Demo@1234!", "30-Day Intensive", "TR", "#9B6EA0"],
-              ["jess@sayjesstonails.com", "Admin@Jess2025!", "Admin · Jess's Dashboard", "JR", B.success],
-            ].map(([em, pw, lbl, av, ac]) => (
-              <button key={em} onClick={() => { setEmail(em); setPass(pw); setErr(""); }} style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 14px", background: email === em ? "#1a1a1a" : "#0d0d0d", border: `1px solid ${email === em ? B.charcoal : "#141414"}`, cursor: "pointer", fontFamily: FONTS.body, textAlign: "left", transition: "all .15s" }}>
-                <div style={{ width: 28, height: 28, background: `${ac}20`, border: `1px solid ${ac}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: ac, flexShrink: 0 }}>{av}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lbl}</div>
-                  <div style={{ fontSize: 9, color: "#9a8880", letterSpacing: "0.05em" }}>{em}</div>
-                </div>
-                {email === em && <div style={{ width: 5, height: 5, background: ac, flexShrink: 0 }} />}
+            <div style={{ marginTop: "auto", padding: "20px", background: "#0d0d0d", borderLeft: `3px solid ${B.blush}` }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Not enrolled yet?</div>
+              <div style={{ fontSize: 12, color: "#9a8880", marginBottom: 14, fontWeight: 300, lineHeight: 1.6 }}>Book a free 20-min discovery call — no pitch, no pressure.</div>
+              <button onClick={() => { setDrawerOpen(false); onBook(); }} style={{ display: "flex", alignItems: "center", gap: 7, background: B.blush, border: "none", padding: "10px 18px", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                <Ic n="calendar" size={12} color={B.white} />Book a Discovery Call
               </button>
-            ))}
+            </div>
+            <button onClick={() => setDrawerOpen(false)} style={{ position: "absolute", top: 20, right: 20, width: 32, height: 32, background: "none", border: `1px solid #333`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <Ic n="close" size={14} color={B.ivory} />
+            </button>
           </div>
-          <p style={{ color: "#9a8880", fontSize: 9, textAlign: "center", marginTop: 20, letterSpacing: "0.05em", lineHeight: 1.6 }}>CREDENTIALS EMAILED AFTER ENROLLMENT · SESSIONS EXPIRE AFTER 8 HOURS</p>
+        </>
+      )}
+
+      {/* ── Centered sign-in form ── */}
+      <div className="auth-form" style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? "100px 24px 60px" : "100px 24px 60px" }}>
+        <div style={{ width: "100%", maxWidth: 420 }}>
+
+          {/* Single logo — centered above the card, same on all screen sizes */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 36 }}>
+            <Logo height={isMobile ? 48 : 64} white />
+          </div>
+
+          {/* Form card */}
+          <div style={{ background: "#0d0d0d", border: `1px solid #1e1e1e`, padding: isMobile ? "32px 24px" : "48px 44px" }}>
+            {/* Blush top accent */}
+            <div style={{ height: 3, background: B.blush, margin: "-48px -44px 36px", ...(isMobile ? { margin: "-32px -24px 28px" } : {}) }} />
+
+            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 44 : 56, textTransform: "uppercase", color: B.ivory, margin: "0 0 6px", letterSpacing: "-1px", lineHeight: 0.95 }}>Welcome<br/>Back.</h2>
+            <p style={{ color: "#9a8880", fontSize: 13, margin: "0 0 32px", fontWeight: 300, lineHeight: 1.6 }}>Use the credentials Jess sent when you enrolled.</p>
+
+            <label style={{ display: "block", fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Email Address</label>
+            <input value={email} onChange={e => { setEmail(e.target.value); setErr(""); }} onKeyDown={e => e.key === "Enter" && login()} type="email" placeholder="your@email.com" autoComplete="email" style={{ ...inp(!!err), marginBottom: 20 }} />
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <label style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Password</label>
+              <button onClick={() => setForgot(true)} style={{ fontSize: 11, color: "#9a8880", background: "none", border: "none", cursor: "pointer", fontFamily: FONTS.body, textDecoration: "underline", textUnderlineOffset: 3 }}>Forgot password?</button>
+            </div>
+            <div style={{ position: "relative", marginBottom: err ? 12 : 28 }}>
+              <input value={pass} onChange={e => { setPass(e.target.value); setErr(""); }} onKeyDown={e => e.key === "Enter" && login()} type={showPass ? "text" : "password"} placeholder="••••••••" autoComplete="current-password" style={{ ...inp(!!err), paddingRight: 48 }} />
+              <button onClick={() => setShowPass(s => !s)} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                <Ic n={showPass ? "eyeOff" : "eye"} size={16} color="#555" />
+              </button>
+            </div>
+
+            {err && <div style={{ color: B.blushLight, fontSize: 12, marginBottom: 16, padding: "10px 14px", background: `${B.blush}15`, borderLeft: `3px solid ${B.blush}`, fontWeight: 300, lineHeight: 1.5 }}>{err}</div>}
+
+            <Btn full variant="blush" onClick={login} disabled={busy || locked} style={{ padding: "15px", fontSize: 13 }}>
+              {busy ? "Signing in…" : locked ? "Account locked — try later" : "Sign In to Portal"}
+            </Btn>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "28px 0 20px" }}>
+              <div style={{ flex: 1, height: 1, background: "#1e1e1e" }} />
+              <span style={{ fontSize: 9, color: "#444", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Demo Accounts</span>
+              <div style={{ flex: 1, height: 1, background: "#1e1e1e" }} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {[
+                ["jessica@example.com", "Demo@1234!", "3-Month Elite", "JM", B.blush],
+                ["taylor@example.com", "Demo@1234!", "30-Day Intensive", "TR", "#9B6EA0"],
+                ["jess@sayjesstonails.com", "Admin@Jess2025!", "Admin · Jess's Dashboard", "JR", B.success],
+              ].map(([em, pw, lbl, av, ac]) => (
+                <button key={em} onClick={() => { setEmail(em); setPass(pw); setErr(""); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", background: email === em ? "#1a1a1a" : "#111", border: `1px solid ${email === em ? "#333" : "#161616"}`, cursor: "pointer", fontFamily: FONTS.body, textAlign: "left", transition: "all .15s" }}>
+                  <div style={{ width: 30, height: 30, background: `${ac}18`, border: `1px solid ${ac}50`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: ac, flexShrink: 0 }}>{av}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lbl}</div>
+                    <div style={{ fontSize: 9, color: "#555", letterSpacing: "0.05em", marginTop: 1 }}>{em}</div>
+                  </div>
+                  {email === em && <div style={{ width: 5, height: 5, borderRadius: "50%", background: ac, flexShrink: 0 }} />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p style={{ color: "#444", fontSize: 9, textAlign: "center", marginTop: 16, letterSpacing: "0.08em", lineHeight: 1.8 }}>
+            CREDENTIALS EMAILED AFTER ENROLLMENT · SESSIONS EXPIRE AFTER 8 HOURS
+          </p>
+
+          {/* Mobile — not enrolled CTA */}
+          {isMobile && (
+            <div style={{ marginTop: 20, padding: "18px 20px", background: "#0d0d0d", border: `1px solid #1e1e1e`, borderLeft: `3px solid ${B.blush}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Not enrolled yet?</div>
+                <div style={{ fontSize: 11, color: "#9a8880", fontWeight: 300 }}>Book a free discovery call.</div>
+              </div>
+              <button onClick={onBook} style={{ display: "flex", alignItems: "center", gap: 6, background: B.blush, border: "none", padding: "9px 16px", color: B.white, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                <Ic n="calendar" size={11} color={B.white} />Book Now
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
