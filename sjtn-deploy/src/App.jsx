@@ -1083,12 +1083,22 @@ const MenteePortal = ({ user, onLogout }) => {
   const [milestones, setMilestones] = useState(user.milestones || []);
   const [celebratingMilestone, setCelebratingMilestone] = useState(null);
 
-  const [communityPosts] = useState([
-    { author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew This week's focus: your rebooking language. What do YOU say at checkout? Drop it below.", likes:12, comments:["Sarah T.", "Maya R.", "Bria M."], isJess:true },
-    { author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you.", likes:24, comments:[], isJess:false },
-    { author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. Thank you Jess and this whole community.", likes:31, comments:[], isJess:false },
+  const [communityPosts, setCommunityPosts] = useState([
+    { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Drop it below.", likes:12, comments:["Sarah T.", "Maya R.", "Bria M."], isJess:true, cat:"tip" },
+    { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you.", likes:24, comments:[], isJess:false, cat:"win" },
+    { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. Thank you Jess and this whole community.", likes:31, comments:[], isJess:false, cat:"win" },
   ]);
-  const [likedPosts, setLikedPosts] = useState([]);
+  const [commPostInput, setCommPostInput] = useState("");
+  const [commPostCat, setCommPostCat] = useState("win");
+  const [commLiked, setCommLiked] = useState([]);
+  const commCatColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
+  const commCatLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
+  const commCatIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
+  const submitCommPost = () => {
+    if (!commPostInput.trim()) return;
+    setCommunityPosts(p => [{ id: Date.now(), author: user.firstName, avatar: user.avatar, time: "Just now", text: commPostInput, likes: 0, comments: [], isJess: false, cat: commPostCat }, ...p]);
+    setCommPostInput("");
+  };
 
   const [sessionPrep, setSessionPrep] = useState({ win:"", challenge:"", need:"", submitted:false });
   const [referralCopied, setReferralCopied] = useState(false);
@@ -1444,32 +1454,73 @@ const MenteePortal = ({ user, onLogout }) => {
 
     // ── 2. COMMUNITY ───────────────────────────────────────────────────
     community: (
-      <Pg title="Community" sub="The Inner Circle">
+      <Pg title="Community Feed" sub="The Inner Circle">
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Your people. Real nail techs doing the work alongside you.</p>
+
+        {/* Jess's Voice audio teaser */}
+        <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setAudioPlaying(p => !p)}>
+          <div style={{ width: 40, height: 40, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
+            <Ic n={audioPlaying ? "zap" : "mic"} size={18} color={B.white} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 3px" }}>Jess's Voice — This Week</p>
+            <p style={{ color: B.ivory, fontSize: 13, fontWeight: 300, margin: "0 0 8px", lineHeight: 1.4 }}>"Your pricing confidence starts with your language."</p>
+            <div style={{ height: 3, background: "#333", borderRadius: 2 }}>
+              <div style={{ height: "100%", width: audioPlaying ? "45%" : "0%", background: B.blush, borderRadius: 2, transition: audioPlaying ? "width 60s linear" : "none" }} />
+            </div>
+          </div>
+          <div style={{ fontSize: 9, color: "#9a8880", fontWeight: 300, flexShrink: 0 }}>{audioPlaying ? "Playing…" : "Tap to play"}</div>
+        </div>
+
+        {/* Post composer */}
+        <div style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "18px 20px", marginBottom: 16, borderTop: `3px solid ${B.blush}` }}>
+          <div style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "nowrap", overflowX: "auto" }}>
+            {Object.entries(commCatLabels).map(([k, v]) => (
+              <button key={k} onClick={() => setCommPostCat(k)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "5px 9px", border: `1px solid ${commPostCat === k ? commCatColors[k] : B.cloud}`, background: commPostCat === k ? `${commCatColors[k]}12` : "transparent", color: commPostCat === k ? commCatColors[k] : B.mid, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 0.5, transition: "all .15s", whiteSpace: "nowrap", flexShrink: 0 }}>
+                <Ic n={commCatIcons[k]} size={10} color={commPostCat === k ? commCatColors[k] : B.mid} sw={1.5} />{v}
+              </button>
+            ))}
+          </div>
+          <textarea value={commPostInput} onChange={e => setCommPostInput(e.target.value)} placeholder="Share a win, ask a question, drop a tip — this community grows because you show up." rows={4} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${B.cloud}`, fontSize: 14, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "vertical", boxSizing: "border-box", fontWeight: 300, minHeight: 100 }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, borderRadius: "50%" }}>{user.avatar}</div>
+              <span style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>Posting as {user.firstName}</span>
+            </div>
+            <button onClick={submitCommPost} disabled={!commPostInput.trim()} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: commPostInput.trim() ? B.blush : B.cloud, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: commPostInput.trim() ? "pointer" : "default", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", transition: "background .2s" }}>
+              <Ic n="send" size={12} color={B.white} />Post
+            </button>
+          </div>
+        </div>
+
+        {/* Feed */}
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {communityPosts.map((post, i) => (
-            <Card key={i} style={{ padding: "20px 22px", borderTop: post.isJess ? `3px solid ${B.blush}` : `1px solid ${B.cloud}` }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          {communityPosts.map((post) => (
+            <div key={post.id} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "20px 22px", borderTop: post.isJess ? `3px solid ${B.blush}` : `1px solid ${B.cloud}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                 <div style={{ width: 36, height: 36, background: post.isJess ? B.blush : B.off, border: post.isJess ? "none" : `1px solid ${B.cloud}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: post.isJess ? B.white : B.steel, flexShrink: 0, borderRadius: "50%" }}>{post.avatar}</div>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{post.author}{post.isJess && <span style={{ marginLeft: 6, fontSize: 8, background: B.blush, color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>JESS</span>}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 7 }}>
+                    {post.author}
+                    {post.isJess && <span style={{ fontSize: 8, background: B.blush, color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>JESS</span>}
+                    {post.cat && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 8, background: `${commCatColors[post.cat]}15`, color: commCatColors[post.cat], padding: "2px 8px", fontWeight: 700, letterSpacing: 1 }}>
+                      <Ic n={commCatIcons[post.cat]} size={9} color={commCatColors[post.cat]} sw={1.5} />{commCatLabels[post.cat]}
+                    </span>}
+                  </div>
                   <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginTop: 1 }}>{post.time}</div>
                 </div>
               </div>
-              <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.7, margin: "0 0 14px", fontWeight: 300 }}>{post.text}</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <button onClick={() => setLikedPosts(p => p.includes(i) ? p.filter(x => x !== i) : [...p, i])} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: likedPosts.includes(i) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 11, fontWeight: likedPosts.includes(i) ? 700 : 300 }}>
-                  <Ic n="heart" size={14} color={likedPosts.includes(i) ? B.blush : B.mid} sw={likedPosts.includes(i) ? 0 : 1.8} />
-                  {post.likes + (likedPosts.includes(i) ? 1 : 0)}
+              <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.75, margin: "0 0 14px", fontWeight: 300 }}>{post.text}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: `1px solid ${B.cloud}`, paddingTop: 12 }}>
+                <button onClick={() => setCommLiked(p => p.includes(post.id) ? p.filter(x => x !== post.id) : [...p, post.id])} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: commLiked.includes(post.id) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: commLiked.includes(post.id) ? 700 : 300, padding: 0 }}>
+                  <Ic n="heart" size={14} color={commLiked.includes(post.id) ? B.blush : B.mid} sw={commLiked.includes(post.id) ? 0 : 1.8} />
+                  {post.likes + (commLiked.includes(post.id) ? 1 : 0)}
                 </button>
                 {post.comments.length > 0 && <span style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>{post.comments.length} comments</span>}
               </div>
-            </Card>
+            </div>
           ))}
         </div>
-        <Card style={{ padding: "16px 20px", marginTop: 12, background: B.off, border: `1px solid ${B.cloud}` }}>
-          <p style={{ fontSize: 12, color: B.steel, margin: 0, fontWeight: 300, textAlign: "center", lineHeight: 1.6 }}>👋 The full community is right here — <strong style={{ color: B.black }}>you're already in it.</strong><br/>Share your wins. Ask questions. Lift each other up.</p>
-        </Card>
       </Pg>
     ),
 
@@ -1899,11 +1950,11 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     ),
 
     upgrade: (
-      <Pg title="Level Up" sub="Ready for More?">
-        <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 24px", fontWeight: 300 }}>You're in the community. Now take the next step.</p>
+      <Pg title="Level Up" sub="When You're Ready">
+        <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 24px", fontWeight: 300 }}>You've been doing the work. This is what the next level looks like.</p>
         <div style={{ background: B.black, padding: "28px 28px", marginBottom: 16, borderLeft: `3px solid ${B.blush}` }}>
-          <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 8px" }}>A message from Jess</p>
-          <p style={{ color: B.ivory, fontSize: 15, lineHeight: 1.8, fontWeight: 300, fontStyle: "italic", margin: "0 0 6px" }}>"Being in the community is step one. But if you're ready to raise your prices, fill your books, and build something real — that's exactly what 1:1 mentorship is designed for."</p>
+          <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 8px" }}>From Jess</p>
+          <p style={{ color: B.ivory, fontSize: 15, lineHeight: 1.8, fontWeight: 300, fontStyle: "italic", margin: "0 0 6px" }}>"The community is where it starts — and I'm glad you're here. When you feel ready to go deeper, 1:1 is where the real shift happens. No rush. Just know I'm here when you are."</p>
           <span style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>— Jess</span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 2, marginBottom: 20 }}>
@@ -2019,8 +2070,8 @@ const AdminDashboard = ({ onLogout }) => {
   const scMap = { pending: [B.amber, B.amberPale], accepted: [B.success, B.successPale], declined: [B.mid, B.off] };
   const contacts = [{ name: "Jessica M.", tier: "elite", preview: "Two clients accepted my new rate!", unread: 0 }, { name: "Taylor R.", tier: "intensive", preview: "Posted my first reel — 3 DMs!", unread: 1 }];
 
-  const ADMIN_NAV = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
-  const ADMIN_TABS = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
+  const ADMIN_NAV = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
+  const ADMIN_TABS = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
 
   const Pg = ({ title, sub, children, action }) => (
     <div style={{ padding: isMobile ? "20px 18px 40px" : "28px 32px", maxWidth: 1020, width: "100%" }}>
@@ -2326,7 +2377,101 @@ const AdminDashboard = ({ onLogout }) => {
     </Pg>
   );
 
-  const viewMap = { overview: Overview, leads: LeadsView, mentees: MenteesView, messages: MessagesView, settings: SettingsView };
+  const InvoicesView = () => {
+    const [invoices, setInvoices] = React.useState([
+      { id:"INV-001", to:"Jessica M.", email:"jessica@example.com", tier:"3-Month Elite", amount:3360, status:"paid", date:"Apr 1" },
+      { id:"INV-002", to:"Taylor R.", email:"taylor@example.com", tier:"30-Day Intensive", amount:1120, status:"paid", date:"Apr 5" },
+      { id:"INV-003", to:"Maya J.", email:"maya@example.com", tier:"Community", amount:27, status:"pending", date:"Apr 14" },
+    ]);
+    const [showNew, setShowNew] = React.useState(false);
+    const [form, setForm] = React.useState({ to:"", email:"", tier:"Hourly Session", amount:"250", note:"" });
+    const tiers = [["Hourly Session","250"],["30-Day Intensive","1120"],["3-Month Elite","3360"],["Community","27"],["Custom",""]];
+    const statusColor = { paid: B.success, pending: B.amber, draft: B.mid };
+    const statusBg = { paid: B.successPale, pending: B.amberPale, draft: B.off };
+    const sendInvoice = () => {
+      if (!form.to.trim() || !form.email.trim()) return;
+      setInvoices(p => [{ id:`INV-00${p.length+1}`, to:form.to, email:form.email, tier:form.tier, amount:Number(form.amount)||0, status:"pending", date:"Just now" }, ...p]);
+      setForm({ to:"", email:"", tier:"Hourly Session", amount:"250", note:"" });
+      setShowNew(false);
+    };
+    return (
+      <Pg title="Invoices" sub="Payment Requests" action={<button onClick={() => setShowNew(s => !s)} style={{ display:"flex", alignItems:"center", gap:6, padding:"9px 16px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}><Ic n="send" size={12} color={B.white} />New Invoice</button>}>
+        <p style={{ color:B.mid, fontSize:13, margin:"-14px 0 20px", fontWeight:300 }}>Request payment or send an invoice to any mentee or lead.</p>
+
+        {showNew && (
+          <Card style={{ marginBottom: 16, padding:"20px 20px", borderTop:`3px solid ${B.blush}` }}>
+            <Section style={{ marginBottom:14 }}>New Payment Request</Section>
+            <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:10, marginBottom:10 }}>
+              {[["Name","to","text","e.g. Taylor R."],["Email","email","email","e.g. taylor@example.com"]].map(([lbl,key,type,ph]) => (
+                <div key={key}>
+                  <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>{lbl}</div>
+                  <input type={type} value={form[key]} onChange={e => setForm(p=>({...p,[key]:e.target.value}))} placeholder={ph} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:10, marginBottom:10 }}>
+              <div>
+                <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>Service</div>
+                <select value={form.tier} onChange={e => { const t=tiers.find(([n])=>n===e.target.value); setForm(p=>({...p,tier:e.target.value,amount:t?t[1]:p.amount})); }} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, background:B.white, boxSizing:"border-box" }}>
+                  {tiers.map(([n]) => <option key={n}>{n}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>Amount ($)</div>
+                <input type="number" value={form.amount} onChange={e => setForm(p=>({...p,amount:e.target.value}))} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
+              </div>
+            </div>
+            <div style={{ marginBottom:14 }}>
+              <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>Note (optional)</div>
+              <textarea value={form.note} onChange={e => setForm(p=>({...p,note:e.target.value}))} placeholder="e.g. Discovery call follow-up — 3-Month Elite program" rows={2} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", resize:"vertical", color:B.black, boxSizing:"border-box" }} />
+            </div>
+            <div style={{ display:"flex", gap:8 }}>
+              <Btn variant="blush" icon="send" onClick={sendInvoice} disabled={!form.to.trim()||!form.email.trim()}>Send Invoice</Btn>
+              <Btn variant="ghost" onClick={() => setShowNew(false)}>Cancel</Btn>
+            </div>
+          </Card>
+        )}
+
+        <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)", gap:2, marginBottom:20 }}>
+          {[["Total Sent", invoices.length], ["Paid", invoices.filter(i=>i.status==="paid").length], ["Pending", invoices.filter(i=>i.status==="pending").length]].map(([l,v]) => (
+            <div key={l} style={{ padding:"16px 18px", border:`1px solid ${B.cloud}`, background:B.white, borderTop:`3px solid ${l==="Pending"&&v>0?B.amber:l==="Paid"?B.success:B.cloud}` }}>
+              <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:32, color:B.black, lineHeight:1 }}>{v}</div>
+              <div style={{ fontSize:9, fontWeight:700, color:B.mid, marginTop:5, letterSpacing:1.5, textTransform:"uppercase" }}>{l}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+          {invoices.map((inv) => (
+            <Card key={inv.id} style={{ padding:"16px 18px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:8 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                  <div style={{ width:36, height:36, background:B.blushPale, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:B.blush, flexShrink:0 }}>{inv.to.split(" ").map(w=>w[0]).join("")}</div>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{inv.to}</div>
+                    <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{inv.email}</div>
+                    <div style={{ fontSize:10, color:B.steel, fontWeight:300, marginTop:2 }}>{inv.tier} · {inv.date}</div>
+                  </div>
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:22, color:B.black }}>${inv.amount.toLocaleString()}</div>
+                  <span style={{ fontSize:8, fontWeight:700, padding:"3px 8px", letterSpacing:1, textTransform:"uppercase", color:statusColor[inv.status], background:statusBg[inv.status] }}>{inv.status}</span>
+                </div>
+              </div>
+              {inv.status === "pending" && (
+                <div style={{ display:"flex", gap:6, marginTop:12 }}>
+                  <button onClick={() => setInvoices(p=>p.map(i=>i.id===inv.id?{...i,status:"paid"}:i))} style={{ padding:"7px 14px", background:B.success, border:"none", color:B.white, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Mark Paid</button>
+                  <button onClick={() => setInvoices(p=>p.map(i=>i.id===inv.id?{...i,status:"draft"}:i))} style={{ padding:"7px 14px", background:"none", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Resend</button>
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+      </Pg>
+    );
+  };
+
+  const viewMap = { overview: Overview, leads: LeadsView, mentees: MenteesView, invoices: <InvoicesView />, messages: MessagesView, settings: SettingsView };
 
   return (
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
