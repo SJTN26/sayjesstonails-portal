@@ -60,6 +60,7 @@ const DB = {
     "taylor@example.com": { role:"mentee", password:"Demo@1234!", name:"Taylor R.", firstName:"Taylor", avatar:"TR", tier:"30-Day Intensive", tierKey:"intensive", startDate:"April 1, 2025", daysRemaining:18, totalDays:30, sessionsCompleted:1, sessionsTotal:2, goal:"Attract my first 5 consistent clients", nextSession:{ date:"Sunday Apr 20", time:"11:00 AM EST", type:"Session 2 — Momentum Review" }, milestones:[{label:"Complete intake form",done:true},{label:"Book Session 1",done:true},{label:"Update Instagram bio",done:true},{label:"Book 3 new clients",done:false},{label:"Implement pricing structure",done:false}], messages:[{from:"Jess",time:"Today 8:00 AM",text:"Check-in is due today — how are the pricing cards working?",unread:true},{from:"You",time:"Apr 15",text:"Posted my first reel and got 3 DMs asking about booking!"},{from:"Jess",time:"Apr 15",text:"THAT IS HUGE. This is exactly what we planned. Let's convert them."}], documents:[{name:"Welcome Packet — 30-Day",type:"PDF",date:"Apr 1",category:"Welcome",size:"2.1 MB"},{name:"30-Day Business Plan",type:"PDF",date:"Apr 3",category:"Plans",size:"1.4 MB"},{name:"Session 1 Recording",type:"Video",date:"Apr 5",category:"Sessions",size:"—"},{name:"Social Media Quick-Start",type:"PDF",date:"Apr 8",category:"Resources",size:"0.6 MB"}], schedule:[{date:"Apr 20",label:"Session 2",type:"session",time:"11:00 AM"},{date:"Apr 22",label:"Check-in",type:"checkin",time:"Flexible"},{date:"Apr 28",label:"End-of-Month Review",type:"review",time:"TBD"}], payments:[{date:"Apr 1, 2025",desc:"30-Day Intensive",amount:"$1,120.00",status:"Paid"}],
     },
     "jess@sayjesstonails.com": { role:"admin", password:"Admin@Jess2025!", name:"Jess Ramos", firstName:"Jess", avatar:"JR" },
+    "maya@example.com": { role:"community", password:"Demo@1234!", name:"Maya J.", firstName:"Maya", avatar:"MJ", tier:"Community Member", tierKey:"community", joinDate:"April 10, 2025" },
   },
   leads: [
     { id:1, name:"Aaliyah Johnson", email:"aaliyah@example.com", phone:"(305) 555-0182", ig:"@aaliyahnails_miami", licensed:"Yes", experience:"1–3 years", challenge:"I'm undercharging and terrified to raise my prices without losing everyone.", goal:"Double my income in 90 days and stop feeling embarrassed about my rates.", tier:"3-Month Elite ($3,360)", how:"Instagram", slot:{day:"Monday",date:"Apr 21",time:"2:00 PM"}, status:"pending", submitted:"2 hours ago" },
@@ -147,7 +148,7 @@ const LogoMark = ({ size = 36, white = false }) => {
 
 /* ─── ICONS ─────────────────────────────────────────────────────────────── */
 const PX = {
-  home:"M3 9.5L12 3l9 6.5V21h-6v-5H9v5H3V9.5z", calendar:"M8 2v3M16 2v3M3 8h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z", video:"M15 10l4.553-2.277A1 1 0 0121 8.72v6.56a1 1 0 01-1.447.898L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z", file:"M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6", message:"M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z", check:"M5 13l4 4L19 7", logout:"M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1", bell:"M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9", users:"M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", dollar:"M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6", send:"M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z", play:"M5 3l14 9-14 9V3z", download:"M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3", award:"M12 15a7 7 0 100-14 7 7 0 000 14zM8.21 13.89L7 23l5-3 5 3-1.21-9.12", card:"M1 4h22v16H1zM1 10h22", arrow:"M5 12h14M12 5l7 7-7 7", back:"M19 12H5M12 5l-7 7 7 7", close:"M18 6L6 18M6 6l12 12", menu:"M3 12h18M3 6h18M3 18h18", star:"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z", instagram:"M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37zM17.5 6.5h.01M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5z", eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 15a3 3 0 100-6 3 3 0 000 6z", eyeOff:"M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22", lock:"M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2zM7 11V7a5 5 0 0110 0v4", shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z", zap:"M13 2L3 14h9l-1 8 10-12h-9l1-8z", settings:"M12 15a3 3 0 100-6 3 3 0 000 6z", grid:"M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z", book:"M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z", graduationCap:"M22 10v6M2 10l10-5 10 5-10 5-10-5zM6 12v5c3.333 1.333 6.667 1.333 10 0v-5", sparkle:"M12 3l1.5 4.5H18l-3.75 2.7 1.5 4.5L12 12l-3.75 2.7 1.5-4.5L6 7.5h4.5L12 3z",
+  home:"M3 9.5L12 3l9 6.5V21h-6v-5H9v5H3V9.5z", calendar:"M8 2v3M16 2v3M3 8h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z", video:"M15 10l4.553-2.277A1 1 0 0121 8.72v6.56a1 1 0 01-1.447.898L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z", file:"M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6", message:"M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z", check:"M5 13l4 4L19 7", logout:"M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1", bell:"M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9", users:"M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", dollar:"M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6", send:"M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z", play:"M5 3l14 9-14 9V3z", download:"M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3", award:"M12 15a7 7 0 100-14 7 7 0 000 14zM8.21 13.89L7 23l5-3 5 3-1.21-9.12", card:"M1 4h22v16H1zM1 10h22", arrow:"M5 12h14M12 5l7 7-7 7", back:"M19 12H5M12 5l-7 7 7 7", close:"M18 6L6 18M6 6l12 12", menu:"M3 12h18M3 6h18M3 18h18", star:"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z", instagram:"M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37zM17.5 6.5h.01M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5z", eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 15a3 3 0 100-6 3 3 0 000 6z", eyeOff:"M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22", lock:"M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2zM7 11V7a5 5 0 0110 0v4", shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z", zap:"M13 2L3 14h9l-1 8 10-12h-9l1-8z", settings:"M12 15a3 3 0 100-6 3 3 0 000 6z", grid:"M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z", book:"M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z", graduationCap:"M22 10v6M2 10l10-5 10 5-10 5-10-5zM6 12v5c3.333 1.333 6.667 1.333 10 0v-5", sparkle:"M12 3l1.5 4.5H18l-3.75 2.7 1.5 4.5L12 12l-3.75 2.7 1.5-4.5L6 7.5h4.5L12 3z", trophy:"M6 9H4a1 1 0 01-1-1V5a1 1 0 011-1h2M18 9h2a1 1 0 001-1V5a1 1 0 00-1-1h-2M8 21h8M12 17v4M5 3h14l-1 7a6 6 0 01-12 0L5 3z", mic:"M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3zM19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8", share:"M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13", heart:"M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z", gift:"M20 12v10H4V12M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z", clipBoard:"M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", link:"M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71", edit:"M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z",
 };
 const Ic = ({ n, size = 18, color = "currentColor", sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -214,6 +215,7 @@ const Landing = ({ onSignIn, onBook }) => {
   }, []);
 
   const tiers = [
+    { name: "Community", price: "$27", sub: "/month · cancel anytime", value: "", saving: "", features: ["Private community feed — all nail techs welcome", "Jess's weekly audio check-in", "Free resources & templates", "Peer wins, encouragement & accountability", "Visibility into what full mentorship looks like", "Direct path to upgrade when you're ready"], accent: false, community: true },
     { name: "Hourly Session", price: "$250", value: "$750", saving: "Save $500", sub: "One session, total clarity", features: ["60-min focused session with Jess", "You set the agenda — she brings the answers", "Written action plan after every session", "No commitment required — start here", "Payment plans available"], accent: false },
     { name: "30-Day Intensive", price: "$1,120", value: "$3,600", saving: "Save $2,480", sub: "Real momentum, one month", features: ["Structured 30-day roadmap built around you", "Live sessions + guided check-ins", "Pricing strategy & client attraction coaching", "Direct access to Jess throughout the month", "Resources and tools curated to your goals", "Payment plans available"], accent: false },
     { name: "3-Month Elite", price: "$3,360", value: "$8,550", saving: "Save $5,190", sub: "Complete transformation", features: ["Full 90-day personalized growth plan", "Deep-dive sessions at every stage", "Milestone tracking & accountability built in", "Community access for ongoing support", "Monthly reviews to keep you on track", "End-of-quarter strategy audit", "Payment plans available"], accent: true },
@@ -409,35 +411,41 @@ const Landing = ({ onSignIn, onBook }) => {
             <div style={{ marginBottom: 48, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16 }}>
               <div>
                 <Section style={{ marginBottom: 12 }}>Investment</Section>
-                <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 44 : 64, textTransform: "uppercase", lineHeight: 0.95, letterSpacing: "-1px" }}>Three Ways<br/>To Say Yes.</h2>
+                <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 44 : 64, textTransform: "uppercase", lineHeight: 0.95, letterSpacing: "-1px" }}>Four Ways<br/>To Say Yes.</h2>
               </div>
-              <p style={{ color: B.steel, fontSize: 14, maxWidth: 320, lineHeight: 1.7, fontWeight: 300 }}>Personalized guidance from Jess — delivered in the format that serves you best. Every program evolves with you.</p>
+              <p style={{ color: B.steel, fontSize: 14, maxWidth: 320, lineHeight: 1.7, fontWeight: 300 }}>Start free in the community. Grow into 1:1 when you're ready. Every path leads to the same place — a career that finally pays what it should.</p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 2 }}>
-              {tiers.map(({ name, price, value, saving, sub, features, accent }) => (
-                <div key={name} className="tier-card pricing-card" style={{ background: accent ? B.black : B.white, border: `1px solid ${B.cloud}`, padding: "36px 28px", position: "relative" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)", gap: 2 }}>
+              {tiers.map(({ name, price, sub, value, saving, features, accent, community }) => (
+                <div key={name} className="tier-card pricing-card" style={{ background: accent ? B.black : community ? `linear-gradient(160deg, ${B.blushPale} 0%, ${B.white} 100%)` : B.white, border: `1px solid ${community ? B.blushMid : B.cloud}`, padding: "36px 24px", position: "relative" }}>
                   {accent && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: B.blush }} />}
                   {accent && <div style={{ position: "absolute", top: 16, right: 16 }}><BlushTag>Most Popular</BlushTag></div>}
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: accent ? B.mid : B.steel, marginBottom: 16, fontFamily: FONTS.display }}>{name}</div>
-                  <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 54, color: accent ? B.white : B.black, lineHeight: 1 }}>{price}</div>
+                  {community && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${B.blushLight}, ${B.blush})` }} />}
+                  {community && <div style={{ position: "absolute", top: 16, right: 16 }}><span style={{ fontSize: 8, fontWeight: 700, color: B.blush, background: B.blushPale, padding: "3px 8px", letterSpacing: 1, border: `1px solid ${B.blushMid}` }}>START HERE</span></div>}
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: community ? B.blush : accent ? B.mid : B.steel, marginBottom: 16, fontFamily: FONTS.display }}>{name}</div>
+                  <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: community ? 44 : 54, color: accent ? B.white : B.black, lineHeight: 1 }}>{price}</div>
                   <div style={{ fontSize: 11, color: accent ? "#9a8880" : B.steel, marginTop: 4, marginBottom: 6, fontWeight: 300 }}>{sub}</div>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 10, color: accent ? B.blushLight : B.steel, fontWeight: 300, textDecoration: "line-through" }}>{value} value</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: B.blush }}>{saving}</span>
-                  </div>
+                  {(value || saving) && <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+                    {value && <span style={{ fontSize: 10, color: accent ? B.blushLight : B.steel, fontWeight: 300, textDecoration: "line-through" }}>{value} value</span>}
+                    {saving && <span style={{ fontSize: 10, fontWeight: 700, color: B.blush }}>{saving}</span>}
+                  </div>}
+                  {!(value || saving) && <div style={{ marginBottom: 24 }} />}
                   <Divider />
                   <div style={{ margin: "20px 0 24px" }}>
                     {features.map((f, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
-                        <div style={{ width: 16, height: 16, borderRadius: "50%", background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                        <div style={{ width: 16, height: 16, borderRadius: "50%", background: community ? B.blushLight : B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
                           <Ic n="check" size={9} color={B.white} sw={2.5} />
                         </div>
                         <span style={{ fontSize: 12, color: accent ? B.ivory : B.charcoal, lineHeight: 1.4, fontWeight: 300 }}>{f}</span>
                       </div>
                     ))}
                   </div>
-                  <Btn full variant={accent ? "blush" : "primary"} onClick={onBook}>Book Discovery Call</Btn>
+                  {community
+                    ? <Btn full variant="blush" onClick={onSignIn}>Join the Community</Btn>
+                    : <Btn full variant={accent ? "blush" : "primary"} onClick={onBook}>Book Discovery Call</Btn>
+                  }
                 </div>
               ))}
             </div>
@@ -759,7 +767,8 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
               {[
                 ["jessica@example.com", "Demo@1234!", "3-Month Elite", "JM", B.blush],
                 ["taylor@example.com", "Demo@1234!", "30-Day Intensive", "TR", "#9B6EA0"],
-                ["jess@sayjesstonails.com", "Admin@Jess2025!", "Admin · Jess's Dashboard", "JR", B.success],
+                ["maya@example.com", "Demo@1234!", "Community Member", "MJ", B.success],
+                ["jess@sayjesstonails.com", "Admin@Jess2025!", "Admin · Jess's Dashboard", "JR", B.amber],
               ].map(([em, pw, lbl, av, ac]) => (
                 <button key={em} onClick={() => { setEmail(em); setPass(pw); setErr(""); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", background: email === em ? "#1a1a1a" : "#111", border: `1px solid ${email === em ? "#333" : "#161616"}`, cursor: "pointer", fontFamily: FONTS.body, textAlign: "left", transition: "all .15s" }}>
                   <div style={{ width: 30, height: 30, background: `${ac}18`, border: `1px solid ${ac}50`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: ac, flexShrink: 0 }}>{av}</div>
@@ -1001,16 +1010,78 @@ const MenteePortal = ({ user, onLogout }) => {
   const [msgInput, setMsgInput] = useState("");
   const [docFilter, setDocFilter] = useState("All");
   const msgEnd = useRef(null);
+
+  // ── Feature state ──────────────────────────────────────────────────
+  const [wins, setWins] = useState([
+    { id:1, date:"Apr 14", cat:"pricing", text:"Raised gel full set from $65 to $85. Two clients didn't even blink.", celebrated:true },
+    { id:2, date:"Apr 10", cat:"clients", text:"Booked my first client from Instagram after Jess's strategy session.", celebrated:true },
+  ]);
+  const [winInput, setWinInput] = useState("");
+  const [winCat, setWinCat] = useState("pricing");
+  const [celebratingWin, setCelebratingWin] = useState(null);
+
+  const [milestones, setMilestones] = useState(user.milestones || []);
+  const [celebratingMilestone, setCelebratingMilestone] = useState(null);
+
+  const [communityPosts] = useState([
+    { author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew 💅 This week's focus: your rebooking language. What do YOU say at checkout? Drop it below.", likes:12, comments:["Sarah T.", "Maya R.", "Bria M."], isJess:true },
+    { author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you.", likes:24, comments:[], isJess:false },
+    { author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. Thank you Jess and this whole community 🙏", likes:31, comments:[], isJess:false },
+  ]);
+  const [likedPosts, setLikedPosts] = useState([]);
+
+  const [sessionPrep, setSessionPrep] = useState({ win:"", challenge:"", need:"", submitted:false });
+  const [referralCopied, setReferralCopied] = useState(false);
+
+  const [audioPlaying, setAudioPlaying] = useState(false);
+
+  // ── Computed ────────────────────────────────────────────────────────
   const unread = msgs.filter(m => m.unread && m.from !== "You").length;
-  const done = user.milestones?.filter(m => m.done).length || 0;
+  const done = milestones.filter(m => m.done).length;
   const pct = user.sessionsTotal ? Math.round((user.sessionsCompleted / user.sessionsTotal) * 100) : 0;
   const dayPct = user.totalDays ? Math.round(((user.totalDays - user.daysRemaining) / user.totalDays) * 100) : 0;
 
-  const sendMsg = () => { if (!msgInput.trim()) return; setMsgs(p => [...p, { from: "You", time: "Just now", text: msgInput }]); setMsgInput(""); setTimeout(() => setMsgs(p => [...p, { from: "Jess", time: "Just now", text: "Thanks — I'll respond within 24 hours. You're doing amazing, keep pushing." }]), 1000); };
+  const sendMsg = () => { if (!msgInput.trim()) return; setMsgs(p => [...p, { from: "You", time: "Just now", text: msgInput }]); setMsgInput(""); setTimeout(() => setMsgs(p => [...p, { from: "Jess", time: "Just now", text: "Thanks — I'll respond within 48 hours. You're doing amazing, keep pushing." }]), 1000); };
   useEffect(() => { msgEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
-  const NAV = [{ id:"dashboard",icon:"home",label:"Dashboard" }, { id:"sessions",icon:"video",label:"Sessions" }, { id:"schedule",icon:"calendar",label:"Schedule" }, { id:"messages",icon:"message",label:"Messages" }, { id:"documents",icon:"file",label:"Files" }, { id:"progress",icon:"award",label:"Progress" }, { id:"payments",icon:"card",label:"Payments" }];
-  const TABS = [{ id:"dashboard",icon:"home",label:"Home" }, { id:"sessions",icon:"video",label:"Sessions" }, { id:"messages",icon:"message",label:"Messages" }, { id:"documents",icon:"file",label:"Files" }, { id:"more",icon:"menu",label:"More" }];
+  const addWin = () => {
+    if (!winInput.trim()) return;
+    const w = { id: Date.now(), date: "Today", cat: winCat, text: winInput, celebrated: false };
+    setWins(p => [w, ...p]);
+    setWinInput("");
+    setCelebratingWin(w);
+    setTimeout(() => setCelebratingWin(null), 3500);
+  };
+
+  const completeMilestone = (idx) => {
+    const updated = milestones.map((m, i) => i === idx ? { ...m, done: true } : m);
+    setMilestones(updated);
+    setCelebratingMilestone(milestones[idx]);
+    setTimeout(() => setCelebratingMilestone(null), 3500);
+  };
+
+  const catColors = { pricing: B.blush, clients: B.success, mindset: "#9B6EA0", income: B.amber };
+  const catLabels = { pricing: "Pricing", clients: "Clients", mindset: "Mindset", income: "Income" };
+
+  const NAV = [
+    { id:"dashboard", icon:"home",   label:"Dashboard" },
+    { id:"wins",      icon:"trophy",  label:"My Wins" },
+    { id:"community", icon:"users",   label:"Community" },
+    { id:"sessions",  icon:"video",   label:"Sessions" },
+    { id:"schedule",  icon:"calendar",label:"Schedule" },
+    { id:"messages",  icon:"message", label:"Messages" },
+    { id:"resources", icon:"book",    label:"Resources" },
+    { id:"progress",  icon:"award",   label:"Progress" },
+    { id:"referral",  icon:"gift",    label:"Refer a Friend" },
+    { id:"payments",  icon:"card",    label:"Payments" },
+  ];
+  const TABS = [
+    { id:"dashboard", icon:"home",    label:"Home" },
+    { id:"wins",      icon:"trophy",  label:"Wins" },
+    { id:"community", icon:"users",   label:"Community" },
+    { id:"messages",  icon:"message", label:"Messages" },
+    { id:"more",      icon:"menu",    label:"More" },
+  ];
 
   const Pg = ({ title, sub, children }) => (
     <div style={{ padding: isMobile ? "20px 18px 96px" : "28px 32px", maxWidth: 900, width: "100%" }}>
@@ -1033,26 +1104,64 @@ const MenteePortal = ({ user, onLogout }) => {
     dashboard: (
       <Pg title={`Hi, ${user.firstName}.`} sub="Welcome Back">
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 18px", fontWeight: 300 }}>{user.daysRemaining} days remaining in your {user.tier}.</p>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 2, marginBottom: 20 }}>
+
+        {/* ── Jess's Voice — weekly audio message ── */}
+        <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 16, cursor: "pointer" }} onClick={() => setAudioPlaying(p => !p)}>
+          <div style={{ width: 44, height: 44, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
+            <Ic n={audioPlaying ? "zap" : "mic"} size={20} color={B.white} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Section style={{ color: B.blushLight, marginBottom: 4 }}>Jess's Voice — This Week</Section>
+            <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>"Your pricing confidence starts with your language."</div>
+            <div style={{ marginTop: 8, height: 3, background: "#2a2a2a", borderRadius: 2 }}>
+              <div style={{ height: "100%", width: audioPlaying ? "45%" : "0%", background: B.blush, borderRadius: 2, transition: audioPlaying ? "width 60s linear" : "none" }} />
+            </div>
+          </div>
+          <div style={{ fontSize: 9, color: "#9a8880", fontWeight: 300, flexShrink: 0 }}>{audioPlaying ? "Playing…" : "Tap to play"}</div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 2, marginBottom: 16 }}>
           <StatTile value={`${user.sessionsCompleted}/${user.sessionsTotal}`} label="Sessions" />
           <StatTile value={user.daysRemaining} label="Days Left" />
-          <StatTile value={`${done}/${user.milestones?.length || 0}`} label="Milestones" />
+          <StatTile value={`${done}/${milestones.length}`} label="Milestones" />
           <StatTile value={`${pct}%`} label="Progress" accent />
         </div>
 
-        {/* Next session — dark card */}
-        <div style={{ background: B.black, padding: isMobile ? "22px 22px" : "28px 28px", marginBottom: 16, borderLeft: `3px solid ${B.blush}`, position: "relative", overflow: "hidden" }}>
+        {/* ── Next session + prep card ── */}
+        <div style={{ background: B.black, padding: isMobile ? "20px" : "24px 28px", marginBottom: 16, borderLeft: `3px solid ${B.blush}`, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", right: -20, top: -20, width: 100, height: 100, borderRadius: "50%", background: `${B.blush}0A` }} />
           <Section style={{ color: B.blushLight, marginBottom: 10 }}>Next Session</Section>
           <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{user.nextSession?.type}</div>
-          <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 18, fontWeight: 300 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
-          <Btn variant="blush" icon="video" size={isMobile ? "md" : "md"}>Join Session</Btn>
+          <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <Btn variant="blush" icon="video">Join Session</Btn>
+            {!sessionPrep.submitted && <Btn variant="ghostDark" icon="clipBoard" onClick={() => setView("sessionprep")}>Prepare for Session</Btn>}
+            {sessionPrep.submitted && <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: B.success }}><Ic n="check" size={12} color={B.success} />Prep submitted</div>}
+          </div>
         </div>
 
-        {/* Progress bars */}
-        <Card style={{ padding: "20px 22px", marginBottom: 16 }}>
+        {/* ── Quick wins ── */}
+        <Card style={{ padding: "18px 20px", marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <Section>Recent Wins</Section>
+            <button onClick={() => setView("wins")} style={{ fontSize: 9, color: B.blush, border: "none", background: "none", cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Add a Win →</button>
+          </div>
+          {wins.slice(0, 2).map((w, i) => (
+            <div key={i} style={{ display: "flex", gap: 10, padding: "10px 0", borderBottom: i < 1 ? `1px solid ${B.cloud}` : "none", alignItems: "flex-start" }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: catColors[w.cat] || B.blush, flexShrink: 0, marginTop: 4 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, color: B.charcoal, lineHeight: 1.5, fontWeight: 300 }}>{w.text}</div>
+                <div style={{ fontSize: 9, color: B.mid, marginTop: 2 }}>{catLabels[w.cat]} · {w.date}</div>
+              </div>
+            </div>
+          ))}
+          {wins.length === 0 && <p style={{ fontSize: 12, color: B.mid, fontWeight: 300, fontStyle: "italic" }}>No wins logged yet — add your first one!</p>}
+        </Card>
+
+        {/* ── Progress ── */}
+        <Card style={{ padding: "18px 20px", marginBottom: 16 }}>
           <Section style={{ marginBottom: 14 }}>Progress Overview</Section>
-          {[["Sessions", pct], ["Timeline", dayPct], ["Milestones", user.milestones?.length ? Math.round((done / user.milestones.length) * 100) : 0]].map(([l, v]) => (
+          {[["Sessions", pct], ["Timeline", dayPct], ["Milestones", milestones.length ? Math.round((done / milestones.length) * 100) : 0]].map(([l, v]) => (
             <div key={l} style={{ marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                 <span style={{ fontSize: 11, color: B.steel, fontWeight: 300 }}>{l}</span>
@@ -1066,10 +1175,13 @@ const MenteePortal = ({ user, onLogout }) => {
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2 }}>
           <Card style={{ padding: "18px 20px" }}>
             <Section style={{ marginBottom: 12 }}>Milestones</Section>
-            {user.milestones?.map((m, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < user.milestones.length - 1 ? `1px solid ${B.cloud}` : "none" }}>
-                <div style={{ width: 18, height: 18, background: m.done ? B.blush : B.cloud, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{m.done && <Ic n="check" size={9} color={B.white} />}</div>
-                <span style={{ fontSize: 11, color: m.done ? B.mid : B.charcoal, textDecoration: m.done ? "line-through" : "none", fontWeight: 300 }}>{m.label}</span>
+            {milestones.map((m, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < milestones.length - 1 ? `1px solid ${B.cloud}` : "none" }}>
+                <button onClick={() => !m.done && completeMilestone(i)} style={{ width: 20, height: 20, background: m.done ? B.blush : "transparent", border: `2px solid ${m.done ? B.blush : B.cloud}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: m.done ? "default" : "pointer", transition: "all .2s", padding: 0 }}>
+                  {m.done && <Ic n="check" size={10} color={B.white} />}
+                </button>
+                <span style={{ fontSize: 11, color: m.done ? B.mid : B.charcoal, textDecoration: m.done ? "line-through" : "none", fontWeight: 300, flex: 1 }}>{m.label}</span>
+                {!m.done && <button onClick={() => completeMilestone(i)} style={{ fontSize: 8, color: B.blush, border: `1px solid ${B.blush}`, background: "none", padding: "2px 7px", cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1, whiteSpace: "nowrap" }}>Done</button>}
               </div>
             ))}
           </Card>
@@ -1203,10 +1315,13 @@ const MenteePortal = ({ user, onLogout }) => {
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2, marginBottom: 12 }}>
           <Card style={{ padding: "18px 20px" }}>
             <Section style={{ marginBottom: 12 }}>Milestones</Section>
-            {user.milestones?.map((m, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < user.milestones.length - 1 ? `1px solid ${B.cloud}` : "none" }}>
-                <div style={{ width: 18, height: 18, background: m.done ? B.blush : B.cloud, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{m.done && <Ic n="check" size={9} color={B.white} />}</div>
-                <span style={{ fontSize: 11, color: m.done ? B.mid : B.charcoal, textDecoration: m.done ? "line-through" : "none", fontWeight: 300 }}>{m.label}</span>
+            {milestones.map((m, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < milestones.length - 1 ? `1px solid ${B.cloud}` : "none" }}>
+                <button onClick={() => !m.done && completeMilestone(i)} style={{ width: 20, height: 20, background: m.done ? B.blush : "transparent", border: `2px solid ${m.done ? B.blush : B.cloud}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: m.done ? "default" : "pointer", transition: "all .2s", padding: 0 }}>
+                  {m.done && <Ic n="check" size={10} color={B.white} />}
+                </button>
+                <span style={{ fontSize: 11, color: m.done ? B.mid : B.charcoal, textDecoration: m.done ? "line-through" : "none", fontWeight: 300, flex: 1 }}>{m.label}</span>
+                {!m.done && <button onClick={() => completeMilestone(i)} style={{ fontSize: 8, color: B.blush, border: `1px solid ${B.blush}`, background: "none", padding: "2px 7px", cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1 }}>Done ✓</button>}
               </div>
             ))}
           </Card>
@@ -1227,6 +1342,191 @@ const MenteePortal = ({ user, onLogout }) => {
           <Section style={{ marginBottom: 8 }}>A Note from Jess</Section>
           <p style={{ fontFamily: FONTS.script, fontStyle: "italic", fontSize: 14, color: B.charcoal, margin: "0 0 6px", lineHeight: 1.65, fontWeight: 400 }}>"You are further ahead than you feel. Every session, every check-in compounds. Keep going — the breakthrough is closer than you think."</p>
           <span style={{ fontSize: 9, color: B.mid, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>— Jess</span>
+        </Card>
+      </Pg>
+    ),
+
+    // ── 1. WIN TRACKER ─────────────────────────────────────────────────
+    wins: (
+      <Pg title="My Wins" sub="Win Tracker">
+        <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Every win counts. Log it, own it, celebrate it.</p>
+
+        {/* Add a win */}
+        <Card style={{ padding: "20px 22px", marginBottom: 16, borderTop: `3px solid ${B.blush}` }}>
+          <Section style={{ marginBottom: 14 }}>Log a New Win</Section>
+          <div style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "wrap" }}>
+            {Object.entries(catLabels).map(([k, v]) => (
+              <button key={k} onClick={() => setWinCat(k)} style={{ padding: "7px 14px", border: `1px solid ${winCat === k ? catColors[k] : B.cloud}`, background: winCat === k ? `${catColors[k]}15` : "transparent", color: winCat === k ? catColors[k] : B.mid, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 1.5, textTransform: "uppercase", transition: "all .15s" }}>{v}</button>
+            ))}
+          </div>
+          <textarea value={winInput} onChange={e => setWinInput(e.target.value)} placeholder="What happened? Be specific — numbers make wins feel real. e.g. 'Raised my prices $20 and kept all 8 clients.'" rows={3} style={{ width: "100%", padding: "12px 16px", border: `1px solid ${B.cloud}`, fontSize: 14, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "none", boxSizing: "border-box", fontWeight: 300 }} />
+          <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}>
+            <Btn variant="blush" icon="trophy" onClick={addWin} disabled={!winInput.trim()}>Log This Win</Btn>
+          </div>
+        </Card>
+
+        {/* Win history */}
+        <Section style={{ marginBottom: 12 }}>Win History ({wins.length})</Section>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {wins.map((w, i) => (
+            <Card key={i} style={{ padding: "16px 18px", borderLeft: `3px solid ${catColors[w.cat] || B.blush}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: catColors[w.cat] || B.blush, letterSpacing: 1.5, textTransform: "uppercase" }}>{catLabels[w.cat]}</span>
+                <span style={{ fontSize: 9, color: B.mid, fontWeight: 300, flexShrink: 0 }}>{w.date}</span>
+              </div>
+              <p style={{ fontSize: 13, color: B.charcoal, margin: 0, lineHeight: 1.6, fontWeight: 300 }}>{w.text}</p>
+            </Card>
+          ))}
+          {wins.length === 0 && (
+            <div style={{ padding: "40px 20px", textAlign: "center", border: `1px dashed ${B.cloud}` }}>
+              <Ic n="trophy" size={32} color={B.cloud} />
+              <p style={{ color: B.mid, fontSize: 13, marginTop: 12, fontWeight: 300 }}>Your wins are waiting to be claimed.<br/>Log your first one above.</p>
+            </div>
+          )}
+        </div>
+      </Pg>
+    ),
+
+    // ── 2. COMMUNITY ───────────────────────────────────────────────────
+    community: (
+      <Pg title="Community" sub="The Inner Circle">
+        <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Your people. Real nail techs doing the work alongside you.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {communityPosts.map((post, i) => (
+            <Card key={i} style={{ padding: "20px 22px", borderTop: post.isJess ? `3px solid ${B.blush}` : `1px solid ${B.cloud}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <div style={{ width: 36, height: 36, background: post.isJess ? B.blush : B.off, border: post.isJess ? "none" : `1px solid ${B.cloud}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: post.isJess ? B.white : B.steel, flexShrink: 0, borderRadius: "50%" }}>{post.avatar}</div>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{post.author}{post.isJess && <span style={{ marginLeft: 6, fontSize: 8, background: B.blush, color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>JESS</span>}</div>
+                  <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginTop: 1 }}>{post.time}</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.7, margin: "0 0 14px", fontWeight: 300 }}>{post.text}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <button onClick={() => setLikedPosts(p => p.includes(i) ? p.filter(x => x !== i) : [...p, i])} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: likedPosts.includes(i) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 11, fontWeight: likedPosts.includes(i) ? 700 : 300 }}>
+                  <Ic n="heart" size={14} color={likedPosts.includes(i) ? B.blush : B.mid} sw={likedPosts.includes(i) ? 0 : 1.8} />
+                  {post.likes + (likedPosts.includes(i) ? 1 : 0)}
+                </button>
+                {post.comments.length > 0 && <span style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>{post.comments.length} comments</span>}
+              </div>
+            </Card>
+          ))}
+        </div>
+        <Card style={{ padding: "16px 20px", marginTop: 12, background: B.off, border: `1px solid ${B.cloud}` }}>
+          <p style={{ fontSize: 12, color: B.steel, margin: 0, fontWeight: 300, textAlign: "center", lineHeight: 1.6 }}>👋 The full community is right here — <strong style={{ color: B.black }}>you're already in it.</strong><br/>Share your wins. Ask questions. Lift each other up.</p>
+        </Card>
+      </Pg>
+    ),
+
+    // ── 3. SESSION PREP ────────────────────────────────────────────────
+    sessionprep: (
+      <Pg title="Session Prep" sub={`For ${user.nextSession?.type}`}>
+        <div style={{ background: B.black, padding: "16px 20px", marginBottom: 20, borderLeft: `3px solid ${B.blush}` }}>
+          <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
+          <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300, marginTop: 2 }}>Your answers go directly to Jess before the call so she's prepared for YOU.</div>
+        </div>
+        {sessionPrep.submitted ? (
+          <Card style={{ padding: "32px 24px", textAlign: "center", borderTop: `3px solid ${B.success}` }}>
+            <div style={{ width: 52, height: 52, background: B.successPale, border: `2px solid ${B.success}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}><Ic n="check" size={24} color={B.success} sw={2.5} /></div>
+            <h3 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 26, textTransform: "uppercase", color: B.black, margin: "0 0 8px" }}>Prep Submitted.</h3>
+            <p style={{ color: B.mid, fontSize: 13, fontWeight: 300, lineHeight: 1.6 }}>Jess has your answers. She'll come prepared with exactly what you need. See you at the session.</p>
+            <div style={{ marginTop: 20 }}><Btn onClick={() => setView("dashboard")} variant="blush" icon="home">Back to Dashboard</Btn></div>
+          </Card>
+        ) : (
+          <div>
+            {[["What's your biggest win since your last session?", "win", "Something shifted, no matter how small — what was it?"], ["What's your biggest challenge right now?", "challenge", "Be honest. The more specific, the more Jess can help."], ["What do you need most from Jess in this session?", "need", "Strategy? Accountability? A mindset reset? Clarity on something specific?"]].map(([label, key, hint], i) => (
+              <div key={key} style={{ marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <div style={{ width: 24, height: 24, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: B.white, flexShrink: 0 }}>{i + 1}</div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: B.black, letterSpacing: "0.02em" }}>{label}</label>
+                </div>
+                <textarea value={sessionPrep[key]} onChange={e => setSessionPrep(p => ({ ...p, [key]: e.target.value }))} placeholder={hint} rows={3} style={{ width: "100%", padding: "12px 16px", border: `1px solid ${B.cloud}`, fontSize: 14, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "none", boxSizing: "border-box", fontWeight: 300 }} />
+              </div>
+            ))}
+            <Btn full variant="blush" icon="send" onClick={() => setSessionPrep(p => ({ ...p, submitted: true }))} disabled={!sessionPrep.win.trim() || !sessionPrep.challenge.trim() || !sessionPrep.need.trim()}>Send to Jess</Btn>
+          </div>
+        )}
+      </Pg>
+    ),
+
+    // ── 4. RESOURCES ───────────────────────────────────────────────────
+    resources: (
+      <Pg title="Resources" sub="Resource Library">
+        <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Tools, guides, and templates curated by Jess for your growth.</p>
+        {[
+          { topic: "Pricing", color: B.blush, items: [{ name: "Pricing Calculator Workbook", type: "PDF", desc: "Set your prices with confidence using Jess's formula.", unlocked: true }, { name: "How to Raise Prices Without Losing Clients", type: "Guide", desc: "The exact language and timing strategy Jess uses.", unlocked: true }, { name: "Price Increase Announcement Templates", type: "Templates", desc: "3 caption templates ready to copy and customize.", unlocked: user.tierKey !== "hourly" }] },
+          { topic: "Client Attraction", color: B.success, items: [{ name: "Instagram Bio Formula", type: "Template", desc: "A bio that converts visitors to bookings.", unlocked: true }, { name: "5-Day Content Plan for Nail Techs", type: "PDF", desc: "Post ideas for every day of your first week.", unlocked: true }, { name: "Rebooking Script", type: "Guide", desc: "What to say at checkout to guarantee the next appointment.", unlocked: user.tierKey !== "hourly" }] },
+          { topic: "Business Setup", color: "#9B6EA0", items: [{ name: "Nail Tech Business Checklist", type: "PDF", desc: "Everything you need to operate legally and professionally.", unlocked: true }, { name: "Service Menu Template", type: "Template", desc: "A clean, professional service menu design.", unlocked: user.tierKey === "elite" }] },
+        ].map(({ topic, color, items }) => (
+          <div key={topic} style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 3, height: 20, background: color, flexShrink: 0 }} />
+              <Section style={{ color }}>{topic}</Section>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {items.map((item, i) => (
+                <Card key={i} style={{ padding: "14px 18px", opacity: item.unlocked ? 1 : 0.6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{item.name}</span>
+                        <span style={{ fontSize: 8, fontWeight: 700, color, background: `${color}15`, padding: "2px 7px", letterSpacing: 1, textTransform: "uppercase" }}>{item.type}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>{item.desc}</div>
+                    </div>
+                    {item.unlocked ? (
+                      <button style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", border: `1px solid ${B.cloud}`, background: "none", color: B.steel, fontSize: 9, cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", flexShrink: 0 }}>
+                        <Ic n="download" size={11} color={color} />Access
+                      </button>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 9, color: B.mid, flexShrink: 0 }}>
+                        <Ic n="lock" size={11} color={B.mid} />Elite only
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        ))}
+      </Pg>
+    ),
+
+    // ── 5. REFERRAL ────────────────────────────────────────────────────
+    referral: (
+      <Pg title="Refer a Friend" sub="Grow the Circle">
+        <div style={{ background: B.black, padding: "28px 28px", marginBottom: 20, borderLeft: `3px solid ${B.blush}`, textAlign: isMobile ? "left" : "center" }}>
+          <Ic n="gift" size={36} color={B.blush} />
+          <h3 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 32, textTransform: "uppercase", color: B.ivory, margin: "12px 0 8px", letterSpacing: "-0.5px" }}>Share the Love.</h3>
+          <p style={{ color: "#9a8880", fontSize: 14, lineHeight: 1.75, fontWeight: 300, maxWidth: 480, margin: "0 auto" }}>Know a nail tech who's ready to level up? Send them your link. When they book a discovery call, you earn a credit toward your next session.</p>
+        </div>
+        <Card style={{ padding: "22px 24px", marginBottom: 16 }}>
+          <Section style={{ marginBottom: 12 }}>Your Personal Referral Link</Section>
+          <div style={{ display: "flex", gap: 2 }}>
+            <div style={{ flex: 1, padding: "12px 16px", background: B.off, border: `1px solid ${B.cloud}`, fontSize: 12, color: B.steel, fontFamily: FONTS.body, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              sayjesstonails.com/ref/{user.firstName.toLowerCase()}{user.avatar.toLowerCase()}
+            </div>
+            <button onClick={() => { setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }} style={{ padding: "12px 18px", background: referralCopied ? B.success : B.black, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0, transition: "background .3s", display: "flex", alignItems: "center", gap: 7 }}>
+              <Ic n={referralCopied ? "check" : "link"} size={13} color={B.white} />
+              {referralCopied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+        </Card>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 2, marginBottom: 20 }}>
+          {[["Share on Instagram", "instagram", B.blush], ["Share via Text", "send", B.success], ["Copy Link", "link", "#9B6EA0"]].map(([label, icon, color]) => (
+            <button key={label} style={{ padding: "14px", border: `1px solid ${B.cloud}`, background: B.white, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", fontFamily: FONTS.body, fontSize: 12, fontWeight: 600, color: B.charcoal, letterSpacing: "0.02em" }}>
+              <Ic n={icon} size={15} color={color} />{label}
+            </button>
+          ))}
+        </div>
+        <Card style={{ padding: "18px 20px", borderLeft: `3px solid ${B.blush}` }}>
+          <Section style={{ marginBottom: 10 }}>How it Works</Section>
+          {[["Share your link", "Send it to any nail tech you know who's ready to grow."], ["They book a call", "When they request a discovery call using your link, it's tracked."], ["You earn a credit", "After their call, Jess applies a session credit to your account."]].map(([t, d], i) => (
+            <div key={i} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: i < 2 ? `1px solid ${B.cloud}` : "none" }}>
+              <div style={{ width: 22, height: 22, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: B.white, flexShrink: 0 }}>{i + 1}</div>
+              <div><div style={{ fontSize: 12, fontWeight: 700, color: B.black, marginBottom: 2 }}>{t}</div><div style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>{d}</div></div>
+            </div>
+          ))}
         </Card>
       </Pg>
     ),
@@ -1256,7 +1556,14 @@ const MenteePortal = ({ user, onLogout }) => {
       <div style={{ padding: "20px 18px 96px" }}>
         <div style={{ marginBottom: 20 }}><Logo height={42} /></div>
         <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 32, textTransform: "uppercase", color: B.black, margin: "0 0 18px", letterSpacing: "-0.5px" }}>More</h2>
-        {[{ id:"schedule",icon:"calendar",label:"Schedule" }, { id:"progress",icon:"award",label:"My Progress" }, { id:"payments",icon:"card",label:"Payments" }].map(({ id, icon, label }) => (
+        {[
+          { id:"schedule",    icon:"calendar",  label:"Schedule" },
+          { id:"sessionprep", icon:"clipBoard",  label:"Prepare for Session" },
+          { id:"resources",   icon:"book",       label:"Resource Library" },
+          { id:"progress",    icon:"award",      label:"My Progress" },
+          { id:"referral",    icon:"gift",       label:"Refer a Friend" },
+          { id:"payments",    icon:"card",       label:"Payments" },
+        ].map(({ id, icon, label }) => (
           <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", border: `1px solid ${B.cloud}`, background: B.white, color: B.charcoal, marginBottom: 2, fontFamily: FONTS.body, fontSize: 13, fontWeight: 600, cursor: "pointer", textAlign: "left", letterSpacing: "0.03em" }}>
             <div style={{ width: 36, height: 36, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Ic n={icon} size={16} color={B.white} /></div>
             {label}
@@ -1271,8 +1578,29 @@ const MenteePortal = ({ user, onLogout }) => {
   };
 
   return (
-    <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:opacity .15s} button:active{opacity:.75} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}`}</style>
+    <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off, position: "relative" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:all .18s} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}} @keyframes celebPop{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.08) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}} @keyframes celebFade{0%{opacity:1}70%{opacity:1}100%{opacity:0}} @keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(80px) rotate(360deg);opacity:0}}`}</style>
+
+      {/* ── Celebration overlays ── */}
+      {(celebratingWin || celebratingMilestone) && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", animation: "celebFade 3.5s ease forwards" }} onClick={() => { setCelebratingWin(null); setCelebratingMilestone(null); }}>
+          {/* Confetti dots */}
+          {[...Array(12)].map((_, i) => (
+            <div key={i} style={{ position: "absolute", width: 8, height: 8, borderRadius: "50%", background: [B.blush, B.white, B.blushLight, B.success, "#9B6EA0"][i % 5], left: `${10 + i * 7}%`, top: "20%", animation: `confettiDrop ${0.8 + (i % 4) * 0.3}s ease ${i * 0.1}s both` }} />
+          ))}
+          <div style={{ textAlign: "center", animation: "celebPop .5s cubic-bezier(.16,1,.3,1) both", padding: "0 32px", maxWidth: 400 }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
+            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 52, textTransform: "uppercase", color: B.white, letterSpacing: "-1px", lineHeight: 0.95, marginBottom: 12 }}>
+              {celebratingMilestone ? "Milestone\nUnlocked!" : "Win\nLogged!"}
+            </h2>
+            <div style={{ width: 48, height: 3, background: B.blush, margin: "0 auto 16px" }} />
+            <p style={{ color: "#9a8880", fontSize: 15, fontWeight: 300, lineHeight: 1.65 }}>
+              {celebratingMilestone ? `"${celebratingMilestone.label}" — that's real growth. Jess is proud of you.` : `"${(celebratingWin?.text || "").slice(0, 80)}${(celebratingWin?.text || "").length > 80 ? "…" : ""}"`}
+            </p>
+            <div style={{ marginTop: 20, fontSize: 10, color: "#555", letterSpacing: 1.5, textTransform: "uppercase" }}>tap anywhere to continue</div>
+          </div>
+        </div>
+      )}
 
       {useSidebar && (
         <div style={{ width: 220, background: B.white, borderRight: `1px solid ${B.cloud}`, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
@@ -1318,6 +1646,280 @@ const MenteePortal = ({ user, onLogout }) => {
 };
 
 /* ════════════════════════════════════════════════════════════════════════
+   COMMUNITY PORTAL
+════════════════════════════════════════════════════════════════════════ */
+const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
+  const { isMobile, useSidebar } = useLayout();
+  const [view, setView] = useState("feed");
+  const [postInput, setPostInput] = useState("");
+  const [postCat, setPostCat] = useState("win");
+  const [posts, setPosts] = useState([
+    { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew 💅 This week's focus: your rebooking language. What do YOU say at checkout? Share below — let's build a script together.", likes:14, isJess:true, cat:"tip" },
+    { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you. Don't be afraid.", likes:31, isJess:false, cat:"win" },
+    { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. If you're on the fence about mentorship — just do it. Best investment I've made in myself.", likes:44, isJess:false, cat:"win" },
+    { id:4, author:"Savannah R.", avatar:"SR", time:"3 days ago", text:"Question: how do you handle clients who push back on price increases? Struggling with this right now 😬", likes:8, isJess:false, cat:"question" },
+    { id:5, author:"Jess", avatar:"J", time:"4 days ago", text:"Resource drop 🎁 The exact script I use to introduce a price increase without losing the relationship. Grab it in the Resources section. You're welcome 💅", likes:52, isJess:true, cat:"resource" },
+    { id:6, author:"Maya J.", avatar:"MJ", time:"5 days ago", text:"Just joined the community! So excited to be here with other nail techs who are serious about growth. Already feeling inspired 🙏", likes:19, isJess:false, cat:"intro" },
+  ]);
+  const [likedPosts, setLikedPosts] = useState([]);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const catColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
+  const catLabels = { win: "🏆 Win", tip: "💡 Tip", question: "❓ Question", resource: "📎 Resource", intro: "👋 Intro" };
+
+  const submitPost = () => {
+    if (!postInput.trim()) return;
+    setPosts(p => [{ id: Date.now(), author: user.firstName, avatar: user.avatar, time: "Just now", text: postInput, likes: 0, isJess: false, cat: postCat }, ...p]);
+    setPostInput("");
+  };
+
+  const resources = [
+    { name: "Pricing Confidence Starter Guide", type: "PDF", desc: "Set your prices without apology.", cat: "Pricing" },
+    { name: "Instagram Bio Formula", type: "Template", desc: "A bio that books clients while you sleep.", cat: "Marketing" },
+    { name: "Rebooking Script", type: "Guide", desc: "What to say at checkout every time.", cat: "Clients" },
+  ];
+
+  const NAV_C = [
+    { id:"feed",      icon:"users",    label:"Community Feed" },
+    { id:"resources", icon:"book",     label:"Resources" },
+    { id:"audio",     icon:"mic",      label:"Jess's Voice" },
+    { id:"upgrade",   icon:"zap",      label:"Level Up" },
+  ];
+  const TABS_C = [
+    { id:"feed",    icon:"users",  label:"Feed" },
+    { id:"resources",icon:"book", label:"Resources" },
+    { id:"audio",   icon:"mic",   label:"Jess" },
+    { id:"upgrade", icon:"zap",   label:"Level Up" },
+  ];
+
+  const Pg = ({ title, sub, children }) => (
+    <div style={{ padding: isMobile ? "20px 18px 96px" : "28px 32px", maxWidth: 860, width: "100%" }}>
+      {title && <div style={{ marginBottom: 20 }}>
+        {sub && <p style={{ fontSize: 9, fontWeight: 700, color: B.blush, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 8px" }}>{sub}</p>}
+        <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: 0, lineHeight: 0.95, letterSpacing: "-0.5px" }}>{title}</h1>
+      </div>}
+      {children}
+    </div>
+  );
+
+  const views = {
+    feed: (
+      <Pg title="Community Feed" sub="The Inner Circle">
+        <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 20px", fontWeight: 300 }}>Real nail techs. Real growth. All in one place.</p>
+
+        {/* Audio check-in teaser */}
+        <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setView("audio")}>
+          <div style={{ width: 40, height: 40, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
+            <Ic n="mic" size={18} color={B.white} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 3px" }}>Jess's Voice — This Week</p>
+            <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>"Your pricing confidence starts with your language."</div>
+          </div>
+          <div style={{ fontSize: 9, color: "#9a8880", flexShrink: 0 }}>Tap to listen →</div>
+        </div>
+
+        {/* Post composer */}
+        <div style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "18px 20px", marginBottom: 16, borderTop: `3px solid ${B.blush}` }}>
+          <div style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "wrap" }}>
+            {Object.entries(catLabels).map(([k, v]) => (
+              <button key={k} onClick={() => setPostCat(k)} style={{ padding: "5px 12px", border: `1px solid ${postCat === k ? catColors[k] : B.cloud}`, background: postCat === k ? `${catColors[k]}12` : "transparent", color: postCat === k ? catColors[k] : B.mid, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 1, transition: "all .15s" }}>{v}</button>
+            ))}
+          </div>
+          <textarea value={postInput} onChange={e => setPostInput(e.target.value)} placeholder="Share a win, ask a question, drop a tip — this community grows because you show up." rows={3} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${B.cloud}`, fontSize: 14, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "none", boxSizing: "border-box", fontWeight: 300 }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, borderRadius: "50%" }}>{user.avatar}</div>
+              <span style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>Posting as {user.firstName}</span>
+            </div>
+            <button onClick={submitPost} disabled={!postInput.trim()} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: postInput.trim() ? B.blush : B.cloud, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: postInput.trim() ? "pointer" : "default", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", transition: "background .2s" }}>
+              <Ic n="send" size={12} color={B.white} />Post
+            </button>
+          </div>
+        </div>
+
+        {/* Feed */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {posts.map((post, i) => (
+            <div key={post.id} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "20px 22px", borderTop: post.isJess ? `3px solid ${B.blush}` : `1px solid ${B.cloud}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div style={{ width: 36, height: 36, background: post.isJess ? B.blush : B.off, border: post.isJess ? "none" : `1px solid ${B.cloud}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: post.isJess ? B.white : B.steel, flexShrink: 0, borderRadius: "50%" }}>{post.avatar}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 7 }}>
+                    {post.author}
+                    {post.isJess && <span style={{ fontSize: 8, background: B.blush, color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>JESS</span>}
+                    <span style={{ fontSize: 8, background: `${catColors[post.cat]}15`, color: catColors[post.cat], padding: "1px 7px", fontWeight: 700, letterSpacing: 1 }}>{catLabels[post.cat]}</span>
+                  </div>
+                  <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginTop: 1 }}>{post.time}</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.75, margin: "0 0 14px", fontWeight: 300 }}>{post.text}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: `1px solid ${B.cloud}`, paddingTop: 12 }}>
+                <button onClick={() => setLikedPosts(p => p.includes(post.id) ? p.filter(x => x !== post.id) : [...p, post.id])} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: likedPosts.includes(post.id) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: likedPosts.includes(post.id) ? 700 : 300, padding: 0, transition: "color .15s" }}>
+                  <Ic n="heart" size={14} color={likedPosts.includes(post.id) ? B.blush : B.mid} sw={likedPosts.includes(post.id) ? 0 : 1.8} />
+                  {post.likes + (likedPosts.includes(post.id) ? 1 : 0)}
+                </button>
+                <span style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>Reply coming soon</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Pg>
+    ),
+
+    resources: (
+      <Pg title="Resources" sub="Free for Members">
+        <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 20px", fontWeight: 300 }}>Starter tools from Jess — yours as a community member.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 24 }}>
+          {resources.map((r, i) => (
+            <div key={i} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: B.black }}>{r.name}</span>
+                  <span style={{ fontSize: 8, fontWeight: 700, color: B.blush, background: B.blushPale, padding: "2px 7px", letterSpacing: 1 }}>{r.type}</span>
+                </div>
+                <div style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>{r.desc}</div>
+              </div>
+              <button style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", border: `1px solid ${B.cloud}`, background: "none", color: B.steel, fontSize: 9, cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", flexShrink: 0 }}>
+                <Ic n="download" size={11} color={B.blush} />Access
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Upgrade tease */}
+        <div style={{ background: B.black, padding: "24px 24px", borderLeft: `3px solid ${B.blush}` }}>
+          <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 8px" }}>Want the full library?</p>
+          <p style={{ color: B.ivory, fontSize: 14, fontWeight: 300, lineHeight: 1.7, margin: "0 0 16px" }}>Mentorship members get 20+ premium resources — pricing calculators, client scripts, social media templates, and more.</p>
+          <button onClick={onUpgrade} style={{ display: "flex", alignItems: "center", gap: 7, background: B.blush, border: "none", padding: "10px 20px", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            <Ic n="zap" size={13} color={B.white} />Explore Mentorship
+          </button>
+        </div>
+      </Pg>
+    ),
+
+    audio: (
+      <Pg title="Jess's Voice" sub="Weekly Check-In">
+        <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 24px", fontWeight: 300 }}>A personal message from Jess every week — just for this community.</p>
+        <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "28px 28px", marginBottom: 16 }}>
+          <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 6px" }}>This Week · Apr 16, 2025</p>
+          <h3 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 26, textTransform: "uppercase", color: B.ivory, margin: "0 0 12px", letterSpacing: "-0.5px" }}>Pricing Confidence.</h3>
+          <p style={{ color: "#9a8880", fontSize: 13, lineHeight: 1.8, fontWeight: 300, margin: "0 0 20px" }}>"Your pricing confidence starts with your language. This week I want you to say your prices out loud — to yourself, to a friend, to your reflection. Confidence is a practice, not a personality trait. You already have what it takes."</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button onClick={() => setAudioPlaying(p => !p)} style={{ width: 48, height: 48, borderRadius: "50%", background: B.blush, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+              <Ic n={audioPlaying ? "zap" : "play"} size={20} color={B.white} />
+            </button>
+            <div style={{ flex: 1 }}>
+              <div style={{ height: 3, background: "#2a2a2a", borderRadius: 2, marginBottom: 6 }}>
+                <div style={{ height: "100%", width: audioPlaying ? "45%" : "0%", background: B.blush, borderRadius: 2, transition: audioPlaying ? "width 60s linear" : "none" }} />
+              </div>
+              <div style={{ fontSize: 10, color: "#9a8880", fontWeight: 300 }}>{audioPlaying ? "Playing… 1:12 / 2:40" : "Tap to play · 2:40"}</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {[["Apr 9, 2025", "Your First 5 Clients"], ["Apr 2, 2025", "Why You Need to Raise Your Prices Now"], ["Mar 26, 2025", "The Mindset Shift That Changes Everything"]].map(([date, title]) => (
+            <div key={date} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div><div style={{ fontSize: 12, fontWeight: 600, color: B.black }}>{title}</div><div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginTop: 2 }}>{date}</div></div>
+              <button style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", border: `1px solid ${B.cloud}`, background: "none", color: B.steel, fontSize: 9, cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                <Ic n="play" size={10} color={B.blush} />Play
+              </button>
+            </div>
+          ))}
+        </div>
+      </Pg>
+    ),
+
+    upgrade: (
+      <Pg title="Level Up" sub="Ready for More?">
+        <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 24px", fontWeight: 300 }}>You're in the community. Now take the next step.</p>
+        <div style={{ background: B.black, padding: "28px 28px", marginBottom: 16, borderLeft: `3px solid ${B.blush}` }}>
+          <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 8px" }}>A message from Jess</p>
+          <p style={{ color: B.ivory, fontSize: 15, lineHeight: 1.8, fontWeight: 300, fontStyle: "italic", margin: "0 0 6px" }}>"Being in the community is step one. But if you're ready to raise your prices, fill your books, and build something real — that's exactly what 1:1 mentorship is designed for."</p>
+          <span style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>— Jess</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 2, marginBottom: 20 }}>
+          {[
+            { name: "Hourly Session", price: "$250", desc: "One focused session. Total clarity. No commitment.", icon: "zap" },
+            { name: "30-Day Intensive", price: "$1,120", desc: "Real momentum in one month. Built around your goals.", icon: "calendar" },
+            { name: "3-Month Elite", price: "$3,360", desc: "Complete transformation. The full Jess experience.", icon: "award" },
+          ].map(({ name, price, desc, icon }) => (
+            <div key={name} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "24px 20px", textAlign: "center" }}>
+              <div style={{ width: 40, height: 40, background: B.blushPale, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+                <Ic n={icon} size={18} color={B.blush} />
+              </div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: B.steel, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>{name}</div>
+              <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 36, color: B.black, lineHeight: 1, marginBottom: 10 }}>{price}</div>
+              <div style={{ fontSize: 12, color: B.mid, fontWeight: 300, lineHeight: 1.5, marginBottom: 18 }}>{desc}</div>
+              <button onClick={onUpgrade} style={{ width: "100%", padding: "10px", background: B.black, border: "none", color: B.white, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>Book Discovery Call</button>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: B.blushPale, border: `1px solid ${B.blushMid}`, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: B.blush, marginBottom: 3 }}>Discovery call is free.</div>
+            <div style={{ fontSize: 12, color: B.steel, fontWeight: 300 }}>20 minutes. No pressure. Jess will help you pick the right path.</div>
+          </div>
+          <button onClick={onUpgrade} style={{ display: "flex", alignItems: "center", gap: 7, background: B.blush, border: "none", padding: "10px 20px", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+            <Ic n="calendar" size={12} color={B.white} />Book Free Call
+          </button>
+        </div>
+      </Pg>
+    ),
+  };
+
+  return (
+    <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:all .18s} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}}`}</style>
+
+      {useSidebar && (
+        <div style={{ width: 220, background: B.white, borderRight: `1px solid ${B.cloud}`, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
+          <div style={{ padding: "16px 20px 14px", borderBottom: `1px solid ${B.cloud}` }}><Logo height={isMobile ? 50 : 60} /></div>
+          <div style={{ padding: "12px 16px", borderBottom: `1px solid ${B.cloud}`, display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 30, height: 30, background: B.success, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, flexShrink: 0 }}>{user.avatar}</div>
+            <div><div style={{ color: B.ink, fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>{user.firstName}</div><div style={{ fontSize: 8, color: B.success, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>Community Member</div></div>
+          </div>
+          <nav style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
+            {NAV_C.map(({ id, icon, label }) => {
+              const on = view === id;
+              const isUpgrade = id === "upgrade";
+              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? (isUpgrade ? `${B.blush}15` : B.blushPale) : "transparent", color: on ? (isUpgrade ? B.blush : B.blush) : isUpgrade ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : isUpgrade ? 600 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on || isUpgrade ? B.blush : B.mid} />{label}</button>;
+            })}
+          </nav>
+          <div style={{ padding: "10px 10px", borderTop: `1px solid ${B.cloud}` }}>
+            <button onClick={onLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", border: "none", background: "transparent", color: B.mid, fontFamily: FONTS.body, fontSize: 11, cursor: "pointer", letterSpacing: "0.05em" }}><Ic n="logout" size={13} color={B.mid} />Sign out</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+        <div style={{ position: "sticky", top: 0, background: B.white, borderBottom: `1px solid ${B.cloud}`, padding: "11px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 50, flexShrink: 0 }}>
+          <span style={{ fontSize: 9, color: B.mid, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>{NAV_C.find(n => n.id === view)?.label || "Community"}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button onClick={() => setView("upgrade")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: B.blush, border: "none", color: B.white, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 1.5, textTransform: "uppercase" }}>
+              <Ic n="zap" size={10} color={B.white} />Upgrade
+            </button>
+            <div style={{ width: 26, height: 26, background: B.success, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white }}>{user.avatar}</div>
+          </div>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto" }}>{views[view] || views.feed}</div>
+      </div>
+
+      {!useSidebar && (
+        <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: B.white, borderTop: `1px solid ${B.cloud}`, display: "flex", paddingBottom: "env(safe-area-inset-bottom)", zIndex: 100 }}>
+          {TABS_C.map(({ id, icon, label }) => {
+            const on = view === id;
+            const isUpgrade = id === "upgrade";
+            return <button key={id} onClick={() => setView(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px 8px", border: "none", background: "transparent", color: on || isUpgrade ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 8, fontWeight: on ? 700 : isUpgrade ? 600 : 300, position: "relative", letterSpacing: 1.5, textTransform: "uppercase" }}><Ic n={icon} size={20} color={on || isUpgrade ? B.blush : B.mid} />{label}</button>;
+          })}
+        </nav>
+      )}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════════════
    ADMIN DASHBOARD
 ════════════════════════════════════════════════════════════════════════ */
 const AdminDashboard = ({ onLogout }) => {
@@ -1338,6 +1940,7 @@ const AdminDashboard = ({ onLogout }) => {
   const accept = id => setLeads(p => p.map(l => l.id === id ? { ...l, status: "accepted", acceptedAt: "Just now" } : l));
   const decline = id => setLeads(p => p.map(l => l.id === id ? { ...l, status: "declined" } : l));
   const menteeList = Object.entries(DB.users).filter(([, u]) => u.role === "mentee").map(([email, u]) => ({ email, ...u }));
+  const communityList = Object.entries(DB.users).filter(([, u]) => u.role === "community").map(([email, u]) => ({ email, ...u }));
   const totalRev = menteeList.reduce((s, m) => s + (m.tierKey === "elite" ? 3360 : m.tierKey === "intensive" ? 1120 : 250), 0);
 
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs, selChat]);
@@ -1364,7 +1967,7 @@ const AdminDashboard = ({ onLogout }) => {
       <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Here's everything happening across your mentorship program.</p>
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 2, marginBottom: 20 }}>
-        {[[menteeList.length, "Active Mentees", true], [pending.length, "Pending Leads", pending.length > 0], [`$${totalRev.toLocaleString()}`, "Total Revenue", false], ["3", "Sessions Today", false]].map(([v, l, accent], i) => (
+        {[[menteeList.length, "Active Mentees", true], [communityList.length, "Community Members", false], [pending.length, "Pending Leads", pending.length > 0], [`$${totalRev.toLocaleString()}`, "Total Revenue", false]].map(([v, l, accent], i) => (
           <div key={i} style={{ padding: "18px 20px", border: `1px solid ${B.cloud}`, background: B.white, borderTop: `3px solid ${accent ? B.blush : B.cloud}` }}>
             <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 28 : 36, color: accent ? B.blush : B.black, lineHeight: 1 }}>{v}</div>
             <div style={{ fontSize: 9, fontWeight: 700, color: B.mid, marginTop: 6, letterSpacing: 1.5, textTransform: "uppercase" }}>{l}</div>
@@ -1408,6 +2011,36 @@ const AdminDashboard = ({ onLogout }) => {
           );
         })}
       </div>
+
+      {/* Community members — conversion pipeline */}
+      {communityList.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <Section>Community Members · Warm Leads</Section>
+            <span style={{ fontSize: 9, color: B.mid, fontWeight: 300, letterSpacing: 1 }}>{communityList.length} members</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {communityList.map((m, i) => (
+              <div key={i} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 32, height: 32, background: B.successPale, border: `1px solid ${B.success}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: B.success, flexShrink: 0 }}>{m.avatar}</div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{m.name}</div>
+                    <div style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>Community · Joined {m.joinDate}</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 2 }}>
+                  <Btn size="sm" variant="blush" icon="message">Invite to Mentor</Btn>
+                  <Btn size="sm" variant="ghost" icon="eye">View Activity</Btn>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 8, padding: "10px 14px", background: B.blushPale, border: `1px solid ${B.blushMid}`, fontSize: 11, color: B.blush, fontWeight: 300, lineHeight: 1.5 }}>
+            💡 Community members are warm leads — they're already engaged with Jess's content. Use "Invite to Mentor" to start a personal conversation.
+          </div>
+        </div>
+      )}
 
       <Section style={{ marginBottom: 10 }}>Today's Sessions</Section>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2 }}>
@@ -1690,7 +2323,10 @@ export default function App() {
         const s = JSON.parse(stored);
         if (Sec.valid(s)) {
           const u = DB.users[s.userId];
-          if (u) { setActiveUser(u); setActiveSession(s); setScreen(s.role === "admin" ? "admin" : "portal"); }
+          if (u) { setActiveUser(u); setActiveSession(s);
+            const dest = s.role === "admin" ? "admin" : s.role === "community" ? "community" : "portal";
+            setScreen(dest);
+          }
         } else { sessionStorage.removeItem("sjtn_session"); }
       }
     } catch { sessionStorage.removeItem("sjtn_session"); }
@@ -1699,7 +2335,8 @@ export default function App() {
   const handleLogin = useCallback((email, userData, session) => {
     setActiveUser(userData); setActiveSession(session);
     sessionStorage.setItem("sjtn_session", JSON.stringify(session));
-    setScreen(userData.role === "admin" ? "admin" : "portal");
+    const dest = userData.role === "admin" ? "admin" : userData.role === "community" ? "community" : "portal";
+    setScreen(dest);
   }, []);
 
   const handleLogout = useCallback(() => {
@@ -1716,9 +2353,10 @@ export default function App() {
       {screen === "auth"         && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => setScreen("booking")} />}
       {screen === "booking"      && <Booking onConfirm={f => { setBookedForm(f); setScreen("confirmation"); }} onBack={() => setScreen("landing")} />}
       {screen === "confirmation" && <Confirmation form={bookedForm} onHome={() => setScreen("landing")} onSignIn={() => setScreen("auth")} />}
-      {screen === "portal"  && activeUser && sessionValid && <MenteePortal user={activeUser} onLogout={handleLogout} />}
-      {screen === "admin"   && activeUser && <AdminDashboard onLogout={handleLogout} />}
-      {(screen === "portal" || screen === "admin") && !sessionValid && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => setScreen("booking")} />}
+      {screen === "portal"    && activeUser && sessionValid && <MenteePortal user={activeUser} onLogout={handleLogout} />}
+      {screen === "community" && activeUser && sessionValid && <CommunityPortal user={activeUser} onLogout={handleLogout} onUpgrade={() => setScreen("booking")} />}
+      {screen === "admin"     && activeUser && <AdminDashboard onLogout={handleLogout} />}
+      {(screen === "portal" || screen === "admin" || screen === "community") && !sessionValid && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => setScreen("booking")} />}
     </>
   );
 }
