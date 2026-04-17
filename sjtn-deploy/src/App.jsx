@@ -210,6 +210,17 @@ const Landing = ({ onSignIn, onBook }) => {
   const { isMobile } = useLayout();
   const [scrolled, setScrolled] = useState(false);
   const [activeTab, setActiveTab] = useState("mentorship");
+  const sectionRef = useRef(null);
+
+  const switchTab = (id) => {
+    setActiveTab(id);
+    setTimeout(() => {
+      if (sectionRef.current) {
+        const top = sectionRef.current.getBoundingClientRect().top + window.scrollY - (isMobile ? 130 : 150);
+        window.scrollTo({ top, behavior: "smooth" });
+      }
+    }, 20);
+  };
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 60);
@@ -394,7 +405,7 @@ const Landing = ({ onSignIn, onBook }) => {
             const tabIcon  = id === "academy" ? "graduationCap" : id === "about" ? "user" : "star";
             const on = activeTab === id;
             return (
-              <button key={id} onClick={() => setActiveTab(id)} className={on ? "tab-btn-active" : "tab-btn-inactive"} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: isMobile ? 4 : 7, padding: isMobile ? "9px 4px" : "12px 24px", border: `2px solid ${on ? B.blush : B.cloud}`, borderRadius: 40, background: on ? B.blush : B.white, color: on ? B.white : B.steel, fontSize: isMobile ? 10 : 13, fontWeight: 700, cursor: on ? "default" : "pointer", fontFamily: FONTS.body, letterSpacing: isMobile ? "0.01em" : "0.05em", transition: "all .2s", whiteSpace: "nowrap", boxShadow: on ? `0 4px 14px ${B.blush}40` : "none" }}>
+              <button key={id} onClick={() => switchTab(id)} className={on ? "tab-btn-active" : "tab-btn-inactive"} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: isMobile ? 4 : 7, padding: isMobile ? "9px 4px" : "12px 24px", border: `2px solid ${on ? B.blush : B.cloud}`, borderRadius: 40, background: on ? B.blush : B.white, color: on ? B.white : B.steel, fontSize: isMobile ? 10 : 13, fontWeight: 700, cursor: on ? "default" : "pointer", fontFamily: FONTS.body, letterSpacing: isMobile ? "0.01em" : "0.05em", transition: "all .2s", whiteSpace: "nowrap", boxShadow: on ? `0 4px 14px ${B.blush}40` : "none" }}>
                 <Ic n={tabIcon} size={isMobile ? 11 : 15} color={on ? B.white : B.steel} />
                 {tabLabel}
               </button>
@@ -404,6 +415,9 @@ const Landing = ({ onSignIn, onBook }) => {
         </div>
         {isMobile && <div style={{ textAlign: "center", paddingBottom: 10, fontSize: 9, color: B.mid, fontWeight: 300, letterSpacing: 1 }}>TAP A TAB TO EXPLORE</div>}
       </div>
+
+      {/* Scroll anchor — sectionRef targets here on tab switch */}
+      <div ref={sectionRef} />
 
       {/* ── MENTORSHIP ── */}
       {activeTab === "mentorship" && <>
@@ -2166,6 +2180,118 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
 /* ════════════════════════════════════════════════════════════════════════
    ADMIN DASHBOARD
 ════════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════
+   INVOICES VIEW — stable component outside AdminDashboard
+════════════════════════════════════════════════════════════════════════ */
+const InvoicesView = () => {
+  const { isMobile } = useLayout();
+  const [invoices, setInvoices] = useState([
+    { id:"INV-001", to:"Jessica M.", email:"jessica@example.com", tier:"3-Month Elite", amount:3360, status:"paid", date:"Apr 1" },
+    { id:"INV-002", to:"Taylor R.", email:"taylor@example.com", tier:"30-Day Intensive", amount:1120, status:"paid", date:"Apr 5" },
+    { id:"INV-003", to:"Maya J.", email:"maya@example.com", tier:"Community", amount:27, status:"pending", date:"Apr 14" },
+  ]);
+  const [showNew, setShowNew] = useState(false);
+  const [form, setForm] = useState({ to:"", email:"", tier:"Hourly Session", amount:"250", note:"" });
+  const tiers = [["Hourly Session","250"],["30-Day Intensive","1120"],["3-Month Elite","3360"],["Community","27"],["Custom",""]];
+  const statusColor = { paid: B.success, pending: B.amber, draft: B.mid };
+  const statusBg    = { paid: B.successPale, pending: B.amberPale, draft: B.off };
+  const sendInvoice = () => {
+    if (!form.to.trim() || !form.email.trim()) return;
+    setInvoices(p => [{ id:`INV-00${p.length+1}`, to:form.to, email:form.email, tier:form.tier, amount:Number(form.amount)||0, status:"pending", date:"Just now" }, ...p]);
+    setForm({ to:"", email:"", tier:"Hourly Session", amount:"250", note:"" });
+    setShowNew(false);
+  };
+  /* InvoicesView uses its own Pg-like wrapper since Pg is scoped to AdminDashboard */
+  return (
+    <div style={{ padding: isMobile ? "20px 18px 40px" : "28px 32px", maxWidth: 1020, width: "100%" }}>
+      {/* Header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:22 }}>
+        <div>
+          <p style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", margin:"0 0 8px" }}>Payment Requests</p>
+          <h1 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:isMobile?32:44, textTransform:"uppercase", color:B.black, margin:0, lineHeight:0.95, letterSpacing:"-0.5px" }}>Invoices</h1>
+        </div>
+        <button onClick={() => setShowNew(s => !s)} style={{ display:"flex", alignItems:"center", gap:6, padding:"9px 16px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase", flexShrink:0 }}>
+          <Ic n="send" size={12} color={B.white} />New Invoice
+        </button>
+      </div>
+
+      <p style={{ color:B.mid, fontSize:13, margin:"-14px 0 20px", fontWeight:300 }}>Request payment or send an invoice to any mentee or lead.</p>
+
+      {showNew && (
+        <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderRadius:4, marginBottom:16, padding:"20px 20px", borderTop:`3px solid ${B.blush}` }}>
+          <p style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", margin:"0 0 14px" }}>New Payment Request</p>
+          <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:10, marginBottom:10 }}>
+            {[["Name","to","text","e.g. Taylor R."],["Email","email","email","e.g. taylor@example.com"]].map(([lbl,key,type,ph]) => (
+              <div key={key}>
+                <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>{lbl}</div>
+                <input type={type} value={form[key]} onChange={e => setForm(p=>({...p,[key]:e.target.value}))} placeholder={ph} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:10, marginBottom:10 }}>
+            <div>
+              <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>Service</div>
+              <select value={form.tier} onChange={e => { const t=tiers.find(([n])=>n===e.target.value); setForm(p=>({...p,tier:e.target.value,amount:t?t[1]:p.amount})); }} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, background:B.white, boxSizing:"border-box" }}>
+                {tiers.map(([n]) => <option key={n}>{n}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>Amount ($)</div>
+              <input type="number" value={form.amount} onChange={e => setForm(p=>({...p,amount:e.target.value}))} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
+            </div>
+          </div>
+          <div style={{ marginBottom:14 }}>
+            <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>Note (optional)</div>
+            <textarea value={form.note} onChange={e => setForm(p=>({...p,note:e.target.value}))} placeholder="e.g. Discovery call follow-up — 3-Month Elite program" rows={2} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", resize:"vertical", color:B.black, boxSizing:"border-box" }} />
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            <Btn variant="blush" icon="send" onClick={sendInvoice} disabled={!form.to.trim()||!form.email.trim()}>Send Invoice</Btn>
+            <Btn variant="ghost" onClick={() => setShowNew(false)}>Cancel</Btn>
+          </div>
+        </div>
+      )}
+
+      {/* Summary tiles */}
+      <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)", gap:2, marginBottom:20 }}>
+        {[["Total Sent", invoices.length, false], ["Paid", invoices.filter(i=>i.status==="paid").length, false], ["Pending", invoices.filter(i=>i.status==="pending").length, true]].map(([l,v,warn]) => (
+          <div key={l} style={{ padding:"16px 18px", border:`1px solid ${B.cloud}`, background:B.white, borderTop:`3px solid ${warn&&v>0?B.amber:l==="Paid"?B.success:B.cloud}` }}>
+            <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:32, color:B.black, lineHeight:1 }}>{v}</div>
+            <div style={{ fontSize:9, fontWeight:700, color:B.mid, marginTop:5, letterSpacing:1.5, textTransform:"uppercase" }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Invoice list */}
+      <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+        {invoices.map((inv) => (
+          <div key={inv.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, borderRadius:4, padding:"16px 18px" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:8 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                <div style={{ width:36, height:36, background:B.blushPale, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:B.blush, flexShrink:0 }}>{inv.to.split(" ").map(w=>w[0]).join("")}</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{inv.to}</div>
+                  <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{inv.email}</div>
+                  <div style={{ fontSize:10, color:B.steel, fontWeight:300, marginTop:2 }}>{inv.tier} · {inv.date}</div>
+                </div>
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:22, color:B.black }}>${inv.amount.toLocaleString()}</div>
+                <span style={{ fontSize:8, fontWeight:700, padding:"3px 8px", letterSpacing:1, textTransform:"uppercase", color:statusColor[inv.status], background:statusBg[inv.status] }}>{inv.status}</span>
+              </div>
+            </div>
+            {inv.status === "pending" && (
+              <div style={{ display:"flex", gap:6, marginTop:12 }}>
+                <button onClick={() => setInvoices(p=>p.map(i=>i.id===inv.id?{...i,status:"paid"}:i))} style={{ padding:"7px 14px", background:B.success, border:"none", color:B.white, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Mark Paid</button>
+                <button onClick={() => setInvoices(p=>p.map(i=>i.id===inv.id?{...i,status:"draft"}:i))} style={{ padding:"7px 14px", background:"none", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Resend</button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = ({ onLogout }) => {
   const { isMobile, useSidebar } = useLayout();
   const [view, setView] = useState("overview");
@@ -2500,100 +2626,6 @@ const AdminDashboard = ({ onLogout }) => {
       <Btn full variant="ghost" icon="logout" onClick={onLogout} style={{ marginTop: 8 }}>Sign Out</Btn>
     </Pg>
   );
-
-  const InvoicesView = () => {
-    const [invoices, setInvoices] = React.useState([
-      { id:"INV-001", to:"Jessica M.", email:"jessica@example.com", tier:"3-Month Elite", amount:3360, status:"paid", date:"Apr 1" },
-      { id:"INV-002", to:"Taylor R.", email:"taylor@example.com", tier:"30-Day Intensive", amount:1120, status:"paid", date:"Apr 5" },
-      { id:"INV-003", to:"Maya J.", email:"maya@example.com", tier:"Community", amount:27, status:"pending", date:"Apr 14" },
-    ]);
-    const [showNew, setShowNew] = React.useState(false);
-    const [form, setForm] = React.useState({ to:"", email:"", tier:"Hourly Session", amount:"250", note:"" });
-    const tiers = [["Hourly Session","250"],["30-Day Intensive","1120"],["3-Month Elite","3360"],["Community","27"],["Custom",""]];
-    const statusColor = { paid: B.success, pending: B.amber, draft: B.mid };
-    const statusBg = { paid: B.successPale, pending: B.amberPale, draft: B.off };
-    const sendInvoice = () => {
-      if (!form.to.trim() || !form.email.trim()) return;
-      setInvoices(p => [{ id:`INV-00${p.length+1}`, to:form.to, email:form.email, tier:form.tier, amount:Number(form.amount)||0, status:"pending", date:"Just now" }, ...p]);
-      setForm({ to:"", email:"", tier:"Hourly Session", amount:"250", note:"" });
-      setShowNew(false);
-    };
-    return (
-      <Pg title="Invoices" sub="Payment Requests" action={<button onClick={() => setShowNew(s => !s)} style={{ display:"flex", alignItems:"center", gap:6, padding:"9px 16px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}><Ic n="send" size={12} color={B.white} />New Invoice</button>}>
-        <p style={{ color:B.mid, fontSize:13, margin:"-14px 0 20px", fontWeight:300 }}>Request payment or send an invoice to any mentee or lead.</p>
-
-        {showNew && (
-          <Card style={{ marginBottom: 16, padding:"20px 20px", borderTop:`3px solid ${B.blush}` }}>
-            <Section style={{ marginBottom:14 }}>New Payment Request</Section>
-            <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:10, marginBottom:10 }}>
-              {[["Name","to","text","e.g. Taylor R."],["Email","email","email","e.g. taylor@example.com"]].map(([lbl,key,type,ph]) => (
-                <div key={key}>
-                  <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>{lbl}</div>
-                  <input type={type} value={form[key]} onChange={e => setForm(p=>({...p,[key]:e.target.value}))} placeholder={ph} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
-                </div>
-              ))}
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:10, marginBottom:10 }}>
-              <div>
-                <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>Service</div>
-                <select value={form.tier} onChange={e => { const t=tiers.find(([n])=>n===e.target.value); setForm(p=>({...p,tier:e.target.value,amount:t?t[1]:p.amount})); }} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, background:B.white, boxSizing:"border-box" }}>
-                  {tiers.map(([n]) => <option key={n}>{n}</option>)}
-                </select>
-              </div>
-              <div>
-                <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>Amount ($)</div>
-                <input type="number" value={form.amount} onChange={e => setForm(p=>({...p,amount:e.target.value}))} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
-              </div>
-            </div>
-            <div style={{ marginBottom:14 }}>
-              <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>Note (optional)</div>
-              <textarea value={form.note} onChange={e => setForm(p=>({...p,note:e.target.value}))} placeholder="e.g. Discovery call follow-up — 3-Month Elite program" rows={2} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", resize:"vertical", color:B.black, boxSizing:"border-box" }} />
-            </div>
-            <div style={{ display:"flex", gap:8 }}>
-              <Btn variant="blush" icon="send" onClick={sendInvoice} disabled={!form.to.trim()||!form.email.trim()}>Send Invoice</Btn>
-              <Btn variant="ghost" onClick={() => setShowNew(false)}>Cancel</Btn>
-            </div>
-          </Card>
-        )}
-
-        <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)", gap:2, marginBottom:20 }}>
-          {[["Total Sent", invoices.length], ["Paid", invoices.filter(i=>i.status==="paid").length], ["Pending", invoices.filter(i=>i.status==="pending").length]].map(([l,v]) => (
-            <div key={l} style={{ padding:"16px 18px", border:`1px solid ${B.cloud}`, background:B.white, borderTop:`3px solid ${l==="Pending"&&v>0?B.amber:l==="Paid"?B.success:B.cloud}` }}>
-              <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:32, color:B.black, lineHeight:1 }}>{v}</div>
-              <div style={{ fontSize:9, fontWeight:700, color:B.mid, marginTop:5, letterSpacing:1.5, textTransform:"uppercase" }}>{l}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
-          {invoices.map((inv) => (
-            <Card key={inv.id} style={{ padding:"16px 18px" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:8 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-                  <div style={{ width:36, height:36, background:B.blushPale, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:B.blush, flexShrink:0 }}>{inv.to.split(" ").map(w=>w[0]).join("")}</div>
-                  <div>
-                    <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{inv.to}</div>
-                    <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{inv.email}</div>
-                    <div style={{ fontSize:10, color:B.steel, fontWeight:300, marginTop:2 }}>{inv.tier} · {inv.date}</div>
-                  </div>
-                </div>
-                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:22, color:B.black }}>${inv.amount.toLocaleString()}</div>
-                  <span style={{ fontSize:8, fontWeight:700, padding:"3px 8px", letterSpacing:1, textTransform:"uppercase", color:statusColor[inv.status], background:statusBg[inv.status] }}>{inv.status}</span>
-                </div>
-              </div>
-              {inv.status === "pending" && (
-                <div style={{ display:"flex", gap:6, marginTop:12 }}>
-                  <button onClick={() => setInvoices(p=>p.map(i=>i.id===inv.id?{...i,status:"paid"}:i))} style={{ padding:"7px 14px", background:B.success, border:"none", color:B.white, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Mark Paid</button>
-                  <button onClick={() => setInvoices(p=>p.map(i=>i.id===inv.id?{...i,status:"draft"}:i))} style={{ padding:"7px 14px", background:"none", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Resend</button>
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
-      </Pg>
-    );
-  };
 
   const viewMap = { overview: Overview, leads: LeadsView, mentees: MenteesView, messages: MessagesView, settings: SettingsView };
 
