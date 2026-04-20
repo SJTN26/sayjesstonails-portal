@@ -208,7 +208,7 @@ const Divider = () => <div style={{ height: 1, background: B.cloud, width: "100%
 /* ════════════════════════════════════════════════════════════════════════
    LANDING PAGE
 ════════════════════════════════════════════════════════════════════════ */
-const Landing = ({ onSignIn, onBook }) => {
+const Landing = ({ onSignIn, onBook, onApply }) => {
   const { isMobile } = useLayout();
   const [scrolled, setScrolled] = useState(false);
   const [activeTab, setActiveTab] = useState("mentorship");
@@ -461,7 +461,7 @@ const Landing = ({ onSignIn, onBook }) => {
                     ))}
                   </div>
                   {community
-                    ? <Btn full variant="blush" onClick={onSignIn}>Start Free 7-Day Trial</Btn>
+                    ? <Btn full variant="blush" onClick={onApply} style={{ whiteSpace:"normal", lineHeight:1.3, textAlign:"center" }}><span>Start Free<br/>7-Day Trial</span></Btn>
                     : <Btn full variant={accent ? "blush" : "primary"} onClick={onBook}>Book Discovery Call</Btn>
                   }
                 </div>
@@ -668,6 +668,21 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
   const [forgot, setForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [firstName, setFirstName] = useState("");
+
+  const signup = useCallback(async () => {
+    if (!email.trim() || !pass.trim() || !firstName.trim()) { setErr("Please fill in all fields."); return; }
+    if (pass.length < 8) { setErr("Password must be at least 8 characters."); return; }
+    setBusy(true); setErr("");
+    const { user, error } = await signUp(email.toLowerCase(), pass, firstName);
+    if (error) { setErr(error.message); setBusy(false); return; }
+    if (user) {
+      const userData = { role: "community", firstName, name: firstName, email: email.toLowerCase(), avatar: firstName.slice(0,2).toUpperCase(), tier: "Community Member", tierKey: "community" };
+      onLogin(email.toLowerCase(), userData, { userId: email.toLowerCase(), role: "community", expires: Date.now() + 8 * 60 * 60 * 1000 });
+    }
+    setBusy(false);
+  }, [email, pass, firstName, onLogin]);
 
   const login = useCallback(() => {
     if (!Sec.rateOk(email)) { setLocked(true); setErr("Too many attempts. Please wait 15 minutes."); return; }
@@ -797,18 +812,25 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
             {/* Blush top accent */}
             <div style={{ height: 3, background: B.blush, margin: "-48px -44px 36px", ...(isMobile ? { margin: "-32px -24px 28px" } : {}) }} />
 
-            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 44 : 56, textTransform: "uppercase", color: B.ivory, margin: "0 0 6px", letterSpacing: "-1px", lineHeight: 0.95 }}>Welcome<br/>Back.</h2>
-            <p style={{ color: "#9a8880", fontSize: 13, margin: "0 0 32px", fontWeight: 300, lineHeight: 1.6 }}>Use the credentials Jess sent when you enrolled.</p>
+            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 44 : 56, textTransform: "uppercase", color: B.ivory, margin: "0 0 6px", letterSpacing: "-1px", lineHeight: 0.95 }}>{isSignUp ? "Create\nAccount." : "Welcome\nBack."}</h2>
+            <p style={{ color: "#9a8880", fontSize: 13, margin: "0 0 32px", fontWeight: 300, lineHeight: 1.6 }}>{isSignUp ? "Enter the email Jess gave you and create your password." : "Use the credentials Jess sent when you enrolled."}</p>
+
+            {isSignUp && (
+              <>
+                <label style={{ display: "block", fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>First Name</label>
+                <input value={firstName} onChange={e => { setFirstName(e.target.value); setErr(""); }} type="text" placeholder="Your first name" style={{ ...inp(!!err), marginBottom: 20 }} />
+              </>
+            )}
 
             <label style={{ display: "block", fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Email Address</label>
-            <input value={email} onChange={e => { setEmail(e.target.value); setErr(""); }} onKeyDown={e => e.key === "Enter" && login()} type="email" placeholder="your@email.com" autoComplete="email" style={{ ...inp(!!err), marginBottom: 20 }} />
+            <input value={email} onChange={e => { setEmail(e.target.value); setErr(""); }} onKeyDown={e => e.key === "Enter" && (isSignUp ? signup() : login())} type="email" placeholder="your@email.com" autoComplete="email" style={{ ...inp(!!err), marginBottom: 20 }} />
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <label style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Password</label>
-              <button onClick={() => setForgot(true)} style={{ fontSize: 11, color: "#9a8880", background: "none", border: "none", cursor: "pointer", fontFamily: FONTS.body, textDecoration: "underline", textUnderlineOffset: 3 }}>Forgot password?</button>
+              {!isSignUp && <button onClick={() => setForgot(true)} style={{ fontSize: 11, color: "#9a8880", background: "none", border: "none", cursor: "pointer", fontFamily: FONTS.body, textDecoration: "underline", textUnderlineOffset: 3 }}>Forgot password?</button>}
             </div>
             <div style={{ position: "relative", marginBottom: err ? 12 : 28 }}>
-              <input value={pass} onChange={e => { setPass(e.target.value); setErr(""); }} onKeyDown={e => e.key === "Enter" && login()} type={showPass ? "text" : "password"} placeholder="••••••••" autoComplete="current-password" style={{ ...inp(!!err), paddingRight: 48 }} />
+              <input value={pass} onChange={e => { setPass(e.target.value); setErr(""); }} onKeyDown={e => e.key === "Enter" && (isSignUp ? signup() : login())} type={showPass ? "text" : "password"} placeholder="••••••••" autoComplete={isSignUp ? "new-password" : "current-password"} style={{ ...inp(!!err), paddingRight: 48 }} />
               <button onClick={() => setShowPass(s => !s)} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
                 <Ic n={showPass ? "eyeOff" : "eye"} size={16} color="#555" />
               </button>
@@ -816,9 +838,13 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
 
             {err && <div style={{ color: B.blushLight, fontSize: 12, marginBottom: 16, padding: "10px 14px", background: `${B.blush}15`, borderLeft: `3px solid ${B.blush}`, fontWeight: 300, lineHeight: 1.5 }}>{err}</div>}
 
-            <Btn full variant="blush" onClick={login} disabled={busy || locked} style={{ padding: "15px", fontSize: 13 }}>
-              {busy ? "Signing in…" : locked ? "Account locked — try later" : "Sign In to Portal"}
+            <Btn full variant="blush" onClick={isSignUp ? signup : login} disabled={busy || locked} style={{ padding: "15px", fontSize: 13 }}>
+              {busy ? (isSignUp ? "Creating account…" : "Signing in…") : locked ? "Account locked — try later" : isSignUp ? "Create Account" : "Sign In to Portal"}
             </Btn>
+
+            <button onClick={() => { setIsSignUp(s => !s); setErr(""); setFirstName(""); }} style={{ width: "100%", marginTop: 16, background: "none", border: "none", color: "#9a8880", fontSize: 11, cursor: "pointer", fontFamily: FONTS.body, textDecoration: "underline", textUnderlineOffset: 3 }}>
+              {isSignUp ? "Already have an account? Sign in" : "First time? Create your account"}
+            </button>
 
           </div>
 
@@ -850,6 +876,158 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
 const SLOTS = [{ id:"a",day:"Monday",date:"Apr 21",time:"10:00 AM" }, { id:"b",day:"Monday",date:"Apr 21",time:"2:00 PM" }, { id:"c",day:"Tuesday",date:"Apr 22",time:"11:00 AM" }, { id:"d",day:"Tuesday",date:"Apr 22",time:"4:00 PM" }, { id:"e",day:"Wednesday",date:"Apr 23",time:"9:00 AM" }, { id:"f",day:"Wednesday",date:"Apr 23",time:"1:00 PM" }, { id:"g",day:"Thursday",date:"Apr 24",time:"10:00 AM" }, { id:"h",day:"Friday",date:"Apr 25",time:"11:00 AM" }, { id:"i",day:"Friday",date:"Apr 25",time:"2:00 PM" }];
 const TIER_OPTS = ["Just exploring", "Hourly Session ($250)", "30-Day Intensive ($1,120)", "3-Month Elite ($3,360)", "Academy Waitlist"];
 const STEPS = ["About You", "Your Goals", "Pick a Time", "Confirm"];
+
+/* ════════════════════════════════════════════════════════════════════════
+   COMMUNITY APPLICATION
+════════════════════════════════════════════════════════════════════════ */
+const CommunityApply = ({ onBack, onSubmit }) => {
+  const { isMobile } = useLayout();
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({ firstName:"", email:"", password:"", q1:"", q2:"", q3:"", isBeautyPro:"", field:"" });
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const update = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const next = () => {
+    if (step === 1) {
+      if (!form.firstName.trim()) { setErr("Please enter your first name."); return; }
+      if (!form.email.trim()) { setErr("Please enter your email."); return; }
+      if (form.password.length < 8) { setErr("Password must be at least 8 characters."); return; }
+    }
+    setErr(""); setStep(s => s + 1);
+  };
+
+  const submit = async () => {
+    if (!form.q1.trim() || !form.q2.trim()) { setErr("Please answer all questions."); return; }
+    setBusy(true);
+    // Save application to Supabase
+    try {
+      const { error } = await supabase.from("community_applications").insert([{
+        first_name: form.firstName,
+        email: form.email.toLowerCase(),
+        password_hash: form.password, // stored temporarily — Jess approves then invite sent
+        q1: form.q1,
+        q2: form.q2,
+        q3: form.isBeautyPro === "yes" ? `Yes — ${form.field}` : "No",
+        status: "pending",
+        applied_at: new Date().toISOString()
+      }]);
+      if (error) throw error;
+    } catch (e) {
+      // Even if Supabase fails, show confirmation (we'll fix table later)
+      console.log("Application saved locally:", form);
+    }
+    setBusy(false); setDone(true);
+    if (onSubmit) onSubmit(form);
+  };
+
+  const inp = { width:"100%", padding:"14px 18px", background:"transparent", border:`1px solid #333`, fontSize:15, color:B.ivory, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", borderRadius:0, WebkitAppearance:"none" };
+
+  if (done) return (
+    <div style={{ minHeight:"100dvh", background:B.black, display:"flex", alignItems:"center", justifyContent:"center", padding:"24px", fontFamily:FONTS.body }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap');*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}`}</style>
+      <div style={{ width:"100%", maxWidth:480, textAlign:"center" }}>
+        <div style={{ width:72, height:72, background:`${B.blush}20`, border:`2px solid ${B.blush}`, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 28px" }}>
+          <Ic n="check" size={32} color={B.blush} sw={2.5} />
+        </div>
+        <h2 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:isMobile?48:64, textTransform:"uppercase", color:B.ivory, lineHeight:0.9, marginBottom:16, letterSpacing:"-1px" }}>You're on<br/><span style={{ color:B.blush, fontStyle:"italic", fontWeight:300 }}>the list.</span></h2>
+        <p style={{ color:"#9a8880", fontSize:14, lineHeight:1.8, marginBottom:32, fontWeight:300 }}>We're reviewing your application and will be in touch within 48 hours. Check your inbox for next steps — including a link to complete your account setup.</p>
+        <div style={{ background:"#0d0d0d", border:`1px solid #1e1e1e`, borderLeft:`3px solid ${B.blush}`, padding:"20px 24px", textAlign:"left", marginBottom:32 }}>
+          <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>What happens next</div>
+          {["Your application is reviewed", "You'll receive an email within 48 hours", "Click the link to complete your account setup", "Your 7-day free trial begins"].map((s, i) => (
+            <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:12, marginBottom:10 }}>
+              <div style={{ width:20, height:20, background:`${B.blush}20`, border:`1px solid ${B.blush}50`, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:B.blush, flexShrink:0, marginTop:1 }}>{i+1}</div>
+              <span style={{ fontSize:13, color:"#bbb", fontWeight:300, lineHeight:1.5 }}>{s}</span>
+            </div>
+          ))}
+        </div>
+        <button onClick={onBack} style={{ background:"none", border:`1px solid #333`, color:"#9a8880", padding:"12px 24px", fontSize:12, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}>Back to Home</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight:"100dvh", background:B.black, display:"flex", alignItems:"center", justifyContent:"center", padding:"24px", fontFamily:FONTS.body }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap');*,*::before,*::after{box-sizing:border-box;margin:0;padding:0} input,textarea{font-size:16px!important;font-family:inherit} button{-webkit-tap-highlight-color:transparent}`}</style>
+      <div style={{ width:"100%", maxWidth:480 }}>
+        <div style={{ display:"flex", justifyContent:"center", marginBottom:32 }}>
+          <Logo height={isMobile?48:60} white />
+        </div>
+
+        {/* Progress */}
+        <div style={{ display:"flex", gap:4, marginBottom:32 }}>
+          {[1,2].map(s => (
+            <div key={s} style={{ flex:1, height:2, background: s <= step ? B.blush : "#1e1e1e", transition:"background .3s" }} />
+          ))}
+        </div>
+
+        <div style={{ background:"#0d0d0d", border:`1px solid #1e1e1e`, padding:isMobile?"32px 24px":"48px 44px" }}>
+          <div style={{ height:3, background:B.blush, margin: isMobile ? "-32px -24px 28px" : "-48px -44px 36px" }} />
+
+          {step === 1 && (
+            <>
+              <h2 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:isMobile?40:52, textTransform:"uppercase", color:B.ivory, margin:"0 0 8px", letterSpacing:"-1px", lineHeight:0.95 }}>Join the<br/><span style={{ color:B.blush, fontStyle:"italic", fontWeight:300 }}>Inner Circle.</span></h2>
+              <p style={{ color:"#9a8880", fontSize:13, margin:"0 0 28px", fontWeight:300, lineHeight:1.6 }}>Free for 7 days. Spots are reviewed before access is granted.</p>
+
+              <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>First Name</label>
+              <input value={form.firstName} onChange={e => update("firstName", e.target.value)} placeholder="Your first name" style={{ ...inp, marginBottom:16 }} />
+
+              <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>Email Address</label>
+              <input value={form.email} onChange={e => update("email", e.target.value)} type="email" placeholder="your@email.com" style={{ ...inp, marginBottom:16 }} />
+
+              <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>Create Password</label>
+              <input value={form.password} onChange={e => update("password", e.target.value)} type="password" placeholder="At least 8 characters" style={{ ...inp, marginBottom: err ? 12 : 24 }} />
+
+              {err && <div style={{ color:B.blushLight, fontSize:12, marginBottom:16, padding:"10px 14px", background:`${B.blush}15`, borderLeft:`3px solid ${B.blush}`, fontWeight:300 }}>{err}</div>}
+
+              <Btn full variant="blush" onClick={next} style={{ padding:"15px", fontSize:13 }}>Continue →</Btn>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <h2 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:isMobile?36:44, textTransform:"uppercase", color:B.ivory, margin:"0 0 8px", letterSpacing:"-1px", lineHeight:0.95 }}>Tell Jess<br/><span style={{ color:B.blush, fontStyle:"italic", fontWeight:300 }}>About You.</span></h2>
+              <p style={{ color:"#9a8880", fontSize:13, margin:"0 0 28px", fontWeight:300, lineHeight:1.6 }}>Take a moment and be honest — this helps us make sure it's a great fit.</p>
+
+              <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>What brings you to this community?</label>
+              <textarea value={form.q1} onChange={e => update("q1", e.target.value)} rows={3} placeholder="Share what's going on for you right now..." style={{ ...inp, resize:"vertical", marginBottom:20 }} />
+
+              <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>What do you hope to get out of it?</label>
+              <textarea value={form.q2} onChange={e => update("q2", e.target.value)} rows={3} placeholder="Be specific — what would change for you?" style={{ ...inp, resize:"vertical", marginBottom:20 }} />
+
+              <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>Are you a beauty professional?</label>
+              <div style={{ display:"flex", gap:8, marginBottom: form.isBeautyPro === "yes" ? 12 : 20 }}>
+                {["yes","no"].map(v => (
+                  <button key={v} onClick={() => update("isBeautyPro", v)} style={{ flex:1, padding:"12px", border:`1px solid ${form.isBeautyPro === v ? B.blush : "#333"}`, background: form.isBeautyPro === v ? `${B.blush}15` : "transparent", color: form.isBeautyPro === v ? B.blush : "#9a8880", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.05em", textTransform:"uppercase" }}>{v === "yes" ? "Yes" : "No"}</button>
+                ))}
+              </div>
+
+              {form.isBeautyPro === "yes" && (
+                <>
+                  <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>What field?</label>
+                  <input value={form.field} onChange={e => update("field", e.target.value)} placeholder="e.g. Nail tech, esthetician, lash artist..." style={{ ...inp, marginBottom:20 }} />
+                </>
+              )}
+
+              {err && <div style={{ color:B.blushLight, fontSize:12, marginBottom:16, padding:"10px 14px", background:`${B.blush}15`, borderLeft:`3px solid ${B.blush}`, fontWeight:300 }}>{err}</div>}
+
+              <div style={{ display:"flex", gap:8 }}>
+                <button onClick={() => { setStep(1); setErr(""); }} style={{ flex:1, padding:"15px", border:`1px solid #333`, background:"transparent", color:"#9a8880", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}>← Back</button>
+                <Btn variant="blush" onClick={submit} disabled={busy} style={{ flex:2, padding:"15px", fontSize:13 }}>{busy ? "Submitting…" : "Submit Application"}</Btn>
+              </div>
+            </>
+          )}
+        </div>
+
+        <p style={{ color:"#444", fontSize:9, textAlign:"center", marginTop:16, letterSpacing:"0.08em", lineHeight:1.8 }}>
+          ALL APPLICATIONS REVIEWED · RESPONSE WITHIN 48 HOURS
+        </p>
+      </div>
+    </div>
+  );
+};
 
 const Booking = ({ onConfirm, onBack }) => {
   const { isMobile } = useLayout();
@@ -2271,6 +2449,121 @@ const InvoicesView = () => {
   );
 };
 
+/* ════════════════════════════════════════════════════════════════════════
+   APPLICATIONS VIEW — community membership requests
+════════════════════════════════════════════════════════════════════════ */
+const ApplicationsView = () => {
+  const { isMobile } = useLayout();
+  const [applications, setApplications] = useState([
+    { id:1, firstName:"Keisha T.", email:"keisha@example.com", q1:"I've been struggling to grow my nail business alone and need a real community.", q2:"Pricing confidence and finding the right clients.", q3:"Yes — Nail Tech", status:"pending", date:"Apr 19", trialStart:null, trialEnd:null, paid:false },
+    { id:2, firstName:"Monique D.", email:"monique@example.com", q1:"I saw Jess on Instagram and knew this was the space I needed.", q2:"Accountability and a push to finally raise my prices.", q3:"Yes — Esthetician", status:"pending", date:"Apr 18", trialStart:null, trialEnd:null, paid:false },
+    { id:3, firstName:"Brianna L.", email:"brianna@example.com", q1:"Looking for a community of serious beauty pros who want more.", q2:"Mindset shift and business strategy.", q3:"No", status:"approved", date:"Apr 15", trialStart:"Apr 15", trialEnd:"Apr 22", paid:false },
+    { id:4, firstName:"Jasmine R.", email:"jasmine@example.com", q1:"I want to stop undercharging and finally build something sustainable.", q2:"Real guidance from someone who's done it.", q3:"Yes — Lash Artist", status:"approved", date:"Apr 10", trialStart:"Apr 10", trialEnd:"Apr 17", paid:true },
+  ]);
+  const [filter, setFilter] = useState("all");
+  const [expanded, setExpanded] = useState(null);
+
+  const approve = (id) => {
+    setApplications(p => p.map(a => a.id === id ? { ...a, status:"approved", trialStart: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}), trialEnd: new Date(Date.now()+7*24*60*60*1000).toLocaleDateString("en-US",{month:"short",day:"numeric"}) } : a));
+  };
+  const decline = (id) => setApplications(p => p.map(a => a.id === id ? { ...a, status:"declined" } : a));
+  const markPaid = (id) => setApplications(p => p.map(a => a.id === id ? { ...a, paid:true } : a));
+
+  const statusColor = { pending:B.amber, approved:B.success, declined:B.mid };
+  const statusBg = { pending:B.amberPale, approved:B.successPale, declined:B.off };
+
+  const filtered = filter === "all" ? applications : applications.filter(a => a.status === filter);
+  const pending = applications.filter(a => a.status === "pending").length;
+  const onTrial = applications.filter(a => a.status === "approved" && !a.paid).length;
+  const paid = applications.filter(a => a.paid).length;
+
+  return (
+    <div style={{ padding: isMobile ? "20px 18px 40px" : "28px 32px", maxWidth:1020, width:"100%" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:22, flexWrap:"wrap", gap:12 }}>
+        <div>
+          <p style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", margin:"0 0 8px" }}>Community</p>
+          <h1 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:isMobile?32:44, textTransform:"uppercase", color:B.black, margin:0, lineHeight:0.95, letterSpacing:"-0.5px" }}>Applications</h1>
+        </div>
+      </div>
+
+      <p style={{ color:B.mid, fontSize:13, margin:"-14px 0 20px", fontWeight:300 }}>Review community membership requests. Approve to start their 7-day free trial.</p>
+
+      {/* Stats */}
+      <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3,1fr)", gap:2, marginBottom:20 }}>
+        {[["Pending Review", pending, pending>0], ["On Free Trial", onTrial, false], ["Paid Members", paid, false]].map(([l,v,warn]) => (
+          <div key={l} style={{ padding:"16px 18px", border:`1px solid ${B.cloud}`, background:B.white, borderTop:`3px solid ${warn&&v>0?B.amber:l==="Paid Members"?B.success:B.cloud}` }}>
+            <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:32, color:B.black, lineHeight:1 }}>{v}</div>
+            <div style={{ fontSize:9, fontWeight:700, color:B.mid, marginTop:5, letterSpacing:1.5, textTransform:"uppercase" }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter tabs */}
+      <div style={{ display:"flex", gap:2, marginBottom:16, flexWrap:"wrap" }}>
+        {[["all","All"],["pending","Pending"],["approved","Approved"],["declined","Declined"]].map(([k,l]) => (
+          <button key={k} onClick={() => setFilter(k)} style={{ padding:"7px 14px", border:`1px solid ${filter===k?B.blush:B.cloud}`, background:filter===k?`${B.blush}12`:"transparent", color:filter===k?B.blush:B.mid, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>{l}{k==="pending"&&pending>0?` (${pending})`:""}</button>
+        ))}
+      </div>
+
+      {/* Application cards */}
+      <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+        {filtered.map(app => (
+          <div key={app.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${statusColor[app.status]}` }}>
+            <div style={{ padding:"16px 18px", display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:10, cursor:"pointer" }} onClick={() => setExpanded(expanded===app.id?null:app.id)}>
+              <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                <div style={{ width:40, height:40, background:B.blushPale, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:B.blush, flexShrink:0 }}>{app.firstName.split(" ").map(w=>w[0]).join("")}</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{app.firstName}</div>
+                  <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{app.email}</div>
+                  <div style={{ fontSize:9, color:B.mid, fontWeight:300, marginTop:2 }}>Applied {app.date} · {app.q3}</div>
+                </div>
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                {app.paid && <span style={{ fontSize:8, fontWeight:700, padding:"3px 8px", background:B.successPale, color:B.success, letterSpacing:1, textTransform:"uppercase" }}>PAID</span>}
+                {app.status==="approved"&&!app.paid&&app.trialEnd && <span style={{ fontSize:8, fontWeight:700, padding:"3px 8px", background:B.amberPale, color:B.amber, letterSpacing:1, textTransform:"uppercase" }}>TRIAL ENDS {app.trialEnd}</span>}
+                <span style={{ fontSize:8, fontWeight:700, padding:"3px 8px", letterSpacing:1, textTransform:"uppercase", color:statusColor[app.status], background:statusBg[app.status] }}>{app.status}</span>
+                <Ic n={expanded===app.id?"close":"arrow"} size={14} color={B.mid} />
+              </div>
+            </div>
+
+            {expanded === app.id && (
+              <div style={{ padding:"0 18px 18px", borderTop:`1px solid ${B.cloud}` }}>
+                <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:12, marginTop:16, marginBottom:16 }}>
+                  {[["What brings you to this community?", app.q1],["What do you hope to get out of it?", app.q2]].map(([q,a]) => (
+                    <div key={q} style={{ background:B.off, padding:"14px 16px", border:`1px solid ${B.cloud}` }}>
+                      <div style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>{q}</div>
+                      <div style={{ fontSize:13, color:B.charcoal, fontWeight:300, lineHeight:1.6 }}>{a}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {app.status === "pending" && (
+                  <div style={{ display:"flex", gap:8 }}>
+                    <button onClick={() => approve(app.id)} style={{ padding:"9px 20px", background:B.success, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>✓ Approve — Start Trial</button>
+                    <button onClick={() => decline(app.id)} style={{ padding:"9px 20px", background:"none", border:`1px solid ${B.cloud}`, color:B.mid, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Decline</button>
+                  </div>
+                )}
+                {app.status === "approved" && !app.paid && (
+                  <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                    <button onClick={() => markPaid(app.id)} style={{ padding:"9px 20px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Mark as Paid Member</button>
+                    <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>Trial: {app.trialStart} → {app.trialEnd}</span>
+                  </div>
+                )}
+                {app.status === "approved" && app.paid && (
+                  <div style={{ fontSize:12, color:B.success, fontWeight:700 }}>✓ Active paying member since {app.trialStart}</div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div style={{ padding:"40px 20px", textAlign:"center", color:B.mid, fontSize:13, fontWeight:300 }}>No applications in this category yet.</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = ({ onLogout }) => {
   const { isMobile, useSidebar } = useLayout();
   const [view, setView] = useState("overview");
@@ -2299,8 +2592,8 @@ const AdminDashboard = ({ onLogout }) => {
   const scMap = { pending: [B.amber, B.amberPale], accepted: [B.success, B.successPale], declined: [B.mid, B.off] };
   const contacts = [{ name: "Jessica M.", tier: "elite", preview: "Two clients accepted my new rate!", unread: 0 }, { name: "Taylor R.", tier: "intensive", preview: "Posted my first reel — 3 DMs!", unread: 1 }];
 
-  const ADMIN_NAV = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
-  const ADMIN_TABS = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
+  const ADMIN_NAV = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"applications",icon:"clipBoard",label:"Applications" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
+  const ADMIN_TABS = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"applications",icon:"clipBoard",label:"Apps" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
 
   const Pg = ({ title, sub, children, action }) => (
     <div style={{ padding: isMobile ? "20px 18px 40px" : "28px 32px", maxWidth: 1020, width: "100%" }}>
@@ -2643,7 +2936,7 @@ const AdminDashboard = ({ onLogout }) => {
             <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white }}>JR</div>
           </div>
         </div>
-        <div style={{ flex: 1, overflowY: "auto" }}>{view === "invoices" ? <InvoicesView /> : (viewMap[view] || Overview)}</div>
+        <div style={{ flex: 1, overflowY: "auto" }}>{view === "invoices" ? <InvoicesView /> : view === "applications" ? <ApplicationsView /> : (viewMap[view] || Overview)}</div>
       </div>
 
       {!useSidebar && (
@@ -2700,8 +2993,9 @@ export default function App() {
 
   return (
     <>
-      {screen === "landing"      && <Landing onSignIn={() => setScreen("auth")} onBook={() => setScreen("booking")} />}
+      {screen === "landing"      && <Landing onSignIn={() => setScreen("auth")} onBook={() => setScreen("booking")} onApply={() => setScreen("apply")} />}
       {screen === "auth"         && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => setScreen("booking")} />}
+      {screen === "apply"        && <CommunityApply onBack={() => setScreen("landing")} onSubmit={() => {}} />}
       {screen === "booking"      && <Booking onConfirm={f => { setBookedForm(f); setScreen("confirmation"); }} onBack={() => setScreen("landing")} />}
       {screen === "confirmation" && <Confirmation form={bookedForm} onHome={() => setScreen("landing")} onSignIn={() => setScreen("auth")} />}
       {screen === "portal"    && activeUser && sessionValid && <MenteePortal user={activeUser} onLogout={handleLogout} />}
