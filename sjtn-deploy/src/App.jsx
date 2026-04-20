@@ -717,8 +717,21 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
         avatar: firstName.slice(0,2).toUpperCase(),
         tier,
         tierKey: tier.includes("Elite") ? "elite" : tier.includes("Intensive") ? "intensive" : "hourly",
+        daysRemaining: 0,
+        totalDays: tier.includes("Elite") ? 90 : tier.includes("Intensive") ? 30 : 1,
+        sessionsCompleted: 0,
+        sessionsTotal: tier.includes("Elite") ? 6 : tier.includes("Intensive") ? 2 : 1,
+        milestones: [],
+        messages: [],
+        documents: [],
+        schedule: [],
+        payments: [],
+        goal: "Getting started",
+        startDate: new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }),
+        nextSession: null,
       };
-      onLogin(email.toLowerCase(), userData, Sec.createSession({ email: email.toLowerCase(), role }));
+      const session = Sec.createSession({ email: email.toLowerCase(), role });
+      onLogin(email.toLowerCase(), userData, session);
     }
     setBusy(false);
   }, [email, pass, onLogin]);
