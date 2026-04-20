@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from './supabase';
-import { signIn, signUp, signOut, getCurrentUser } from './auth';
+import { signIn, signUp, signOut, getCurrentUser, inviteMentee } from './auth';
 
 /* ─── SECURITY ──────────────────────────────────────────────────────────── */
 const Sec = {
@@ -2833,7 +2833,43 @@ const AdminDashboard = ({ onLogout }) => {
   );
 
   const MenteesView = (
-    <Pg title="Mentees" sub="All Enrolled">
+    <Pg title="Mentees" sub="All Enrolled" action={
+      <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+        <input
+          id="invite-email-input"
+          type="email"
+          placeholder="mentee@email.com"
+          style={{ padding:"9px 14px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, width:220, boxSizing:"border-box" }}
+        />
+        <select
+          id="invite-tier-select"
+          style={{ padding:"9px 12px", border:`1px solid ${B.cloud}`, fontSize:12, fontFamily:FONTS.body, outline:"none", color:B.black, background:B.white, boxSizing:"border-box" }}
+        >
+          <option value="Hourly Session">Hourly Session</option>
+          <option value="30-Day Intensive">30-Day Intensive</option>
+          <option value="3-Month Elite">3-Month Elite</option>
+        </select>
+        <button onClick={async () => {
+          const emailEl = document.getElementById("invite-email-input");
+          const tierEl = document.getElementById("invite-tier-select");
+          const email = emailEl?.value?.trim();
+          if (!email) { alert("Please enter an email address."); return; }
+          try {
+            const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
+              data: { tier: tierEl?.value || "Hourly Session", role: "mentee" }
+            });
+            if (error) throw error;
+            alert(`✓ Invite sent to ${email} — they'll receive an email to set their password.`);
+            if (emailEl) emailEl.value = "";
+          } catch (e) {
+            alert(`Error: ${e.message}`);
+          }
+        }} style={{ display:"flex", alignItems:"center", gap:6, padding:"9px 16px", background:B.blush, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase", whiteSpace:"nowrap" }}>
+          <Ic n="send" size={12} color={B.white} />Invite Mentee
+        </button>
+      </div>
+    }>
+      <p style={{ color:B.mid, fontSize:13, margin:"-14px 0 20px", fontWeight:300 }}>Enter a mentee's email and select their tier — they'll receive a link to set their password and access the portal.</p>
       {menteeList.map((m, i) => {
         const pct = Math.round((m.sessionsCompleted / m.sessionsTotal) * 100);
         const done = m.milestones?.filter(x => x.done).length || 0;

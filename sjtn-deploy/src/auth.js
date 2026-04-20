@@ -34,4 +34,9 @@ export const signOut = async () => {
 export const getCurrentUser = async () => {
   const { data: { user } } = await supabase.auth.getUser()
   return user
+}// Invite a new mentee by email (admin only)
+export const inviteMentee = async (email) => {
+  const { data, error } = await supabase.auth.admin.inviteUserByEmail(email)
+  if (error) return { error }
+  return { user: data.user }
 }
