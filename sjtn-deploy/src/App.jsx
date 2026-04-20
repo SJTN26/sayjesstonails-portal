@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { supabase } from './supabase';
+import { signIn, signUp, signOut, getCurrentUser } from './auth';
 
 /* ─── SECURITY ──────────────────────────────────────────────────────────── */
 const Sec = {
