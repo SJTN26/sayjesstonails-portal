@@ -820,29 +820,6 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
               {busy ? "Signing in…" : locked ? "Account locked — try later" : "Sign In to Portal"}
             </Btn>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "28px 0 20px" }}>
-              <div style={{ flex: 1, height: 1, background: "#1e1e1e" }} />
-              <span style={{ fontSize: 9, color: "#444", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Demo Accounts</span>
-              <div style={{ flex: 1, height: 1, background: "#1e1e1e" }} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {[
-                ["jessica@example.com", "Demo@1234!", "3-Month Elite", "JM", B.blush],
-                ["taylor@example.com", "Demo@1234!", "30-Day Intensive", "TR", "#9B6EA0"],
-                ["maya@example.com", "Demo@1234!", "Community Member", "MJ", B.success],
-                ["jess@sayjesstonails.com", "Admin@Jess2025!", "Admin · Jess's Dashboard", "JR", B.amber],
-              ].map(([em, pw, lbl, av, ac]) => (
-                <button key={em} onClick={() => { setEmail(em); setPass(pw); setErr(""); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", background: email === em ? "#1a1a1a" : "#111", border: `1px solid ${email === em ? "#333" : "#161616"}`, cursor: "pointer", fontFamily: FONTS.body, textAlign: "left", transition: "all .15s" }}>
-                  <div style={{ width: 30, height: 30, background: `${ac}18`, border: `1px solid ${ac}50`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: ac, flexShrink: 0 }}>{av}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lbl}</div>
-                    <div style={{ fontSize: 9, color: "#555", letterSpacing: "0.05em", marginTop: 1 }}>{em}</div>
-                  </div>
-                  {email === em && <div style={{ width: 5, height: 5, borderRadius: "50%", background: ac, flexShrink: 0 }} />}
-                </button>
-              ))}
-            </div>
           </div>
 
           <p style={{ color: "#444", fontSize: 9, textAlign: "center", marginTop: 16, letterSpacing: "0.08em", lineHeight: 1.8 }}>
