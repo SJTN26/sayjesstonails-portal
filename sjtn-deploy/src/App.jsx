@@ -2874,10 +2874,16 @@ const AdminDashboard = ({ onLogout }) => {
     <Pg title="Mentees" sub="All Enrolled" action={
       <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
         <input
+          id="invite-name-input"
+          type="text"
+          placeholder="First name"
+          style={{ padding:"9px 14px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, width:130, boxSizing:"border-box" }}
+        />
+        <input
           id="invite-email-input"
           type="email"
           placeholder="mentee@email.com"
-          style={{ padding:"9px 14px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, width:220, boxSizing:"border-box" }}
+          style={{ padding:"9px 14px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, width:200, boxSizing:"border-box" }}
         />
         <select
           id="invite-tier-select"
@@ -2888,17 +2894,21 @@ const AdminDashboard = ({ onLogout }) => {
           <option value="3-Month Elite">3-Month Elite</option>
         </select>
         <button onClick={async () => {
+          const nameEl = document.getElementById("invite-name-input");
           const emailEl = document.getElementById("invite-email-input");
           const tierEl = document.getElementById("invite-tier-select");
+          const firstName = nameEl?.value?.trim();
           const email = emailEl?.value?.trim();
+          if (!firstName) { alert("Please enter the mentee's first name."); return; }
           if (!email) { alert("Please enter an email address."); return; }
           try {
             const { data, error } = await supabase.functions.invoke('invite-mentee', {
-              body: { email, tier: tierEl?.value || "Hourly Session" }
+              body: { email, tier: tierEl?.value || "Hourly Session", first_name: firstName }
             });
             if (error) throw error;
             if (data?.error) throw new Error(data.error);
-            alert(`✓ Invite sent to ${email} — they'll receive an email to set their password.`);
+            alert(`✓ Invite sent to ${firstName} at ${email} — they'll receive an email to set their password.`);
+            if (nameEl) nameEl.value = "";
             if (emailEl) emailEl.value = "";
           } catch (e) {
             alert(`Error: ${e.message}`);
