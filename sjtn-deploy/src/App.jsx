@@ -3203,6 +3203,17 @@ export default function App() {
   const [bookedForm, setBookedForm] = useState(null);
 
   useEffect(() => {
+    // Check for Calendly redirect with booked=true
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("booked") === "true") {
+      const name = params.get("invitee_full_name") || "";
+      const email = params.get("invitee_email") || "";
+      setBookedForm({ name, email, slot: { day: "", date: "", time: "" } });
+      setScreen("confirmation");
+      window.history.replaceState(null, "", window.location.pathname);
+      return;
+    }
+
     // Check for invite/recovery token in URL hash
     const hash = window.location.hash;
     if (hash && hash.includes("type=invite") || hash.includes("type=recovery")) {
