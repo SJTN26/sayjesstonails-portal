@@ -907,17 +907,18 @@ const CommunityApply = ({ onBack, onSubmit }) => {
       const { error } = await supabase.from("community_applications").insert([{
         first_name: form.firstName,
         email: form.email.toLowerCase(),
-        password_hash: form.password, // stored temporarily — Jess approves then invite sent
         q1: form.q1,
         q2: form.q2,
         q3: form.isBeautyPro === "yes" ? `Yes — ${form.field}` : "No",
         status: "pending",
-        applied_at: new Date().toISOString()
+        applied_at: new Date().toISOString(),
+        paid: false
       }]);
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error.message);
+      }
     } catch (e) {
-      // Even if Supabase fails, show confirmation (we'll fix table later)
-      console.log("Application saved locally:", form);
+      console.error("Insert failed:", e);
     }
     setBusy(false); setDone(true);
     if (onSubmit) onSubmit(form);
@@ -2454,20 +2455,58 @@ const InvoicesView = () => {
 ════════════════════════════════════════════════════════════════════════ */
 const ApplicationsView = () => {
   const { isMobile } = useLayout();
-  const [applications, setApplications] = useState([
-    { id:1, firstName:"Keisha T.", email:"keisha@example.com", q1:"I've been struggling to grow my nail business alone and need a real community.", q2:"Pricing confidence and finding the right clients.", q3:"Yes — Nail Tech", status:"pending", date:"Apr 19", trialStart:null, trialEnd:null, paid:false },
-    { id:2, firstName:"Monique D.", email:"monique@example.com", q1:"I saw Jess on Instagram and knew this was the space I needed.", q2:"Accountability and a push to finally raise my prices.", q3:"Yes — Esthetician", status:"pending", date:"Apr 18", trialStart:null, trialEnd:null, paid:false },
-    { id:3, firstName:"Brianna L.", email:"brianna@example.com", q1:"Looking for a community of serious beauty pros who want more.", q2:"Mindset shift and business strategy.", q3:"No", status:"approved", date:"Apr 15", trialStart:"Apr 15", trialEnd:"Apr 22", paid:false },
-    { id:4, firstName:"Jasmine R.", email:"jasmine@example.com", q1:"I want to stop undercharging and finally build something sustainable.", q2:"Real guidance from someone who's done it.", q3:"Yes — Lash Artist", status:"approved", date:"Apr 10", trialStart:"Apr 10", trialEnd:"Apr 17", paid:true },
-  ]);
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [expanded, setExpanded] = useState(null);
 
-  const approve = (id) => {
-    setApplications(p => p.map(a => a.id === id ? { ...a, status:"approved", trialStart: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"}), trialEnd: new Date(Date.now()+7*24*60*60*1000).toLocaleDateString("en-US",{month:"short",day:"numeric"}) } : a));
+  useEffect(() => {
+    const fetchApplications = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("community_applications")
+        .select("*")
+        .order("applied_at", { ascending: false });
+      if (!error && data) {
+        setApplications(data.map(a => ({
+          id: a.id,
+          firstName: a.first_name,
+          email: a.email,
+          q1: a.q1,
+          q2: a.q2,
+          q3: a.q3,
+          status: a.status || "pending",
+          date: new Date(a.applied_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+          trialStart: a.trial_start ? new Date(a.trial_start).toLocaleDateString("en-US", { month:"short", day:"numeric" }) : null,
+          trialEnd: a.trial_end ? new Date(a.trial_end).toLocaleDateString("en-US", { month:"short", day:"numeric" }) : null,
+          paid: a.paid || false,
+        })));
+      }
+      setLoading(false);
+    };
+    fetchApplications();
+  }, []);
+
+  const approve = async (id) => {
+    const trialStart = new Date();
+    const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await supabase.from("community_applications").update({
+      status: "approved",
+      trial_start: trialStart.toISOString(),
+      trial_end: trialEnd.toISOString()
+    }).eq("id", id);
+    setApplications(p => p.map(a => a.id === id ? { ...a, status:"approved", trialStart: trialStart.toLocaleDateString("en-US",{month:"short",day:"numeric"}), trialEnd: trialEnd.toLocaleDateString("en-US",{month:"short",day:"numeric"}) } : a));
   };
-  const decline = (id) => setApplications(p => p.map(a => a.id === id ? { ...a, status:"declined" } : a));
-  const markPaid = (id) => setApplications(p => p.map(a => a.id === id ? { ...a, paid:true } : a));
+
+  const decline = async (id) => {
+    await supabase.from("community_applications").update({ status: "declined" }).eq("id", id);
+    setApplications(p => p.map(a => a.id === id ? { ...a, status:"declined" } : a));
+  };
+
+  const markPaid = async (id) => {
+    await supabase.from("community_applications").update({ paid: true }).eq("id", id);
+    setApplications(p => p.map(a => a.id === id ? { ...a, paid:true } : a));
+  };
 
   const statusColor = { pending:B.amber, approved:B.success, declined:B.mid };
   const statusBg = { pending:B.amberPale, approved:B.successPale, declined:B.off };
@@ -2556,7 +2595,8 @@ const ApplicationsView = () => {
             )}
           </div>
         ))}
-        {filtered.length === 0 && (
+        {loading && <div style={{ padding:"40px 20px", textAlign:"center", color:B.mid, fontSize:13, fontWeight:300 }}>Loading applications…</div>}
+        {!loading && filtered.length === 0 && (
           <div style={{ padding:"40px 20px", textAlign:"center", color:B.mid, fontSize:13, fontWeight:300 }}>No applications in this category yet.</div>
         )}
       </div>
