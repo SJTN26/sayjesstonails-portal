@@ -988,12 +988,19 @@ const CommunityApply = ({ onBack, onSubmit }) => {
   );
 
   return (
-    <div style={{ minHeight:"100dvh", background:B.black, display:"flex", alignItems:"center", justifyContent:"center", padding:"24px", fontFamily:FONTS.body }}>
+    <div style={{ minHeight:"100dvh", background:B.black, fontFamily:FONTS.body }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap');*,*::before,*::after{box-sizing:border-box;margin:0;padding:0} input,textarea{font-size:16px!important;font-family:inherit} button{-webkit-tap-highlight-color:transparent}`}</style>
+
+      {/* Top nav with back button */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding: isMobile ? "16px 20px" : "20px 40px", borderBottom:`1px solid #1e1e1e` }}>
+        <Logo height={isMobile?40:50} white />
+        <button onClick={onBack} style={{ display:"flex", alignItems:"center", gap:6, background:"none", border:`1px solid #333`, color:"#9a8880", padding:"8px 16px", fontSize:11, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}>
+          ← Back to Home
+        </button>
+      </div>
+
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:"40px 24px 60px" }}>
       <div style={{ width:"100%", maxWidth:480 }}>
-        <div style={{ display:"flex", justifyContent:"center", marginBottom:32 }}>
-          <Logo height={isMobile?48:60} white />
-        </div>
 
         {/* Progress */}
         <div style={{ display:"flex", gap:4, marginBottom:32 }}>
@@ -1063,6 +1070,7 @@ const CommunityApply = ({ onBack, onSubmit }) => {
         <p style={{ color:"#444", fontSize:9, textAlign:"center", marginTop:16, letterSpacing:"0.08em", lineHeight:1.8 }}>
           ALL APPLICATIONS REVIEWED · RESPONSE WITHIN 48 HOURS
         </p>
+      </div>
       </div>
     </div>
   );
@@ -2871,54 +2879,55 @@ const AdminDashboard = ({ onLogout }) => {
   );
 
   const MenteesView = (
-    <Pg title="Mentees" sub="All Enrolled" action={
-      <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-        <input
-          id="invite-name-input"
-          type="text"
-          placeholder="First name"
-          style={{ padding:"9px 14px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, width:130, boxSizing:"border-box" }}
-        />
-        <input
-          id="invite-email-input"
-          type="email"
-          placeholder="mentee@email.com"
-          style={{ padding:"9px 14px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, width:200, boxSizing:"border-box" }}
-        />
-        <select
-          id="invite-tier-select"
-          style={{ padding:"9px 12px", border:`1px solid ${B.cloud}`, fontSize:12, fontFamily:FONTS.body, outline:"none", color:B.black, background:B.white, boxSizing:"border-box" }}
-        >
-          <option value="Hourly Session">Hourly Session</option>
-          <option value="30-Day Intensive">30-Day Intensive</option>
-          <option value="3-Month Elite">3-Month Elite</option>
-        </select>
-        <button onClick={async () => {
-          const nameEl = document.getElementById("invite-name-input");
-          const emailEl = document.getElementById("invite-email-input");
-          const tierEl = document.getElementById("invite-tier-select");
-          const firstName = nameEl?.value?.trim();
-          const email = emailEl?.value?.trim();
-          if (!firstName) { alert("Please enter the mentee's first name."); return; }
-          if (!email) { alert("Please enter an email address."); return; }
-          try {
-            const { data, error } = await supabase.functions.invoke('invite-mentee', {
-              body: { email, tier: tierEl?.value || "Hourly Session", first_name: firstName }
-            });
-            if (error) throw error;
-            if (data?.error) throw new Error(data.error);
-            alert(`✓ Invite sent to ${firstName} at ${email} — they'll receive an email to set their password.`);
-            if (nameEl) nameEl.value = "";
-            if (emailEl) emailEl.value = "";
-          } catch (e) {
-            alert(`Error: ${e.message}`);
-          }
-        }} style={{ display:"flex", alignItems:"center", gap:6, padding:"9px 16px", background:B.blush, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase", whiteSpace:"nowrap" }}>
-          <Ic n="send" size={12} color={B.white} />Invite Mentee
-        </button>
+    <Pg title="Mentees" sub="All Enrolled">
+      <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderTop:`3px solid ${B.blush}`, padding:"20px", marginBottom:20 }}>
+        <p style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", margin:"0 0 14px" }}>Invite a Mentee</p>
+        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:10, marginBottom:10 }}>
+          <div>
+            <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>First Name</div>
+            <input id="invite-name-input" type="text" placeholder="e.g. Taylor" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
+          </div>
+          <div>
+            <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>Email Address</div>
+            <input id="invite-email-input" type="email" placeholder="mentee@email.com" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
+          </div>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr", gap:10 }}>
+          <div>
+            <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>Program Tier</div>
+            <select id="invite-tier-select" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, background:B.white, boxSizing:"border-box" }}>
+              <option value="Hourly Session">Hourly Session</option>
+              <option value="30-Day Intensive">30-Day Intensive</option>
+              <option value="3-Month Elite">3-Month Elite</option>
+            </select>
+          </div>
+          <div style={{ display:"flex", alignItems:"flex-end" }}>
+            <button onClick={async () => {
+              const nameEl = document.getElementById("invite-name-input");
+              const emailEl = document.getElementById("invite-email-input");
+              const tierEl = document.getElementById("invite-tier-select");
+              const firstName = nameEl?.value?.trim();
+              const email = emailEl?.value?.trim();
+              if (!firstName) { alert("Please enter the mentee's first name."); return; }
+              if (!email) { alert("Please enter an email address."); return; }
+              try {
+                const { data, error } = await supabase.functions.invoke('invite-mentee', {
+                  body: { email, tier: tierEl?.value || "Hourly Session", first_name: firstName }
+                });
+                if (error) throw error;
+                if (data?.error) throw new Error(data.error);
+                alert(`✓ Invite sent to ${firstName} at ${email} — they'll receive an email to set their password.`);
+                if (nameEl) nameEl.value = "";
+                if (emailEl) emailEl.value = "";
+              } catch (e) {
+                alert(`Error: ${e.message}`);
+              }
+            }} style={{ width:"100%", padding:"10px 16px", background:B.blush, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+              <Ic n="send" size={12} color={B.white} />Invite Mentee
+            </button>
+          </div>
+        </div>
       </div>
-    }>
-      <p style={{ color:B.mid, fontSize:13, margin:"-14px 0 20px", fontWeight:300 }}>Enter a mentee's email and select their tier — they'll receive a link to set their password and access the portal.</p>
       {menteeList.map((m, i) => {
         const pct = Math.round((m.sessionsCompleted / m.sessionsTotal) * 100);
         const done = m.milestones?.filter(x => x.done).length || 0;
