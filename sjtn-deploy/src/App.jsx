@@ -2855,10 +2855,11 @@ const AdminDashboard = ({ onLogout }) => {
           const email = emailEl?.value?.trim();
           if (!email) { alert("Please enter an email address."); return; }
           try {
-            const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
-              data: { tier: tierEl?.value || "Hourly Session", role: "mentee" }
+            const { data, error } = await supabase.functions.invoke('invite-mentee', {
+              body: { email, tier: tierEl?.value || "Hourly Session" }
             });
             if (error) throw error;
+            if (data?.error) throw new Error(data.error);
             alert(`✓ Invite sent to ${email} — they'll receive an email to set their password.`);
             if (emailEl) emailEl.value = "";
           } catch (e) {
