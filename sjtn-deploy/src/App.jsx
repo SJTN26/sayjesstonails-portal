@@ -2128,6 +2128,39 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
 
+  // Trial detection — community users without paid status are on trial
+  const isTrial = user.tierKey === "community" && !user.paid;
+
+  // Lock gate component for trial users
+  const LockedGate = ({ section }) => (
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:400, padding:"48px 24px", textAlign:"center" }}>
+      <div style={{ width:64, height:64, background:B.blushPale, border:`2px solid ${B.blushMid}`, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:24 }}>
+        <Ic n="lock" size={28} color={B.blush} />
+      </div>
+      <h3 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:32, textTransform:"uppercase", color:B.black, margin:"0 0 12px", letterSpacing:"-0.5px" }}>{section} is a<br/>Member Benefit</h3>
+      <p style={{ color:B.mid, fontSize:14, maxWidth:360, lineHeight:1.8, margin:"0 0 32px", fontWeight:300 }}>
+        You're currently on your free trial — community feed access only. Upgrade to full membership to unlock {section.toLowerCase()}, audio check-ins, and everything inside.
+      </p>
+      <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderTop:`3px solid ${B.blush}`, padding:"20px 24px", maxWidth:320, width:"100%", marginBottom:24, textAlign:"left" }}>
+        <div style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", marginBottom:12 }}>Full Membership Includes</div>
+        {["Community feed access", "Full resource library", "Jess's weekly audio check-ins", "Peer accountability & wins", "Direct path to 1:1 mentorship"].map((f, i) => (
+          <div key={i} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+            <div style={{ width:16, height:16, background:B.blush, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              <Ic n="check" size={9} color={B.white} sw={3} />
+            </div>
+            <span style={{ fontSize:13, color:B.charcoal, fontWeight:300 }}>{f}</span>
+          </div>
+        ))}
+        <div style={{ marginTop:16, paddingTop:16, borderTop:`1px solid ${B.cloud}` }}>
+          <span style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:28, color:B.black }}>$27</span>
+          <span style={{ fontSize:12, color:B.mid, fontWeight:300 }}>/month</span>
+        </div>
+      </div>
+      <Btn variant="blush" icon="zap" onClick={onUpgrade}>Upgrade to Full Membership</Btn>
+      <p style={{ color:B.mid, fontSize:11, marginTop:16, fontWeight:300 }}>Cancel anytime. No contracts.</p>
+    </div>
+  );
+
   const catColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
   const catLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
   const catIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
@@ -2162,6 +2195,17 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     feed: (
       <Pg title="Community Feed" sub="The Inner Circle">
         <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 20px", fontWeight: 300 }}>Real nail techs. Real growth. All in one place.</p>
+
+        {/* Trial banner */}
+        {isTrial && (
+          <div style={{ background:`${B.amber}12`, border:`1px solid ${B.amber}40`, borderLeft:`3px solid ${B.amber}`, padding:"14px 18px", marginBottom:16, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10 }}>
+            <div>
+              <div style={{ fontSize:9, fontWeight:700, color:B.amber, letterSpacing:2, textTransform:"uppercase", marginBottom:3 }}>Free Trial Active</div>
+              <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}>You have full feed access. Upgrade to unlock resources, audio check-ins and more.</div>
+            </div>
+            <button onClick={onUpgrade} style={{ padding:"8px 16px", background:B.amber, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap" }}>Upgrade — $27/mo</button>
+          </div>
+        )}
 
         {/* Audio check-in teaser */}
         <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setView("audio")}>
@@ -2227,7 +2271,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
       </Pg>
     ),
 
-    resources: (
+    resources: isTrial ? <LockedGate section="Resource Library" /> : (
       <Pg title="Resources" sub="Free for Members">
         <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 20px", fontWeight: 300 }}>Starter tools from Jess — yours as a community member.</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 24 }}>
@@ -2258,7 +2302,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
       </Pg>
     ),
 
-    audio: (
+    audio: isTrial ? <LockedGate section="Jess's Voice" /> : (
       <Pg title="Jess's Voice" sub="Weekly Check-In">
         <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 24px", fontWeight: 300 }}>A personal message from Jess every week — just for this community.</p>
         <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "28px 28px", marginBottom: 16 }}>
