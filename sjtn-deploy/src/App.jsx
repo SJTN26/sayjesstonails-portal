@@ -684,18 +684,43 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
     setBusy(false);
   }, [email, pass, firstName, onLogin]);
 
-  const login = useCallback(() => {
+  const login = useCallback(async () => {
     if (!Sec.rateOk(email)) { setLocked(true); setErr("Too many attempts. Please wait 15 minutes."); return; }
     if (!email.trim() || !pass.trim()) { setErr("Please enter your email and password."); return; }
     setBusy(true); setErr("");
-    setTimeout(() => {
-      Sec.record(email);
-      const u = DB.users[email.toLowerCase()];
-      if (u && u.password === pass) {
-        onLogin(email.toLowerCase(), u, Sec.createSession({ email: email.toLowerCase(), role: u.role }));
-      } else { setErr("Email or password is incorrect."); }
+    Sec.record(email);
+
+    // First check demo/hardcoded accounts
+    const u = DB.users[email.toLowerCase()];
+    if (u && u.password === pass) {
+      onLogin(email.toLowerCase(), u, Sec.createSession({ email: email.toLowerCase(), role: u.role }));
       setBusy(false);
-    }, 800);
+      return;
+    }
+
+    // Fall back to real Supabase auth for invited mentees
+    const { user, error } = await signIn(email.toLowerCase(), pass);
+    if (error) {
+      setErr("Email or password is incorrect.");
+      setBusy(false);
+      return;
+    }
+    if (user) {
+      const tier = user.user_metadata?.tier || "Hourly Session";
+      const role = user.user_metadata?.role || "mentee";
+      const firstName = user.user_metadata?.first_name || email.split("@")[0];
+      const userData = {
+        role,
+        firstName,
+        name: firstName,
+        email: email.toLowerCase(),
+        avatar: firstName.slice(0,2).toUpperCase(),
+        tier,
+        tierKey: tier.includes("Elite") ? "elite" : tier.includes("Intensive") ? "intensive" : "hourly",
+      };
+      onLogin(email.toLowerCase(), userData, Sec.createSession({ email: email.toLowerCase(), role }));
+    }
+    setBusy(false);
   }, [email, pass, onLogin]);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
