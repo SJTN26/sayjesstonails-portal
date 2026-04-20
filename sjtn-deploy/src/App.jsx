@@ -3252,15 +3252,15 @@ export default function App() {
   return (
     <>
       {screen === "setpassword"  && <SetPassword onDone={() => setScreen("auth")} />}
-      {screen === "landing"      && <Landing onSignIn={() => setScreen("auth")} onBook={() => setScreen("booking")} onApply={() => setScreen("apply")} />}
-      {screen === "auth"         && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => setScreen("booking")} />}
+      {screen === "landing"      && <Landing onSignIn={() => setScreen("auth")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} onApply={() => setScreen("apply")} />}
+      {screen === "auth"         && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} />}
       {screen === "apply"        && <CommunityApply onBack={() => setScreen("landing")} onSubmit={() => {}} />}
       {screen === "booking"      && <Booking onConfirm={f => { setBookedForm(f); setScreen("confirmation"); }} onBack={() => setScreen("landing")} />}
       {screen === "confirmation" && <Confirmation form={bookedForm} onHome={() => setScreen("landing")} onSignIn={() => setScreen("auth")} />}
       {screen === "portal"    && activeUser && sessionValid && <MenteePortal user={activeUser} onLogout={handleLogout} />}
-      {screen === "community" && activeUser && sessionValid && <CommunityPortal user={activeUser} onLogout={handleLogout} onUpgrade={() => setScreen("booking")} />}
+      {screen === "community" && activeUser && sessionValid && <CommunityPortal user={activeUser} onLogout={handleLogout} onUpgrade={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} />}
       {screen === "admin"     && activeUser && <AdminDashboard onLogout={handleLogout} />}
-      {(screen === "portal" || screen === "admin" || screen === "community") && !sessionValid && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => setScreen("booking")} />}
+      {(screen === "portal" || screen === "admin" || screen === "community") && !sessionValid && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} />}
     </>
   );
 }
