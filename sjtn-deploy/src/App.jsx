@@ -3029,6 +3029,70 @@ const AdminDashboard = ({ onLogout }) => {
 };
 
 /* ════════════════════════════════════════════════════════════════════════
+   SET PASSWORD SCREEN
+════════════════════════════════════════════════════════════════════════ */
+const SetPassword = ({ onDone }) => {
+  const { isMobile } = useLayout();
+  const [pass, setPass] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const submit = async () => {
+    if (pass.length < 8) { setErr("Password must be at least 8 characters."); return; }
+    if (pass !== confirm) { setErr("Passwords don't match."); return; }
+    setBusy(true); setErr("");
+    const { error } = await supabase.auth.updateUser({ password: pass });
+    if (error) { setErr(error.message); setBusy(false); return; }
+    setDone(true);
+    setTimeout(() => onDone(), 2000);
+  };
+
+  const inp = { width:"100%", padding:"14px 18px", background:"transparent", border:`1px solid #333`, fontSize:15, color:B.ivory, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", borderRadius:0 };
+
+  return (
+    <div style={{ minHeight:"100dvh", background:B.black, display:"flex", alignItems:"center", justifyContent:"center", padding:"24px", fontFamily:FONTS.body }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap');*,*::before,*::after{box-sizing:border-box;margin:0;padding:0} input{font-size:16px!important;font-family:inherit} button{-webkit-tap-highlight-color:transparent}`}</style>
+      <div style={{ width:"100%", maxWidth:420 }}>
+        <div style={{ display:"flex", justifyContent:"center", marginBottom:36 }}>
+          <Logo height={isMobile?48:64} white />
+        </div>
+        <div style={{ background:"#0d0d0d", border:`1px solid #1e1e1e`, padding:isMobile?"32px 24px":"48px 44px" }}>
+          <div style={{ height:3, background:B.blush, margin:isMobile?"-32px -24px 28px":"-48px -44px 36px" }} />
+          {done ? (
+            <div style={{ textAlign:"center" }}>
+              <div style={{ width:56, height:56, background:`${B.blush}20`, border:`2px solid ${B.blush}`, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 20px" }}>
+                <Ic n="check" size={24} color={B.blush} sw={2.5} />
+              </div>
+              <h2 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:36, textTransform:"uppercase", color:B.ivory, margin:"0 0 12px" }}>You're in!</h2>
+              <p style={{ color:"#9a8880", fontSize:13, fontWeight:300 }}>Password set. Taking you to your portal…</p>
+            </div>
+          ) : (
+            <>
+              <h2 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:isMobile?40:52, textTransform:"uppercase", color:B.ivory, margin:"0 0 8px", letterSpacing:"-1px", lineHeight:0.95 }}>Set Your<br/><span style={{ color:B.blush, fontStyle:"italic", fontWeight:300 }}>Password.</span></h2>
+              <p style={{ color:"#9a8880", fontSize:13, margin:"0 0 32px", fontWeight:300, lineHeight:1.6 }}>Choose a password to access your portal. At least 8 characters.</p>
+
+              <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>New Password</label>
+              <input value={pass} onChange={e => { setPass(e.target.value); setErr(""); }} type="password" placeholder="At least 8 characters" style={{ ...inp, marginBottom:16 }} />
+
+              <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>Confirm Password</label>
+              <input value={confirm} onChange={e => { setConfirm(e.target.value); setErr(""); }} type="password" placeholder="Repeat your password" style={{ ...inp, marginBottom: err ? 12 : 24 }} />
+
+              {err && <div style={{ color:B.blushLight, fontSize:12, marginBottom:16, padding:"10px 14px", background:`${B.blush}15`, borderLeft:`3px solid ${B.blush}`, fontWeight:300 }}>{err}</div>}
+
+              <Btn full variant="blush" onClick={submit} disabled={busy} style={{ padding:"15px", fontSize:13 }}>
+                {busy ? "Setting password…" : "Set Password & Enter Portal"}
+              </Btn>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════════════
    ROOT
 ════════════════════════════════════════════════════════════════════════ */
 export default function App() {
@@ -3038,6 +3102,22 @@ export default function App() {
   const [bookedForm, setBookedForm] = useState(null);
 
   useEffect(() => {
+    // Check for invite/recovery token in URL hash
+    const hash = window.location.hash;
+    if (hash && hash.includes("type=invite") || hash.includes("type=recovery")) {
+      const params = new URLSearchParams(hash.replace("#", ""));
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      if (accessToken) {
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken || "" })
+          .then(() => {
+            setScreen("setpassword");
+            window.history.replaceState(null, "", window.location.pathname);
+          });
+        return;
+      }
+    }
+
     try {
       const stored = sessionStorage.getItem("sjtn_session");
       if (stored) {
@@ -3070,6 +3150,7 @@ export default function App() {
 
   return (
     <>
+      {screen === "setpassword"  && <SetPassword onDone={() => setScreen("auth")} />}
       {screen === "landing"      && <Landing onSignIn={() => setScreen("auth")} onBook={() => setScreen("booking")} onApply={() => setScreen("apply")} />}
       {screen === "auth"         && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => setScreen("booking")} />}
       {screen === "apply"        && <CommunityApply onBack={() => setScreen("landing")} onSubmit={() => {}} />}
