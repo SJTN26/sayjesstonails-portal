@@ -2201,7 +2201,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
           <div style={{ background:`${B.amber}12`, border:`1px solid ${B.amber}40`, borderLeft:`3px solid ${B.amber}`, padding:"14px 18px", marginBottom:16, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10 }}>
             <div>
               <div style={{ fontSize:9, fontWeight:700, color:B.amber, letterSpacing:2, textTransform:"uppercase", marginBottom:3 }}>Free Trial Active</div>
-              <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}>You have full feed access. Upgrade to unlock resources, audio check-ins and more.</div>
+              <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}><strong style={{ fontWeight:700 }}>Community Feed Access Only.</strong> Resources and audio check-ins unlock with full membership.</div>
             </div>
             <button onClick={onUpgrade} style={{ padding:"8px 16px", background:B.amber, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap" }}>Upgrade — $27/mo</button>
           </div>
