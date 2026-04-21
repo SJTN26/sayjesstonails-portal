@@ -940,6 +940,7 @@ const CommunityApply = ({ onBack, onSubmit }) => {
   const submit = async () => {
     if (!form.q1.trim() || !form.q2.trim()) { setErr("Please answer all questions."); return; }
     setBusy(true);
+    const q3 = form.isBeautyPro === "yes" ? `Yes — ${form.field}` : "No";
     // Save application to Supabase
     try {
       const { error } = await supabase.from("community_applications").insert([{
@@ -947,7 +948,7 @@ const CommunityApply = ({ onBack, onSubmit }) => {
         email: form.email.toLowerCase(),
         q1: form.q1,
         q2: form.q2,
-        q3: form.isBeautyPro === "yes" ? `Yes — ${form.field}` : "No",
+        q3,
         status: "pending",
         applied_at: new Date().toISOString(),
         paid: false
@@ -957,6 +958,20 @@ const CommunityApply = ({ onBack, onSubmit }) => {
       }
     } catch (e) {
       console.error("Insert failed:", e);
+    }
+    // Notify Jess via email
+    try {
+      await supabase.functions.invoke('notify-new-application', {
+        body: {
+          firstName: form.firstName,
+          email: form.email.toLowerCase(),
+          q1: form.q1,
+          q2: form.q2,
+          q3
+        }
+      });
+    } catch (e) {
+      console.error("Notification failed:", e);
     }
     setBusy(false); setDone(true);
     if (onSubmit) onSubmit(form);
