@@ -1234,7 +1234,7 @@ const Confirmation = ({ form, onHome, onSignIn }) => {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} @keyframes pop{0%{transform:scale(.5);opacity:0}80%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}`}</style>
       <div style={{ maxWidth: 520, width: "100%", textAlign: "center" }}>
         <div style={{ width: 56, height: 56, background: B.successPale, border: `2px solid ${B.success}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", animation: "pop .4s ease" }}><Ic n="check" size={26} color={B.success} sw={2.5} /></div>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}><Logo height={32} /></div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}><Logo height={isMobile ? 48 : 64} /></div>
         <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 40 : 52, textTransform: "uppercase", color: B.black, margin: "0 0 12px", lineHeight: 0.95, letterSpacing: "-0.5px" }}>You're one step closer.</h1>
         <p style={{ color: B.steel, fontSize: 14, margin: "0 0 28px", lineHeight: 1.7, fontWeight: 300 }}>Your request is with Jess. She reviews every submission personally and will confirm within 24 hours.</p>
 
@@ -1258,7 +1258,7 @@ const Confirmation = ({ form, onHome, onSignIn }) => {
 
         <div style={{ display: "flex", gap: 2, flexDirection: isMobile ? "column" : "row" }}>
           <Btn full variant="ghost" onClick={onHome}>Back to Homepage</Btn>
-          <Btn full variant="blush" onClick={onSignIn} icon="lock">Have an account? Sign in</Btn>
+          <Btn full variant="primary" onClick={onSignIn} icon="lock">Have an account? Sign in</Btn>
         </div>
       </div>
     </div>
