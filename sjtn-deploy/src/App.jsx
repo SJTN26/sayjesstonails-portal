@@ -1297,120 +1297,75 @@ const MenteePg = ({ title, sub, children }) => {
    VIDEO CALL MODAL — shared across all portals
 ════════════════════════════════════════════════════════════════════════ */
 const VideoCallModal = ({ onClose, sessionName = "Session", participantName = "Jess", isHost = false }) => {
-  const [muted, setMuted] = useState(false);
-  const [videoOff, setVideoOff] = useState(false);
+  const [roomUrl, setRoomUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [elapsed, setElapsed] = useState(0);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [callMsg, setCallMsg] = useState("");
-  const [callMsgs, setCallMsgs] = useState([
-    { from: isHost ? participantName : "Jess", text: "Hey! Ready to dive in?", t: "just now" }
-  ]);
+
   useEffect(() => {
     const t = setInterval(() => setElapsed(s => s + 1), 1000);
     return () => clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    const createRoom = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('create-video-room', {
+          body: { sessionName, participantName }
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setRoomUrl(data.url);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    createRoom();
+  }, []);
+
   const fmt = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
-  const sendCallMsg = () => {
-    if (!callMsg.trim()) return;
-    setCallMsgs(p => [...p, { from: isHost ? "Jess" : participantName, text: callMsg, t: "just now" }]);
-    setCallMsg("");
-  };
+
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.95)", zIndex:9999, display:"flex", flexDirection:"column" }}>
-      <style>{`.vcam{background:#1a1a1a;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}`}</style>
+    <div style={{ position:"fixed", inset:0, background:"#0d0d0d", zIndex:9999, display:"flex", flexDirection:"column" }}>
 
       {/* Top bar */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 20px", background:"#111", flexShrink:0 }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 20px", background:"#111", flexShrink:0, borderBottom:"1px solid #1e1e1e" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <div style={{ width:8, height:8, borderRadius:"50%", background:"#ef4444" }} />
+          <div style={{ width:8, height:8, borderRadius:"50%", background: loading ? "#f59e0b" : roomUrl ? "#22c55e" : "#ef4444" }} />
           <span style={{ color:B.white, fontSize:13, fontWeight:700, fontFamily:FONTS.body, letterSpacing:"0.05em" }}>{sessionName}</span>
           <span style={{ color:"#9a8880", fontSize:11, fontFamily:FONTS.body, fontWeight:300 }}>{fmt(elapsed)}</span>
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <span style={{ fontSize:9, color:"#9a8880", fontFamily:FONTS.body, letterSpacing:2, textTransform:"uppercase" }}>Demo Mode</span>
-          <button onClick={() => setChatOpen(s => !s)} style={{ padding:"6px 12px", background: chatOpen ? B.blush : "#333", border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>
-            Chat {callMsgs.length > 0 && <span style={{ marginLeft:4, background:B.blush, color:B.white, fontSize:8, padding:"1px 5px", borderRadius:8 }}>{callMsgs.length}</span>}
-          </button>
-        </div>
+        <button onClick={onClose} style={{ display:"flex", alignItems:"center", gap:6, background:"#ef4444", border:"none", padding:"8px 16px", cursor:"pointer", borderRadius:4 }}>
+          <Ic n="close" size={14} color={B.white} />
+          <span style={{ fontSize:10, color:B.white, fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>End Call</span>
+        </button>
       </div>
 
       {/* Main area */}
-      <div style={{ flex:1, display:"flex", gap:2, padding:"12px", overflow:"hidden", minHeight:0 }}>
-
-        {/* Video tiles */}
-        <div style={{ flex:1, display:"flex", flexDirection:"column", gap:8, minWidth:0 }}>
-          {/* Main participant tile */}
-          <div className="vcam" style={{ flex:2 }}>
-            {videoOff
-              ? <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
-                  <div style={{ width:72, height:72, borderRadius:"50%", background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, fontWeight:700, color:B.white }}>{isHost ? "JR" : participantName.split(" ").map(w=>w[0]).join("")}</div>
-                  <span style={{ color:"#9a8880", fontSize:12, fontFamily:FONTS.body }}>Camera off</span>
-                </div>
-              : <div style={{ width:"100%", height:"100%", background:"linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                  <div style={{ textAlign:"center" }}>
-                    <div style={{ width:80, height:80, borderRadius:"50%", background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, fontWeight:700, color:B.white, margin:"0 auto 12px", border:"3px solid rgba(196,96,122,0.4)" }}>{isHost ? "JR" : participantName.split(" ").map(w=>w[0]).join("")}</div>
-                    <span style={{ color:"#ccc", fontSize:13, fontFamily:FONTS.body, fontWeight:300 }}>Camera preview</span>
-                  </div>
-                </div>
-            }
-            <div style={{ position:"absolute", bottom:10, left:12, background:"rgba(0,0,0,0.6)", padding:"3px 10px", borderRadius:4 }}>
-              <span style={{ color:B.white, fontSize:10, fontFamily:FONTS.body }}>{isHost ? "Jess (Host)" : participantName}</span>
-            </div>
-          </div>
-
-          {/* Self tile */}
-          <div className="vcam" style={{ flex:1 }}>
-            <div style={{ width:"100%", height:"100%", background:"#222", display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <div style={{ textAlign:"center" }}>
-                <div style={{ width:48, height:48, borderRadius:"50%", background:"#444", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:B.white, margin:"0 auto 8px" }}>YOU</div>
-                <span style={{ color:"#666", fontSize:11, fontFamily:FONTS.body }}>Your camera</span>
-              </div>
-            </div>
-            <div style={{ position:"absolute", bottom:8, left:10, background:"rgba(0,0,0,0.6)", padding:"2px 8px", borderRadius:4 }}>
-              <span style={{ color:B.white, fontSize:9, fontFamily:FONTS.body }}>You</span>
-            </div>
-            {muted && <div style={{ position:"absolute", top:8, right:8, background:"#ef4444", borderRadius:"50%", padding:4 }}><Ic n="mic" size={10} color={B.white} /></div>}
-          </div>
-        </div>
-
-        {/* Chat panel */}
-        {chatOpen && (
-          <div style={{ width:260, background:"#111", borderRadius:8, display:"flex", flexDirection:"column", flexShrink:0 }}>
-            <div style={{ padding:"12px 14px", borderBottom:"1px solid #222" }}>
-              <span style={{ color:B.white, fontSize:11, fontWeight:700, fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>In-Call Chat</span>
-            </div>
-            <div style={{ flex:1, overflowY:"auto", padding:"12px 14px", display:"flex", flexDirection:"column", gap:10 }}>
-              {callMsgs.map((m, i) => (
-                <div key={i}>
-                  <div style={{ fontSize:9, color:"#666", fontFamily:FONTS.body, marginBottom:3 }}>{m.from}</div>
-                  <div style={{ background:"#1e1e1e", padding:"8px 10px", borderRadius:6, fontSize:12, color:"#ddd", fontFamily:FONTS.body, lineHeight:1.5 }}>{m.text}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ padding:"10px 12px", borderTop:"1px solid #222", display:"flex", gap:6 }}>
-              <input value={callMsg} onChange={e=>setCallMsg(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendCallMsg()} placeholder="Message..." style={{ flex:1, background:"#1e1e1e", border:"1px solid #333", color:B.white, padding:"8px 10px", fontSize:12, fontFamily:FONTS.body, outline:"none", borderRadius:4 }} />
-              <button onClick={sendCallMsg} style={{ background:B.blush, border:"none", padding:"8px 10px", cursor:"pointer", borderRadius:4 }}><Ic n="send" size={12} color={B.white} /></button>
-            </div>
+      <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", minHeight:0 }}>
+        {loading && (
+          <div style={{ textAlign:"center" }}>
+            <div style={{ width:48, height:48, border:"3px solid #333", borderTop:`3px solid ${B.blush}`, borderRadius:"50%", margin:"0 auto 20px", animation:"spin 1s linear infinite" }} />
+            <p style={{ color:"#9a8880", fontSize:13, fontFamily:FONTS.body, fontWeight:300 }}>Setting up your session room…</p>
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
         )}
-      </div>
-
-      {/* Controls */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:12, padding:"16px 20px", background:"#111", flexShrink:0 }}>
-        {[
-          { icon: muted ? "mic" : "mic", label: muted ? "Unmute" : "Mute", action: ()=>setMuted(s=>!s), active: muted },
-          { icon: "eye", label: videoOff ? "Start Video" : "Stop Video", action: ()=>setVideoOff(s=>!s), active: videoOff },
-          { icon: "message", label: "Chat", action: ()=>setChatOpen(s=>!s), active: chatOpen },
-        ].map(({ icon, label, action, active }) => (
-          <button key={label} onClick={action} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, background: active ? "#333" : "transparent", border:"1px solid #333", padding:"10px 18px", cursor:"pointer", borderRadius:6, minWidth:70 }}>
-            <Ic n={icon} size={18} color={active ? B.blush : "#aaa"} />
-            <span style={{ fontSize:9, color: active ? B.blush : "#aaa", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>{label}</span>
-          </button>
-        ))}
-        <button onClick={onClose} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, background:"#ef4444", border:"none", padding:"10px 20px", cursor:"pointer", borderRadius:6, minWidth:80 }}>
-          <Ic n="close" size={18} color={B.white} />
-          <span style={{ fontSize:9, color:B.white, fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>End Call</span>
-        </button>
+        {error && (
+          <div style={{ textAlign:"center", padding:32 }}>
+            <p style={{ color:"#ef4444", fontSize:13, fontFamily:FONTS.body, marginBottom:16 }}>Could not create video room: {error}</p>
+            <button onClick={onClose} style={{ padding:"10px 24px", background:B.blush, border:"none", color:B.white, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Close</button>
+          </div>
+        )}
+        {roomUrl && (
+          <iframe
+            src={roomUrl}
+            allow="camera; microphone; fullscreen; speaker; display-capture"
+            style={{ width:"100%", height:"100%", border:"none" }}
+            title="Video Session"
+          />
+        )}
       </div>
     </div>
   );
