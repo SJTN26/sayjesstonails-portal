@@ -1421,10 +1421,39 @@ const MenteePortal = ({ user, onLogout }) => {
   const { isMobile, useSidebar } = useLayout();
   const [view, setView] = useState("dashboard");
   const [callActive, setCallActive] = useState(false);
-  const [msgs, setMsgs] = useState(user.messages);
+  const [msgs, setMsgs] = useState(user.messages || []);
   const [msgInput, setMsgInput] = useState("");
   const [docFilter, setDocFilter] = useState("All");
   const msgEnd = useRef(null);
+
+  // Merge real Supabase profile data for non-demo users
+  const [profile, setProfile] = useState(user);
+  useEffect(() => {
+    const isDemoUser = !!user.password; // demo users have password in their object
+    if (!isDemoUser && user.email) {
+      supabase.from("mentee_profiles").select("*").eq("email", user.email).single()
+        .then(({ data }) => {
+          if (data) {
+            setProfile(p => ({
+              ...p,
+              tier: data.tier || p.tier,
+              tierKey: data.tier_key || p.tierKey,
+              startDate: data.start_date || p.startDate,
+              daysRemaining: data.days_remaining ?? p.daysRemaining,
+              totalDays: data.total_days || p.totalDays,
+              sessionsCompleted: data.sessions_completed ?? p.sessionsCompleted,
+              sessionsTotal: data.sessions_total || p.sessionsTotal,
+              goal: data.goal || p.goal,
+              nextSession: data.next_session_date ? {
+                date: data.next_session_date,
+                time: data.next_session_time || "",
+                type: data.next_session_type || "Session"
+              } : p.nextSession,
+            }));
+          }
+        });
+    }
+  }, [user.email]);
 
   // ── Feature state ──────────────────────────────────────────────────
   const [wins, setWins] = useState([
@@ -1435,7 +1464,7 @@ const MenteePortal = ({ user, onLogout }) => {
   const [winCat, setWinCat] = useState("pricing");
   const [celebratingWin, setCelebratingWin] = useState(null);
 
-  const [milestones, setMilestones] = useState(user.milestones || []);
+  const [milestones, setMilestones] = useState(profile.milestones || []);
   const [celebratingMilestone, setCelebratingMilestone] = useState(null);
 
   const [communityPosts, setCommunityPosts] = useState([
@@ -1463,8 +1492,8 @@ const MenteePortal = ({ user, onLogout }) => {
   // ── Computed ────────────────────────────────────────────────────────
   const unread = msgs.filter(m => m.unread && m.from !== "You").length;
   const done = milestones.filter(m => m.done).length;
-  const pct = user.sessionsTotal ? Math.round((user.sessionsCompleted / user.sessionsTotal) * 100) : 0;
-  const dayPct = user.totalDays ? Math.round(((user.totalDays - user.daysRemaining) / user.totalDays) * 100) : 0;
+  const pct = profile.sessionsTotal ? Math.round((profile.sessionsCompleted / profile.sessionsTotal) * 100) : 0;
+  const dayPct = profile.totalDays ? Math.round(((profile.totalDays - profile.daysRemaining) / profile.totalDays) * 100) : 0;
 
   const sendMsg = () => { if (!msgInput.trim()) return; setMsgs(p => [...p, { from: "You", time: "Just now", text: msgInput }]); setMsgInput(""); setTimeout(() => setMsgs(p => [...p, { from: "Jess", time: "Just now", text: "Thanks — I'll respond within 48 hours. You're doing amazing, keep pushing." }]), 1000); };
   useEffect(() => { msgEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
@@ -1521,7 +1550,7 @@ const MenteePortal = ({ user, onLogout }) => {
   const views = {
     dashboard: (
       <Pg title={`Hi, ${user.firstName}.`} sub="Welcome Back">
-        <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 18px", fontWeight: 300 }}>{user.daysRemaining} days remaining in your {user.tier}.</p>
+        <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 18px", fontWeight: 300 }}>{profile.daysRemaining} days remaining in your {profile.tier}.</p>
 
         {/* ── Jess's Voice — weekly audio message ── */}
         <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 16, cursor: "pointer" }} onClick={() => setAudioPlaying(p => !p)}>
@@ -1539,8 +1568,8 @@ const MenteePortal = ({ user, onLogout }) => {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 2, marginBottom: 16 }}>
-          <StatTile value={`${user.sessionsCompleted}/${user.sessionsTotal}`} label="Sessions" />
-          <StatTile value={user.daysRemaining} label="Days Left" />
+          <StatTile value={`${profile.sessionsCompleted}/${profile.sessionsTotal}`} label="Sessions" />
+          <StatTile value={profile.daysRemaining} label="Days Left" />
           <StatTile value={`${done}/${milestones.length}`} label="Milestones" />
           <StatTile value={`${pct}%`} label="Progress" accent />
         </div>
@@ -1549,8 +1578,8 @@ const MenteePortal = ({ user, onLogout }) => {
         <div style={{ background: B.black, padding: isMobile ? "20px" : "24px 28px", marginBottom: 16, borderLeft: `3px solid ${B.blush}`, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", right: -20, top: -20, width: 100, height: 100, borderRadius: "50%", background: `${B.blush}0A` }} />
           <Section style={{ color: B.blushLight, marginBottom: 10 }}>Next Session</Section>
-          <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{user.nextSession?.type}</div>
-          <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
+          <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{profile.nextSession?.type}</div>
+          <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{profile.nextSession?.date} · {profile.nextSession?.time}</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
             {!sessionPrep.submitted && <Btn variant="ghostDark" icon="clipBoard" onClick={() => setView("sessionprep")}>Prepare for Session</Btn>}
@@ -1626,11 +1655,11 @@ const MenteePortal = ({ user, onLogout }) => {
       <Pg title="Sessions" sub="Live Sessions">
         <div style={{ background: B.black, padding: "22px 24px", marginBottom: 14, borderLeft: `3px solid ${B.blush}` }}>
           <Section style={{ color: B.blushLight, marginBottom: 8 }}>Up Next</Section>
-          <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.03em" }}>{user.nextSession?.type}</div>
-          <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
+          <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.03em" }}>{profile.nextSession?.type}</div>
+          <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{profile.nextSession?.date} · {profile.nextSession?.time}</div>
           <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
         </div>
-        {Array.from({ length: user.sessionsCompleted || 0 }, (_, i) => (
+        {Array.from({ length: profile.sessionsCompleted || 0 }, (_, i) => (
           <Card key={i} style={{ padding: "14px 18px", marginBottom: 2 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <div>
@@ -1647,7 +1676,7 @@ const MenteePortal = ({ user, onLogout }) => {
     schedule: (
       <Pg title="Schedule" sub="Upcoming">
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2, marginBottom: 20 }}>
-          {user.schedule?.map((s, i) => {
+          {profile.schedule?.map((s, i) => {
             const typeColor = { session: B.blush, checkin: B.success, review: "#9B6EA0" }[s.type] || B.mid;
             return (
               <Card key={i} style={{ padding: "16px 18px", borderTop: `3px solid ${typeColor}` }}>
@@ -1700,12 +1729,12 @@ const MenteePortal = ({ user, onLogout }) => {
     documents: (
       <Pg title="Files" sub="Documents">
         <div style={{ display: "flex", gap: 2, marginBottom: 16, overflowX: "auto", paddingBottom: 2 }}>
-          {["All", ...new Set(user.documents?.map(d => d.category) || [])].map(c => (
+          {["All", ...new Set(profile.documents?.map(d => d.category) || [])].map(c => (
             <button key={c} onClick={() => setDocFilter(c)} style={{ padding: "7px 14px", border: `1px solid ${docFilter === c ? B.blush : B.cloud}`, background: docFilter === c ? B.blushPale : "transparent", color: docFilter === c ? B.blush : B.mid, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, whiteSpace: "nowrap", flexShrink: 0, letterSpacing: 1.5, textTransform: "uppercase" }}>{c}</button>
           ))}
         </div>
         <Card style={{ overflow: "hidden" }}>
-          {(docFilter === "All" ? user.documents || [] : user.documents?.filter(d => d.category === docFilter) || []).map((doc, i, arr) => (
+          {(docFilter === "All" ? profile.documents || [] : profile.documents?.filter(d => d.category === docFilter) || []).map((doc, i, arr) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 18px", borderBottom: i < arr.length - 1 ? `1px solid ${B.cloud}` : "none" }}>
               <div style={{ width: 34, height: 34, background: doc.type === "Video" ? B.black : B.off, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <Ic n={doc.type === "Video" ? "play" : "file"} size={14} color={doc.type === "Video" ? B.white : B.steel} />
@@ -1728,7 +1757,7 @@ const MenteePortal = ({ user, onLogout }) => {
       <Pg title="Progress" sub="My Journey">
         <div style={{ background: B.black, padding: "24px 24px", marginBottom: 16, borderLeft: `3px solid ${B.blush}` }}>
           <Section style={{ color: B.blushLight, marginBottom: 10 }}>Your Goal</Section>
-          <p style={{ fontFamily: FONTS.script, fontStyle: "italic", fontSize: isMobile ? 16 : 19, color: B.ivory, margin: 0, lineHeight: 1.45, fontWeight: 400 }}>"{user.goal}"</p>
+          <p style={{ fontFamily: FONTS.script, fontStyle: "italic", fontSize: isMobile ? 16 : 19, color: B.ivory, margin: 0, lineHeight: 1.45, fontWeight: 400 }}>"{profile.goal}"</p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2, marginBottom: 12 }}>
           <Card style={{ padding: "18px 20px" }}>
@@ -1745,13 +1774,13 @@ const MenteePortal = ({ user, onLogout }) => {
           </Card>
           <Card style={{ padding: "18px 20px" }}>
             <Section style={{ marginBottom: 12 }}>Sessions</Section>
-            {Array.from({ length: user.sessionsTotal || 0 }, (_, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < (user.sessionsTotal - 1) ? `1px solid ${B.cloud}` : "none" }}>
-                <div style={{ width: 20, height: 20, background: i < user.sessionsCompleted ? B.blush : B.cloud, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {i < user.sessionsCompleted ? <Ic n="check" size={10} color={B.white} /> : <span style={{ fontSize: 8, color: B.mid, fontWeight: 700 }}>{i + 1}</span>}
+            {Array.from({ length: profile.sessionsTotal || 0 }, (_, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < (profile.sessionsTotal - 1) ? `1px solid ${B.cloud}` : "none" }}>
+                <div style={{ width: 20, height: 20, background: i < profile.sessionsCompleted ? B.blush : B.cloud, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {i < profile.sessionsCompleted ? <Ic n="check" size={10} color={B.white} /> : <span style={{ fontSize: 8, color: B.mid, fontWeight: 700 }}>{i + 1}</span>}
                 </div>
-                <span style={{ fontSize: 11, color: i < user.sessionsCompleted ? B.mid : B.charcoal, fontWeight: 300 }}>Session {i + 1}</span>
-                {i === user.sessionsCompleted && <BlushTag>Next</BlushTag>}
+                <span style={{ fontSize: 11, color: i < profile.sessionsCompleted ? B.mid : B.charcoal, fontWeight: 300 }}>Session {i + 1}</span>
+                {i === profile.sessionsCompleted && <BlushTag>Next</BlushTag>}
               </div>
             ))}
           </Card>
@@ -1881,9 +1910,9 @@ const MenteePortal = ({ user, onLogout }) => {
 
     // ── 3. SESSION PREP ────────────────────────────────────────────────
     sessionprep: (
-      <Pg title="Session Prep" sub={`For ${user.nextSession?.type}`}>
+      <Pg title="Session Prep" sub={`For ${profile.nextSession?.type}`}>
         <div style={{ background: B.black, padding: "16px 20px", marginBottom: 20, borderLeft: `3px solid ${B.blush}` }}>
-          <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>{user.nextSession?.date} · {user.nextSession?.time}</div>
+          <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>{profile.nextSession?.date} · {profile.nextSession?.time}</div>
           <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300, marginTop: 2 }}>Your answers go directly to Jess before the call so she's prepared for YOU.</div>
         </div>
         {sessionPrep.submitted ? (
@@ -1915,9 +1944,9 @@ const MenteePortal = ({ user, onLogout }) => {
       <Pg title="Resources" sub="Resource Library">
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Tools, guides, and templates curated by Jess for your growth.</p>
         {[
-          { topic: "Pricing", color: B.blush, items: [{ name: "Pricing Calculator Workbook", type: "PDF", desc: "Set your prices with confidence using Jess's formula.", unlocked: true }, { name: "How to Raise Prices Without Losing Clients", type: "Guide", desc: "The exact language and timing strategy Jess uses.", unlocked: true }, { name: "Price Increase Announcement Templates", type: "Templates", desc: "3 caption templates ready to copy and customize.", unlocked: user.tierKey !== "hourly" }] },
-          { topic: "Client Attraction", color: B.success, items: [{ name: "Instagram Bio Formula", type: "Template", desc: "A bio that converts visitors to bookings.", unlocked: true }, { name: "5-Day Content Plan for Nail Techs", type: "PDF", desc: "Post ideas for every day of your first week.", unlocked: true }, { name: "Rebooking Script", type: "Guide", desc: "What to say at checkout to guarantee the next appointment.", unlocked: user.tierKey !== "hourly" }] },
-          { topic: "Business Setup", color: "#9B6EA0", items: [{ name: "Nail Tech Business Checklist", type: "PDF", desc: "Everything you need to operate legally and professionally.", unlocked: true }, { name: "Service Menu Template", type: "Template", desc: "A clean, professional service menu design.", unlocked: user.tierKey === "elite" }] },
+          { topic: "Pricing", color: B.blush, items: [{ name: "Pricing Calculator Workbook", type: "PDF", desc: "Set your prices with confidence using Jess's formula.", unlocked: true }, { name: "How to Raise Prices Without Losing Clients", type: "Guide", desc: "The exact language and timing strategy Jess uses.", unlocked: true }, { name: "Price Increase Announcement Templates", type: "Templates", desc: "3 caption templates ready to copy and customize.", unlocked: profile.tierKey !== "hourly" }] },
+          { topic: "Client Attraction", color: B.success, items: [{ name: "Instagram Bio Formula", type: "Template", desc: "A bio that converts visitors to bookings.", unlocked: true }, { name: "5-Day Content Plan for Nail Techs", type: "PDF", desc: "Post ideas for every day of your first week.", unlocked: true }, { name: "Rebooking Script", type: "Guide", desc: "What to say at checkout to guarantee the next appointment.", unlocked: profile.tierKey !== "hourly" }] },
+          { topic: "Business Setup", color: "#9B6EA0", items: [{ name: "Nail Tech Business Checklist", type: "PDF", desc: "Everything you need to operate legally and professionally.", unlocked: true }, { name: "Service Menu Template", type: "Template", desc: "A clean, professional service menu design.", unlocked: profile.tierKey === "elite" }] },
         ].map(({ topic, color, items }) => (
           <div key={topic} style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -1999,7 +2028,7 @@ const MenteePortal = ({ user, onLogout }) => {
             <Section>Transaction History</Section>
             <span style={{ fontSize: 9, fontWeight: 700, color: B.success, letterSpacing: 1.5, textTransform: "uppercase" }}>All Paid</span>
           </div>
-          {user.payments?.map((p, i) => (
+          {profile.payments?.map((p, i) => (
             <div key={i} style={{ padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
               <div><div style={{ fontSize: 13, fontWeight: 600, color: B.black, letterSpacing: "0.02em" }}>{p.desc}</div><div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 2 }}>{p.date}</div></div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -2040,7 +2069,7 @@ const MenteePortal = ({ user, onLogout }) => {
 
   return (
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off, position: "relative" }}>
-      {callActive && <VideoCallModal onClose={() => setCallActive(false)} sessionName={user.nextSession?.type || "Session"} participantName="Jess" isHost={false} />}
+      {callActive && <VideoCallModal onClose={() => setCallActive(false)} sessionName={profile.nextSession?.type || "Session"} participantName="Jess" isHost={false} />}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:all .18s} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}} @keyframes celebPop{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.08) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}} @keyframes celebFade{0%{opacity:1}70%{opacity:1}100%{opacity:0}} @keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(80px) rotate(360deg);opacity:0}}`}</style>
 
       {/* ── Celebration overlays ── */}
@@ -2071,7 +2100,7 @@ const MenteePortal = ({ user, onLogout }) => {
           <div style={{ padding: "16px 20px 14px", borderBottom: `1px solid ${B.cloud}` }}><Logo height={isMobile ? 50 : 60} /></div>
           <div style={{ padding: "12px 16px", borderBottom: `1px solid ${B.cloud}`, display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 30, height: 30, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, flexShrink: 0 }}>{user.avatar}</div>
-            <div><div style={{ color: B.ink, fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>{user.firstName}</div><div style={{ fontSize: 8, color: B.blush, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>{user.tier}</div></div>
+            <div><div style={{ color: B.ink, fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>{user.firstName}</div><div style={{ fontSize: 8, color: B.blush, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>{profile.tier}</div></div>
           </div>
           <nav style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
             {NAV.map(({ id, icon, label }) => {
