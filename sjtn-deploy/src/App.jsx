@@ -3269,7 +3269,12 @@ export default function App() {
       {screen === "booking"      && <Booking onConfirm={f => { setBookedForm(f); setScreen("confirmation"); }} onBack={() => setScreen("landing")} />}
       {screen === "confirmation" && <Confirmation form={bookedForm} onHome={() => setScreen("landing")} onSignIn={() => setScreen("auth")} />}
       {screen === "portal"    && activeUser && sessionValid && <MenteePortal user={activeUser} onLogout={handleLogout} />}
-      {screen === "community" && activeUser && sessionValid && <CommunityPortal user={activeUser} onLogout={handleLogout} onUpgrade={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} />}
+      {screen === "community" && activeUser && sessionValid && <CommunityPortal user={activeUser} onLogout={handleLogout} onUpgrade={() => {
+        const base = "https://calendly.com/sayjesstonails-info/free-discovery-call";
+        const name = encodeURIComponent(activeUser.firstName || "");
+        const email = encodeURIComponent(activeUser.email || "");
+        window.open(`${base}?name=${name}&email=${email}`, "_blank");
+      }} />}
       {screen === "admin"     && activeUser && <AdminDashboard onLogout={handleLogout} />}
       {(screen === "portal" || screen === "admin" || screen === "community") && !sessionValid && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} />}
     </>
