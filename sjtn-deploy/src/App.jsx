@@ -1519,14 +1519,17 @@ const MenteePortal = ({ user, onLogout }) => {
   const sendMsg = async () => {
     if (!msgInput.trim()) return;
     const text = msgInput;
+    const email = user.email || profile.email;
     setMsgs(p => [...p, { from: "You", time: "Just now", text }]);
     setMsgInput("");
-    await supabase.from("messages").insert([{
-      mentee_email: user.email,
+    if (!email) { console.error("No email found for user:", user); return; }
+    const { error } = await supabase.from("messages").insert([{
+      mentee_email: email,
       sender: "mentee",
       text,
       read: false
     }]);
+    if (error) console.error("Message save failed:", error.message);
   };
   useEffect(() => { msgEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
