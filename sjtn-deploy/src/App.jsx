@@ -1491,7 +1491,7 @@ const MenteePortal = ({ user, onLogout }) => {
   const [audioPlaying, setAudioPlaying] = useState(false);
 
   // ── Computed ────────────────────────────────────────────────────────
-  const unread = msgs.filter(m => m.unread && m.from !== "You").length;
+  const unread = view === "messages" ? 0 : msgs.filter(m => m.unread && m.from !== "You").length;
   const done = milestones.filter(m => m.done).length;
   const pct = profile.sessionsTotal ? Math.round((profile.sessionsCompleted / profile.sessionsTotal) * 100) : 0;
   const dayPct = profile.totalDays ? Math.round(((profile.totalDays - profile.daysRemaining) / profile.totalDays) * 100) : 0;
@@ -2893,21 +2893,22 @@ const AdminDashboard = ({ onLogout }) => {
 
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs, selChat]);
 
-  // Mark messages as read when Jess opens a conversation OR when new ones arrive while viewing
-  const markCurrentChatAsRead = useCallback(() => {
-    if (selChatRef.current === null || !contacts[selChatRef.current]) return;
-    const contact = contacts[selChatRef.current];
-    setContacts(p => p.map((c, i) => i === selChatRef.current ? { ...c, unread: 0 } : c));
-    supabase.from("messages")
-      .update({ read: true })
-      .eq("mentee_email", contact.email)
-      .eq("sender", "mentee")
-      .eq("read", false)
-      .then(() => {});
-  }, [contacts]);
-
+  // Mark messages as read whenever selChat or chatMsgs changes
   useEffect(() => {
-    markCurrentChatAsRead();
+    if (selChat === null) return;
+    // Use functional update to get latest contacts
+    setContacts(prev => {
+      const contact = prev[selChat];
+      if (!contact || contact.unread === 0) return prev;
+      // Mark as read in DB
+      supabase.from("messages")
+        .update({ read: true })
+        .eq("mentee_email", contact.email)
+        .eq("sender", "mentee")
+        .eq("read", false)
+        .then(() => {});
+      return prev.map((c, i) => i === selChat ? { ...c, unread: 0 } : c);
+    });
   }, [selChat, chatMsgs]);
 
   const sendChat = async () => {
@@ -3327,6 +3328,7 @@ const AdminDashboard = ({ onLogout }) => {
           <span style={{ fontSize: 9, color: B.mid, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>{view}</span>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {pending.length > 0 && <button onClick={() => setView("leads")} style={{ position: "relative", background: "none", border: "none", cursor: "pointer", padding: 3 }}><Ic n="bell" size={16} color={B.mid} /><div style={{ position: "absolute", top: 0, right: 0, width: 10, height: 10, background: B.blush, fontSize: 6, color: B.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{pending.length}</div></button>}
+            {contacts.reduce((s, c) => s + (c.unread || 0), 0) > 0 && <button onClick={() => setView("messages")} style={{ position: "relative", background: "none", border: "none", cursor: "pointer", padding: 3 }}><Ic n="message" size={16} color={B.mid} /><div style={{ position: "absolute", top: 0, right: 0, width: 10, height: 10, background: B.blush, fontSize: 6, color: B.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{contacts.reduce((s, c) => s + (c.unread || 0), 0)}</div></button>}
             <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white }}>JR</div>
           </div>
         </div>
