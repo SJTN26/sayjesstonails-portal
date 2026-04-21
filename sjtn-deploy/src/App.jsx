@@ -1376,7 +1376,7 @@ const MenteePortal = ({ user, onLogout }) => {
   const { isMobile, useSidebar } = useLayout();
   const [view, setView] = useState("dashboard");
   const [callActive, setCallActive] = useState(false);
-  const [msgs, setMsgs] = useState(user.messages || []);
+  const [msgs, setMsgs] = useState([]);
   const [msgInput, setMsgInput] = useState("");
   const [docFilter, setDocFilter] = useState("All");
   const msgEnd = useRef(null);
@@ -1496,7 +1496,38 @@ const MenteePortal = ({ user, onLogout }) => {
   const pct = profile.sessionsTotal ? Math.round((profile.sessionsCompleted / profile.sessionsTotal) * 100) : 0;
   const dayPct = profile.totalDays ? Math.round(((profile.totalDays - profile.daysRemaining) / profile.totalDays) * 100) : 0;
 
-  const sendMsg = () => { if (!msgInput.trim()) return; setMsgs(p => [...p, { from: "You", time: "Just now", text: msgInput }]); setMsgInput(""); setTimeout(() => setMsgs(p => [...p, { from: "Jess", time: "Just now", text: "Thanks — I'll respond within 48 hours. You're doing amazing, keep pushing." }]), 1000); };
+  // Fetch messages from Supabase
+  useEffect(() => {
+    if (!user.email) return;
+    supabase.from("messages").select("*")
+      .eq("mentee_email", user.email)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setMsgs(data.map(m => ({
+            from: m.sender === "mentee" ? "You" : "Jess",
+            time: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }),
+            text: m.text,
+            unread: !m.read && m.sender === "jess"
+          })));
+        } else if (user.messages) {
+          setMsgs(user.messages);
+        }
+      });
+  }, [user.email]);
+
+  const sendMsg = async () => {
+    if (!msgInput.trim()) return;
+    const text = msgInput;
+    setMsgs(p => [...p, { from: "You", time: "Just now", text }]);
+    setMsgInput("");
+    await supabase.from("messages").insert([{
+      mentee_email: user.email,
+      sender: "mentee",
+      text,
+      read: false
+    }]);
+  };
   useEffect(() => { msgEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
   const addWin = async () => {
@@ -2773,9 +2804,10 @@ const AdminDashboard = ({ onLogout }) => {
   const [selLead, setSelLead] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [leadFilter, setLeadFilter] = useState("all");
-  const [selChat, setSelChat] = useState(0);
+  const [selChat, setSelChat] = useState(null);
   const [showChatList, setShowChatList] = useState(true);
-  const [chatMsgs, setChatMsgs] = useState({ 0: [{ from: "Jessica M.", text: "Two clients accepted my new rate!", t: "Yesterday" }, { from: "Jess", text: "NOT surprised — your work is worth it. Keep going!", t: "Yesterday" }], 1: [{ from: "Taylor R.", text: "Posted my first reel — 3 DMs asking about booking!", t: "Apr 15" }, { from: "Jess", text: "THAT IS HUGE. Let's convert them.", t: "Apr 15" }] });
+  const [contacts, setContacts] = useState([]);
+  const [chatMsgs, setChatMsgs] = useState({});
   const [chatInput, setChatInput] = useState("");
   const chatEnd = useRef(null);
 
@@ -2787,11 +2819,51 @@ const AdminDashboard = ({ onLogout }) => {
   const communityList = Object.entries(DB.users).filter(([, u]) => u.role === "community").map(([email, u]) => ({ email, ...u }));
   const totalRev = menteeList.reduce((s, m) => s + (m.tierKey === "elite" ? 3360 : m.tierKey === "intensive" ? 1120 : 250), 0);
 
+  // Fetch all mentee conversations for admin
+  useEffect(() => {
+    supabase.from("messages").select("mentee_email, text, sender, created_at, read")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (!data || data.length === 0) return;
+        const grouped = {};
+        data.forEach(m => {
+          if (!grouped[m.mentee_email]) grouped[m.mentee_email] = [];
+          grouped[m.mentee_email].push(m);
+        });
+        const contactList = Object.entries(grouped).map(([email, msgs]) => ({
+          email, name: email.split("@")[0],
+          preview: msgs[0]?.text || "",
+          unread: msgs.filter(m => !m.read && m.sender === "mentee").length,
+          tier: "mentee"
+        }));
+        setContacts(contactList);
+        if (contactList.length > 0) setSelChat(0);
+        const msgMap = {};
+        contactList.forEach((c, i) => {
+          msgMap[i] = [...grouped[c.email]].reverse().map(m => ({
+            from: m.sender === "mentee" ? c.name : "Jess",
+            text: m.text,
+            t: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" })
+          }));
+        });
+        setChatMsgs(msgMap);
+      });
+  }, []);
+
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs, selChat]);
-  const sendChat = () => { if (!chatInput.trim()) return; setChatMsgs(p => ({ ...p, [selChat]: [...(p[selChat] || []), { from: "Jess", text: chatInput, t: "now" }] })); setChatInput(""); };
+
+  const sendChat = async () => {
+    if (!chatInput.trim() || selChat === null || !contacts[selChat]) return;
+    const contact = contacts[selChat];
+    const text = chatInput;
+    setChatMsgs(p => ({ ...p, [selChat]: [...(p[selChat] || []), { from: "Jess", text, t: "now" }] }));
+    setChatInput("");
+    await supabase.from("messages").insert([{
+      mentee_email: contact.email, sender: "jess", text, read: false
+    }]);
+  };
 
   const scMap = { pending: [B.amber, B.amberPale], accepted: [B.success, B.successPale], declined: [B.mid, B.off] };
-  const contacts = [{ name: "Jessica M.", tier: "elite", preview: "Two clients accepted my new rate!", unread: 0 }, { name: "Taylor R.", tier: "intensive", preview: "Posted my first reel — 3 DMs!", unread: 1 }];
 
   const ADMIN_NAV = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"applications",icon:"clipBoard",label:"Applications" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
   const ADMIN_TABS = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"applications",icon:"clipBoard",label:"Apps" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
@@ -3085,7 +3157,9 @@ const AdminDashboard = ({ onLogout }) => {
             <Section style={{ marginBottom: 6 }}>Messages</Section>
             <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 26, textTransform: "uppercase", color: B.black, margin: 0, letterSpacing: "-0.5px" }}>Inbox</h2>
           </div>
-          {contacts.map((c, i) => (
+          {contacts.length === 0 ? (
+            <div style={{ padding:"32px 18px", textAlign:"center", color:B.mid, fontSize:13, fontWeight:300 }}>No messages yet. Messages from mentees will appear here.</div>
+          ) : contacts.map((c, i) => (
             <div key={i} onClick={() => { setSelChat(i); if (isMobile) setShowChatList(false); }} style={{ padding: "14px 18px", borderBottom: `1px solid ${B.cloud}`, cursor: "pointer", background: selChat === i && !isMobile ? B.blushPale : "transparent", borderLeft: selChat === i && !isMobile ? `3px solid ${B.blush}` : "3px solid transparent" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{c.name}</span>
