@@ -2893,20 +2893,22 @@ const AdminDashboard = ({ onLogout }) => {
 
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs, selChat]);
 
-  // Mark messages as read when Jess opens a conversation
-  useEffect(() => {
-    if (selChat === null || !contacts[selChat]) return;
-    const contact = contacts[selChat];
-    // Clear unread immediately in UI
-    setContacts(p => p.map((c, i) => i === selChat ? { ...c, unread: 0 } : c));
-    // Then update DB
+  // Mark messages as read when Jess opens a conversation OR when new ones arrive while viewing
+  const markCurrentChatAsRead = useCallback(() => {
+    if (selChatRef.current === null || !contacts[selChatRef.current]) return;
+    const contact = contacts[selChatRef.current];
+    setContacts(p => p.map((c, i) => i === selChatRef.current ? { ...c, unread: 0 } : c));
     supabase.from("messages")
       .update({ read: true })
       .eq("mentee_email", contact.email)
       .eq("sender", "mentee")
       .eq("read", false)
       .then(() => {});
-  }, [selChat]);
+  }, [contacts]);
+
+  useEffect(() => {
+    markCurrentChatAsRead();
+  }, [selChat, chatMsgs]);
 
   const sendChat = async () => {
     if (!chatInput.trim() || selChat === null || !contacts[selChat]) return;
