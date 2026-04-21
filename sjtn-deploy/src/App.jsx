@@ -1496,24 +1496,42 @@ const MenteePortal = ({ user, onLogout }) => {
   const pct = profile.sessionsTotal ? Math.round((profile.sessionsCompleted / profile.sessionsTotal) * 100) : 0;
   const dayPct = profile.totalDays ? Math.round(((profile.totalDays - profile.daysRemaining) / profile.totalDays) * 100) : 0;
 
-  // Fetch messages from Supabase
+  // Fetch messages and subscribe to real-time updates
   useEffect(() => {
     if (!user.email) return;
-    supabase.from("messages").select("*")
-      .eq("mentee_email", user.email)
-      .order("created_at", { ascending: true })
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setMsgs(data.map(m => ({
-            from: m.sender === "mentee" ? "You" : "Jess",
-            time: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }),
-            text: m.text,
-            unread: !m.read && m.sender === "jess"
-          })));
-        } else if (user.messages) {
-          setMsgs(user.messages);
-        }
-      });
+    const email = user.email;
+
+    const fetchMsgs = () => {
+      supabase.from("messages").select("*")
+        .eq("mentee_email", email)
+        .order("created_at", { ascending: true })
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            setMsgs(data.map(m => ({
+              from: m.sender === "mentee" ? "You" : "Jess",
+              time: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }),
+              text: m.text,
+              unread: !m.read && m.sender === "jess"
+            })));
+          } else if (user.messages) {
+            setMsgs(user.messages);
+          }
+        });
+    };
+
+    fetchMsgs();
+
+    // Real-time subscription
+    const channel = supabase.channel(`messages-${email}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `mentee_email=eq.${email}`
+      }, () => fetchMsgs())
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
   }, [user.email]);
 
   const sendMsg = async () => {
@@ -2822,35 +2840,50 @@ const AdminDashboard = ({ onLogout }) => {
   const communityList = Object.entries(DB.users).filter(([, u]) => u.role === "community").map(([email, u]) => ({ email, ...u }));
   const totalRev = menteeList.reduce((s, m) => s + (m.tierKey === "elite" ? 3360 : m.tierKey === "intensive" ? 1120 : 250), 0);
 
-  // Fetch all mentee conversations for admin
+  // Fetch all mentee conversations for admin with real-time
   useEffect(() => {
-    supabase.from("messages").select("mentee_email, text, sender, created_at, read")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (!data || data.length === 0) return;
-        const grouped = {};
-        data.forEach(m => {
-          if (!grouped[m.mentee_email]) grouped[m.mentee_email] = [];
-          grouped[m.mentee_email].push(m);
-        });
-        const contactList = Object.entries(grouped).map(([email, msgs]) => ({
-          email, name: email.split("@")[0],
-          preview: msgs[0]?.text || "",
-          unread: msgs.filter(m => !m.read && m.sender === "mentee").length,
-          tier: "mentee"
-        }));
-        setContacts(contactList);
-        if (contactList.length > 0) setSelChat(0);
-        const msgMap = {};
-        contactList.forEach((c, i) => {
-          msgMap[i] = [...grouped[c.email]].reverse().map(m => ({
-            from: m.sender === "mentee" ? c.name : "Jess",
-            text: m.text,
-            t: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" })
+    const fetchAllMessages = () => {
+      supabase.from("messages").select("mentee_email, text, sender, created_at, read")
+        .order("created_at", { ascending: false })
+        .then(({ data }) => {
+          if (!data || data.length === 0) return;
+          const grouped = {};
+          data.forEach(m => {
+            if (!grouped[m.mentee_email]) grouped[m.mentee_email] = [];
+            grouped[m.mentee_email].push(m);
+          });
+          const contactList = Object.entries(grouped).map(([email, msgs]) => ({
+            email, name: email.split("@")[0],
+            preview: msgs[0]?.text || "",
+            unread: msgs.filter(m => !m.read && m.sender === "mentee").length,
+            tier: "mentee"
           }));
+          setContacts(contactList);
+          if (contactList.length > 0 && selChat === null) setSelChat(0);
+          const msgMap = {};
+          contactList.forEach((c, i) => {
+            msgMap[i] = [...grouped[c.email]].reverse().map(m => ({
+              from: m.sender === "mentee" ? c.name : "Jess",
+              text: m.text,
+              t: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" })
+            }));
+          });
+          setChatMsgs(msgMap);
         });
-        setChatMsgs(msgMap);
-      });
+    };
+
+    fetchAllMessages();
+
+    // Real-time subscription for all messages
+    const channel = supabase.channel('admin-messages')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
+      }, () => fetchAllMessages())
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
   }, []);
 
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs, selChat]);
