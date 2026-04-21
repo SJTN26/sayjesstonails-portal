@@ -3391,7 +3391,8 @@ export default function App() {
   }, []);
 
   const handleLogin = useCallback((email, userData, session) => {
-    setActiveUser(userData); setActiveSession(session);
+    const userWithEmail = { ...userData, email };
+    setActiveUser(userWithEmail); setActiveSession(session);
     sessionStorage.setItem("sjtn_session", JSON.stringify(session));
     const dest = userData.role === "admin" ? "admin" : userData.role === "community" ? "community" : "portal";
     setScreen(dest);
