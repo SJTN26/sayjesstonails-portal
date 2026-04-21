@@ -2915,9 +2915,9 @@ const AdminDashboard = ({ onLogout }) => {
 
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs, selChat]);
 
-  // Mark messages as read whenever selChat or chatMsgs changes
+  // Mark messages as read ONLY when Jess is viewing the Messages tab
   useEffect(() => {
-    if (selChat === null) return;
+    if (selChat === null || viewRef.current !== "messages") return;
     setContacts(prev => {
       const contact = prev[selChat];
       if (!contact) return prev;
