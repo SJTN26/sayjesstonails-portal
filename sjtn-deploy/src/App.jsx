@@ -1520,19 +1520,9 @@ const MenteePortal = ({ user, onLogout }) => {
     };
 
     fetchMsgs();
-
-    // Real-time subscription — no filter on channel level, filter in handler
-    const channel = supabase.channel(`messages-mentee-${email}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages'
-      }, (payload) => {
-        if (payload.new?.mentee_email === email) fetchMsgs();
-      })
-      .subscribe();
-
-    return () => supabase.removeChannel(channel);
+    // Poll every 5 seconds for new messages
+    const interval = setInterval(fetchMsgs, 5000);
+    return () => clearInterval(interval);
   }, [user.email]);
 
   // Mark messages as read when mentee views Messages tab
@@ -2892,19 +2882,26 @@ const AdminDashboard = ({ onLogout }) => {
     };
 
     fetchAllMessages();
-
-    const channel = supabase.channel('admin-messages-rt')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages'
-      }, () => fetchAllMessages())
-      .subscribe();
-
-    return () => supabase.removeChannel(channel);
+    // Poll every 5 seconds
+    const interval = setInterval(fetchAllMessages, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs, selChat]);
+
+  // Mark messages as read when Jess opens a conversation
+  useEffect(() => {
+    if (selChat === null || !contacts[selChat]) return;
+    const contact = contacts[selChat];
+    supabase.from("messages")
+      .update({ read: true })
+      .eq("mentee_email", contact.email)
+      .eq("sender", "mentee")
+      .eq("read", false)
+      .then(() => {
+        setContacts(p => p.map((c, i) => i === selChat ? { ...c, unread: 0 } : c));
+      });
+  }, [selChat]);
 
   const sendChat = async () => {
     if (!chatInput.trim() || selChat === null || !contacts[selChat]) return;
