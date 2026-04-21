@@ -1411,13 +1411,37 @@ const MenteePortal = ({ user, onLogout }) => {
   }, [user.email]);
 
   // ── Feature state ──────────────────────────────────────────────────
-  const [wins, setWins] = useState([
-    { id:1, date:"Apr 14", cat:"pricing", text:"Raised gel full set from $65 to $85. Two clients didn't even blink.", celebrated:true },
-    { id:2, date:"Apr 10", cat:"clients", text:"Booked my first client from Instagram after Jess's strategy session.", celebrated:true },
-  ]);
+  const [wins, setWins] = useState([]);
   const [winInput, setWinInput] = useState("");
   const [winCat, setWinCat] = useState("pricing");
   const [celebratingWin, setCelebratingWin] = useState(null);
+
+  useEffect(() => {
+    if (!user.email) return;
+    supabase.from("mentee_wins").select("*")
+      .eq("mentee_email", user.email)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setWins(data.map(w => ({
+            id: w.id,
+            date: new Date(w.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+            cat: w.cat,
+            text: w.text,
+            celebrated: w.celebrated
+          })));
+        } else if (!user.password) {
+          // No wins yet for real user — start empty
+          setWins([]);
+        } else {
+          // Demo user — show sample wins
+          setWins([
+            { id:1, date:"Apr 14", cat:"pricing", text:"Raised gel full set from $65 to $85. Two clients didn't even blink.", celebrated:true },
+            { id:2, date:"Apr 10", cat:"clients", text:"Booked my first client from Instagram after Jess's strategy session.", celebrated:true },
+          ]);
+        }
+      });
+  }, [user.email]);
 
   const [milestones, setMilestones] = useState(profile.milestones || []);
   const [celebratingMilestone, setCelebratingMilestone] = useState(null);
@@ -1475,13 +1499,19 @@ const MenteePortal = ({ user, onLogout }) => {
   const sendMsg = () => { if (!msgInput.trim()) return; setMsgs(p => [...p, { from: "You", time: "Just now", text: msgInput }]); setMsgInput(""); setTimeout(() => setMsgs(p => [...p, { from: "Jess", time: "Just now", text: "Thanks — I'll respond within 48 hours. You're doing amazing, keep pushing." }]), 1000); };
   useEffect(() => { msgEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
-  const addWin = () => {
+  const addWin = async () => {
     if (!winInput.trim()) return;
     const w = { id: Date.now(), date: "Today", cat: winCat, text: winInput, celebrated: false };
     setWins(p => [w, ...p]);
     setWinInput("");
     setCelebratingWin(w);
     setTimeout(() => setCelebratingWin(null), 3500);
+    await supabase.from("mentee_wins").insert([{
+      mentee_email: user.email,
+      text: winInput,
+      cat: winCat,
+      celebrated: false
+    }]);
   };
 
   const completeMilestone = (idx) => {
