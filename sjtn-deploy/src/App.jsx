@@ -2860,13 +2860,16 @@ const AdminDashboard = ({ onLogout }) => {
             if (!grouped[m.mentee_email]) grouped[m.mentee_email] = [];
             grouped[m.mentee_email].push(m);
           });
-          const contactList = Object.entries(grouped).map(([email, msgs], idx) => ({
-            email, name: email.split("@")[0],
-            preview: msgs[msgs.length - 1]?.text || "",
-            // Keep unread:0 for currently selected chat since we already marked as read
-            unread: idx === selChatRef.current ? 0 : msgs.filter(m => !m.read && m.sender === "mentee").length,
-            tier: "mentee"
-          }));
+          const contactList = Object.entries(grouped).map(([email, msgs]) => {
+            const currentContactEmail = selChatRef.current !== null && contacts[selChatRef.current]?.email;
+            const isCurrentlyViewed = currentContactEmail === email;
+            return {
+              email, name: email.split("@")[0],
+              preview: msgs[msgs.length - 1]?.text || "",
+              unread: isCurrentlyViewed ? 0 : msgs.filter(m => !m.read && m.sender === "mentee").length,
+              tier: "mentee"
+            };
+          });
           setContacts(contactList);
           if (contactList.length > 0 && selChatRef.current === null) setSelChat(0);
           const msgMap = {};
