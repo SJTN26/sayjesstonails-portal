@@ -3175,6 +3175,15 @@ const AdminDashboard = ({ onLogout }) => {
       )}
       {(!isMobile || !showChatList) && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+          {selChat === null || !contacts[selChat] ? (
+            <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", background:B.off }}>
+              <div style={{ textAlign:"center" }}>
+                <Ic n="message" size={40} color={B.cloud} />
+                <p style={{ color:B.mid, fontSize:13, marginTop:16, fontWeight:300 }}>Select a conversation to reply</p>
+              </div>
+            </div>
+          ) : (
+            <>
           <div style={{ padding: "12px 18px", borderBottom: `1px solid ${B.cloud}`, display: "flex", alignItems: "center", gap: 10, background: B.white, flexShrink: 0 }}>
             {isMobile && <button onClick={() => setShowChatList(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><Ic n="back" size={18} color={B.blush} /></button>}
             <div style={{ width: 30, height: 30, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: B.white }}>{contacts[selChat]?.name.split(" ").map(w => w[0]).join("")}</div>
@@ -3201,6 +3210,8 @@ const AdminDashboard = ({ onLogout }) => {
             <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder={`Reply to ${contacts[selChat]?.name}…`} style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, fontWeight: 300 }} />
             <button onClick={sendChat} style={{ width: 44, height: 44, background: B.black, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><Ic n="send" size={15} color={B.white} /></button>
           </div>
+            </>
+          )}
         </div>
       )}
     </div>
