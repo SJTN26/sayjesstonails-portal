@@ -2896,17 +2896,18 @@ const AdminDashboard = ({ onLogout }) => {
   // Mark messages as read whenever selChat or chatMsgs changes
   useEffect(() => {
     if (selChat === null) return;
-    // Use functional update to get latest contacts
     setContacts(prev => {
       const contact = prev[selChat];
-      if (!contact || contact.unread === 0) return prev;
-      // Mark as read in DB
+      if (!contact) return prev;
+      // Always try to mark as read in DB
       supabase.from("messages")
         .update({ read: true })
         .eq("mentee_email", contact.email)
         .eq("sender", "mentee")
         .eq("read", false)
-        .then(() => {});
+        .then(({ error }) => {
+          if (error) console.error("Mark read failed:", error.message);
+        });
       return prev.map((c, i) => i === selChat ? { ...c, unread: 0 } : c);
     });
   }, [selChat, chatMsgs]);
