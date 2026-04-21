@@ -130,9 +130,9 @@ const Logo = ({ height = 40, white = false }) => {
 
 /* ─── LOGOMARK — speech bubble only, for tight spaces ───────────────────── */
 /* Crops to just the bubble portion: x≈70 y≈22 w≈90 h≈100 of the 288×144 viewBox */
-const LogoMark = ({ size = 36, white = false }) => {
+const LogoMark = ({ size = 36, white = false, bg = null }) => {
   const mainFill   = white ? "#FFFFFF" : "#231f20";
-  const whiteFill  = white ? "#231f20" : "#ffffff";
+  const whiteFill  = bg ? bg : white ? "#0D0D0D" : "#ffffff";
   return (
     <svg
       width={size} height={size * 1.15}
@@ -1252,13 +1252,13 @@ const Confirmation = ({ form, onHome, onSignIn }) => {
         </Card>
 
         <div style={{ background: B.black, padding: "20px 22px", marginBottom: 24, display: "flex", alignItems: "center", gap: 14, textAlign: "left", borderLeft: `3px solid ${B.blush}` }}>
-          <div style={{ flexShrink: 0 }}><LogoMark size={34} white /></div>
+          <div style={{ flexShrink: 0 }}><LogoMark size={34} white={true} bg="#0D0D0D" /></div>
           <div><p style={{ fontSize: 12, color: "#9a8880", fontStyle: "italic", margin: "0 0 5px", lineHeight: 1.5, fontWeight: 300 }}>"I personally review every request and I'm already looking forward to hearing your story."</p><span style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>— Jess</span></div>
         </div>
 
         <div style={{ display: "flex", gap: 2, flexDirection: isMobile ? "column" : "row" }}>
           <Btn full variant="ghost" onClick={onHome}>Back to Homepage</Btn>
-          <Btn full variant="primary" onClick={onSignIn} icon="lock">Have an account? Sign in</Btn>
+          <Btn full variant="blush" onClick={onSignIn} icon="lock" style={{ whiteSpace:"nowrap" }}>Have an Account? Sign In</Btn>
         </div>
       </div>
     </div>
