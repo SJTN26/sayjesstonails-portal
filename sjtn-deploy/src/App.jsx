@@ -1422,21 +1422,43 @@ const MenteePortal = ({ user, onLogout }) => {
   const [milestones, setMilestones] = useState(profile.milestones || []);
   const [celebratingMilestone, setCelebratingMilestone] = useState(null);
 
-  const [communityPosts, setCommunityPosts] = useState([
-    { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Drop it below.", likes:12, comments:["Sarah T.", "Maya R.", "Bria M."], isJess:true, cat:"tip" },
-    { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you.", likes:24, comments:[], isJess:false, cat:"win" },
-    { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. Thank you Jess and this whole community.", likes:31, comments:[], isJess:false, cat:"win" },
-  ]);
+  const [communityPosts, setCommunityPosts] = useState([]);
   const [commPostInput, setCommPostInput] = useState("");
   const [commPostCat, setCommPostCat] = useState("win");
   const [commLiked, setCommLiked] = useState([]);
   const commCatColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
   const commCatLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
   const commCatIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
-  const submitCommPost = () => {
+
+  useEffect(() => {
+    supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setCommunityPosts(data.map(p => ({
+            id: p.id, author: p.author, avatar: p.avatar,
+            time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+            text: p.text, likes: p.likes || 0, comments: [], isJess: p.is_jess, cat: p.cat
+          })));
+        } else {
+          // Seed with default posts if empty
+          setCommunityPosts([
+            { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Drop it below.", likes:12, comments:["Sarah T.", "Maya R.", "Bria M."], isJess:true, cat:"tip" },
+            { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you.", likes:24, comments:[], isJess:false, cat:"win" },
+            { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. Thank you Jess and this whole community.", likes:31, comments:[], isJess:false, cat:"win" },
+          ]);
+        }
+      });
+  }, []);
+
+  const submitCommPost = async () => {
     if (!commPostInput.trim()) return;
-    setCommunityPosts(p => [{ id: Date.now(), author: user.firstName, avatar: user.avatar, time: "Just now", text: commPostInput, likes: 0, comments: [], isJess: false, cat: commPostCat }, ...p]);
+    const newPost = { author: user.firstName, avatar: user.avatar, text: commPostInput, likes: 0, comments: [], isJess: false, cat: commPostCat, time: "Just now", id: Date.now() };
+    setCommunityPosts(p => [newPost, ...p]);
     setCommPostInput("");
+    await supabase.from("community_posts").insert([{
+      author: user.firstName, avatar: user.avatar, text: commPostInput,
+      cat: commPostCat, likes: 0, is_jess: false
+    }]);
   };
 
   const [sessionPrep, setSessionPrep] = useState({ win:"", challenge:"", need:"", submitted:false });
@@ -2115,17 +2137,32 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const [view, setView] = useState("feed");
   const [postInput, setPostInput] = useState("");
   const [postCat, setPostCat] = useState("win");
-  const [posts, setPosts] = useState([
-    { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Share below — let's build a script together.", likes:14, isJess:true, cat:"tip" },
-    { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you. Don't be afraid.", likes:31, isJess:false, cat:"win" },
-    { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. If you're on the fence about mentorship — just do it. Best investment I've made in myself.", likes:44, isJess:false, cat:"win" },
-    { id:4, author:"Savannah R.", avatar:"SR", time:"3 days ago", text:"Question: how do you handle clients who push back on price increases? Struggling with this right now.", likes:8, isJess:false, cat:"question" },
-    { id:5, author:"Jess", avatar:"J", time:"4 days ago", text:"Resource drop — the exact script I use to introduce a price increase without losing the relationship. Grab it in the Resources section.", likes:52, isJess:true, cat:"resource" },
-    { id:6, author:"Maya J.", avatar:"MJ", time:"5 days ago", text:"Just joined the community. So excited to be here with other nail techs who are serious about growth. Already feeling inspired.", likes:19, isJess:false, cat:"intro" },
-  ]);
+  const [posts, setPosts] = useState([]);
   const [likedPosts, setLikedPosts] = useState([]);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+
+  useEffect(() => {
+    supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setPosts(data.map(p => ({
+            id: p.id, author: p.author, avatar: p.avatar,
+            time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+            text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat
+          })));
+        } else {
+          setPosts([
+            { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Share below — let's build a script together.", likes:14, isJess:true, cat:"tip" },
+            { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you. Don't be afraid.", likes:31, isJess:false, cat:"win" },
+            { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. If you're on the fence about mentorship — just do it. Best investment I've made in myself.", likes:44, isJess:false, cat:"win" },
+            { id:4, author:"Savannah R.", avatar:"SR", time:"3 days ago", text:"Question: how do you handle clients who push back on price increases? Struggling with this right now.", likes:8, isJess:false, cat:"question" },
+            { id:5, author:"Jess", avatar:"J", time:"4 days ago", text:"Resource drop — the exact script I use to introduce a price increase without losing the relationship. Grab it in the Resources section.", likes:52, isJess:true, cat:"resource" },
+            { id:6, author:"Maya J.", avatar:"MJ", time:"5 days ago", text:"Just joined the community. So excited to be here with other nail techs who are serious about growth. Already feeling inspired.", likes:19, isJess:false, cat:"intro" },
+          ]);
+        }
+      });
+  }, []);
 
   // Trial detection — community users without paid status are on trial
   const isTrial = user.tierKey === "community" && !user.paid;
@@ -2165,10 +2202,15 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const catIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
   const Pg = CommunityPg;
 
-  const submitPost = () => {
+  const submitPost = async () => {
     if (!postInput.trim()) return;
-    setPosts(p => [{ id: Date.now(), author: user.firstName, avatar: user.avatar, time: "Just now", text: postInput, likes: 0, isJess: false, cat: postCat }, ...p]);
+    const newPost = { id: Date.now(), author: user.firstName, avatar: user.avatar, time: "Just now", text: postInput, likes: 0, isJess: false, cat: postCat };
+    setPosts(p => [newPost, ...p]);
     setPostInput("");
+    await supabase.from("community_posts").insert([{
+      author: user.firstName, avatar: user.avatar, text: postInput,
+      cat: postCat, likes: 0, is_jess: false
+    }]);
   };
 
   const resources = [
