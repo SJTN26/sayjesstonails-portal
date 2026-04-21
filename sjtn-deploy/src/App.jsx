@@ -2841,10 +2841,13 @@ const AdminDashboard = ({ onLogout }) => {
   const totalRev = menteeList.reduce((s, m) => s + (m.tierKey === "elite" ? 3360 : m.tierKey === "intensive" ? 1120 : 250), 0);
 
   // Fetch all mentee conversations for admin with real-time
+  const selChatRef = useRef(null);
+  useEffect(() => { selChatRef.current = selChat; }, [selChat]);
+
   useEffect(() => {
     const fetchAllMessages = () => {
       supabase.from("messages").select("mentee_email, text, sender, created_at, read")
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: true })
         .then(({ data }) => {
           if (!data || data.length === 0) return;
           const grouped = {};
@@ -2854,16 +2857,17 @@ const AdminDashboard = ({ onLogout }) => {
           });
           const contactList = Object.entries(grouped).map(([email, msgs]) => ({
             email, name: email.split("@")[0],
-            preview: msgs[0]?.text || "",
+            preview: msgs[msgs.length - 1]?.text || "",
             unread: msgs.filter(m => !m.read && m.sender === "mentee").length,
             tier: "mentee"
           }));
           setContacts(contactList);
-          if (contactList.length > 0 && selChat === null) setSelChat(0);
+          if (contactList.length > 0 && selChatRef.current === null) setSelChat(0);
           const msgMap = {};
           contactList.forEach((c, i) => {
-            msgMap[i] = [...grouped[c.email]].reverse().map(m => ({
+            msgMap[i] = grouped[c.email].map(m => ({
               from: m.sender === "mentee" ? c.name : "Jess",
+              sender: m.sender,
               text: m.text,
               t: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" })
             }));
@@ -2874,7 +2878,6 @@ const AdminDashboard = ({ onLogout }) => {
 
     fetchAllMessages();
 
-    // Real-time subscription for all messages
     const channel = supabase.channel('admin-messages')
       .on('postgres_changes', {
         event: 'INSERT',
@@ -3224,7 +3227,7 @@ const AdminDashboard = ({ onLogout }) => {
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 18px", background: B.off }}>
             {(chatMsgs[selChat] || []).map((m, i) => {
-              const isJ = m.from === "Jess";
+              const isJ = m.from === "Jess" || m.sender === "jess";
               return (
                 <div key={i} style={{ display: "flex", justifyContent: isJ ? "flex-end" : "flex-start", marginBottom: 12 }}>
                   <div style={{ maxWidth: "70%" }}>
