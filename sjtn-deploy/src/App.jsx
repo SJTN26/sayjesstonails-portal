@@ -1525,19 +1525,20 @@ const MenteePortal = ({ user, onLogout }) => {
     return () => clearInterval(interval);
   }, [user.email]);
 
-  // Mark messages as read when mentee views Messages tab
+  // Mark messages as read when mentee views Messages tab OR when new messages arrive while on tab
   useEffect(() => {
     if (view === "messages" && user.email) {
+      const email = user.email;
       supabase.from("messages")
         .update({ read: true })
-        .eq("mentee_email", user.email)
+        .eq("mentee_email", email)
         .eq("sender", "jess")
         .eq("read", false)
         .then(() => {
           setMsgs(p => p.map(m => ({ ...m, unread: false })));
         });
     }
-  }, [view, user.email]);
+  }, [view, user.email, msgs.length]);
 
   const sendMsg = async () => {
     if (!msgInput.trim()) return;
@@ -2847,7 +2848,9 @@ const AdminDashboard = ({ onLogout }) => {
 
   // Fetch all mentee conversations for admin with real-time
   const selChatRef = useRef(null);
+  const viewRef = useRef("overview");
   useEffect(() => { selChatRef.current = selChat; }, [selChat]);
+  useEffect(() => { viewRef.current = view; }, [view]);
 
   useEffect(() => {
     const fetchAllMessages = () => {
@@ -2862,7 +2865,7 @@ const AdminDashboard = ({ onLogout }) => {
           });
           const contactList = Object.entries(grouped).map(([email, msgs]) => {
             const currentContactEmail = selChatRef.current !== null && contacts[selChatRef.current]?.email;
-            const isCurrentlyViewed = currentContactEmail === email;
+            const isCurrentlyViewed = viewRef.current === "messages" && currentContactEmail === email;
             return {
               email, name: email.split("@")[0],
               preview: msgs[msgs.length - 1]?.text || "",
