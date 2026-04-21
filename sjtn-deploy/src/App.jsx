@@ -1521,18 +1521,33 @@ const MenteePortal = ({ user, onLogout }) => {
 
     fetchMsgs();
 
-    // Real-time subscription
-    const channel = supabase.channel(`messages-${email}`)
+    // Real-time subscription — no filter on channel level, filter in handler
+    const channel = supabase.channel(`messages-mentee-${email}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'messages',
-        filter: `mentee_email=eq.${email}`
-      }, () => fetchMsgs())
+        table: 'messages'
+      }, (payload) => {
+        if (payload.new?.mentee_email === email) fetchMsgs();
+      })
       .subscribe();
 
     return () => supabase.removeChannel(channel);
   }, [user.email]);
+
+  // Mark messages as read when mentee views Messages tab
+  useEffect(() => {
+    if (view === "messages" && user.email) {
+      supabase.from("messages")
+        .update({ read: true })
+        .eq("mentee_email", user.email)
+        .eq("sender", "jess")
+        .eq("read", false)
+        .then(() => {
+          setMsgs(p => p.map(m => ({ ...m, unread: false })));
+        });
+    }
+  }, [view, user.email]);
 
   const sendMsg = async () => {
     if (!msgInput.trim()) return;
@@ -2878,7 +2893,7 @@ const AdminDashboard = ({ onLogout }) => {
 
     fetchAllMessages();
 
-    const channel = supabase.channel('admin-messages')
+    const channel = supabase.channel('admin-messages-rt')
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -3288,8 +3303,10 @@ const AdminDashboard = ({ onLogout }) => {
           </div>
           <nav style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
             {ADMIN_NAV.map(({ id, icon, label }) => {
-              const on = view === id; const badge = id === "leads" && pending.length > 0;
-              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", position: "relative", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on ? B.blush : B.mid} />{label}{badge && <span style={{ marginLeft: "auto", background: B.blush, color: B.white, fontSize: 7, fontWeight: 700, padding: "2px 6px", borderRadius: 10 }}>{pending.length}</span>}</button>;
+              const on = view === id;
+              const totalUnread = contacts.reduce((s, c) => s + (c.unread || 0), 0);
+              const badge = id === "leads" ? pending.length : id === "messages" ? totalUnread : 0;
+              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", position: "relative", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on ? B.blush : B.mid} />{label}{badge > 0 && <span style={{ marginLeft: "auto", background: B.blush, color: B.white, fontSize: 7, fontWeight: 700, padding: "2px 6px", borderRadius: 10 }}>{badge}</span>}</button>;
             })}
           </nav>
           <div style={{ padding: "10px 10px", borderTop: `1px solid ${B.cloud}` }}>
@@ -3315,8 +3332,10 @@ const AdminDashboard = ({ onLogout }) => {
       {!useSidebar && (
         <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: B.white, borderTop: `1px solid ${B.cloud}`, display: "flex", paddingBottom: "env(safe-area-inset-bottom)", zIndex: 100 }}>
           {ADMIN_TABS.map(({ id, icon, label }) => {
-            const on = view === id; const badge = id === "leads" && pending.length > 0;
-            return <button key={id} onClick={() => setView(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px 8px", border: "none", background: "transparent", color: on ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 7, fontWeight: on ? 700 : 300, position: "relative", letterSpacing: 1.5, textTransform: "uppercase" }}><Ic n={icon} size={20} color={on ? B.blush : B.mid} />{label}{badge && <div style={{ position: "absolute", top: 8, right: "calc(50% - 13px)", width: 12, height: 12, background: B.blush, fontSize: 6, color: B.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{pending.length}</div>}</button>;
+            const on = view === id;
+            const totalUnread = contacts.reduce((s, c) => s + (c.unread || 0), 0);
+            const badge = id === "leads" ? pending.length : id === "messages" ? totalUnread : 0;
+            return <button key={id} onClick={() => setView(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px 8px", border: "none", background: "transparent", color: on ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 7, fontWeight: on ? 700 : 300, position: "relative", letterSpacing: 1.5, textTransform: "uppercase" }}><Ic n={icon} size={20} color={on ? B.blush : B.mid} />{label}{badge > 0 && <div style={{ position: "absolute", top: 8, right: "calc(50% - 13px)", width: 12, height: 12, background: B.blush, fontSize: 6, color: B.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{badge}</div>}</button>;
           })}
         </nav>
       )}
