@@ -2860,10 +2860,11 @@ const AdminDashboard = ({ onLogout }) => {
             if (!grouped[m.mentee_email]) grouped[m.mentee_email] = [];
             grouped[m.mentee_email].push(m);
           });
-          const contactList = Object.entries(grouped).map(([email, msgs]) => ({
+          const contactList = Object.entries(grouped).map(([email, msgs], idx) => ({
             email, name: email.split("@")[0],
             preview: msgs[msgs.length - 1]?.text || "",
-            unread: msgs.filter(m => !m.read && m.sender === "mentee").length,
+            // Keep unread:0 for currently selected chat since we already marked as read
+            unread: idx === selChatRef.current ? 0 : msgs.filter(m => !m.read && m.sender === "mentee").length,
             tier: "mentee"
           }));
           setContacts(contactList);
@@ -2893,14 +2894,15 @@ const AdminDashboard = ({ onLogout }) => {
   useEffect(() => {
     if (selChat === null || !contacts[selChat]) return;
     const contact = contacts[selChat];
+    // Clear unread immediately in UI
+    setContacts(p => p.map((c, i) => i === selChat ? { ...c, unread: 0 } : c));
+    // Then update DB
     supabase.from("messages")
       .update({ read: true })
       .eq("mentee_email", contact.email)
       .eq("sender", "mentee")
       .eq("read", false)
-      .then(() => {
-        setContacts(p => p.map((c, i) => i === selChat ? { ...c, unread: 0 } : c));
-      });
+      .then(() => {});
   }, [selChat]);
 
   const sendChat = async () => {
