@@ -2831,6 +2831,7 @@ const AdminDashboard = ({ onLogout }) => {
   const [selLead, setSelLead] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [leadFilter, setLeadFilter] = useState("all");
+  const [crmView, setCrmView] = useState("kanban");
   const [selChat, setSelChat] = useState(null);
   const [showChatList, setShowChatList] = useState(true);
   const [contacts, setContacts] = useState([]);
@@ -3056,94 +3057,197 @@ const AdminDashboard = ({ onLogout }) => {
     </Pg>
   );
 
+  // ── Lead Detail Panel (shared between kanban + table) ──────────────────
+  const LeadDetailPanel = selLead ? (() => {
+    const [sc, scPale] = scMap[selLead.status] || [B.mid, B.off];
+    return (
+      <div style={{ width: isMobile ? "100%" : 320, position: isMobile ? "fixed" : "relative", inset: isMobile ? 0 : undefined, background: B.white, borderLeft: isMobile ? "none" : `1px solid ${B.cloud}`, zIndex: isMobile ? 200 : undefined, display: "flex", flexDirection: "column", overflowY: "auto", flexShrink: 0 }}>
+        <div style={{ padding: "13px 18px", borderBottom: `1px solid ${B.cloud}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: B.white, zIndex: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}><LogoMark size={22} /><span style={{ fontSize: 11, fontWeight: 700, color: B.black, letterSpacing: "0.05em", textTransform: "uppercase" }}>Lead Detail</span></div>
+          <button onClick={() => { setShowDetail(false); setSelLead(null); }} style={{ width: 26, height: 26, border: `1px solid ${B.cloud}`, background: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Ic n="close" size={12} color={B.mid} /></button>
+        </div>
+        <div style={{ padding: "18px 18px", flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 40, height: 40, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: B.ivory, flexShrink: 0 }}>{selLead.name.split(" ").map(w => w[0]).join("")}</div>
+            <div><div style={{ fontSize: 15, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{selLead.name}</div><span style={{ fontSize: 8, fontWeight: 700, color: sc, letterSpacing: 2, textTransform: "uppercase" }}>{selLead.status}</span></div>
+          </div>
+          {[[selLead.email, "Email"], [selLead.phone, "Phone"], [selLead.ig, "Instagram"], [selLead.licensed, "Licensed"], [selLead.experience, "Experience"], [selLead.tier, "Interested in"], [selLead.how, "Found via"]].filter(([v]) => v).map(([v, l]) => (
+            <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${B.cloud}` }}>
+              <span style={{ fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1.5, textTransform: "uppercase" }}>{l}</span>
+              <span style={{ fontSize: 11, fontWeight: 400, color: B.black, maxWidth: "58%", textAlign: "right" }}>{v}</span>
+            </div>
+          ))}
+          <div style={{ marginTop: 14, marginBottom: 14 }}>
+            <div style={{ background: B.blushPale, borderLeft: `3px solid ${B.blush}`, padding: "12px 14px", marginBottom: 8 }}><div style={{ fontSize: 8, fontWeight: 700, color: B.blush, letterSpacing: 1.5, marginBottom: 5 }}>CHALLENGE</div><p style={{ fontSize: 12, color: B.charcoal, margin: 0, lineHeight: 1.6, fontWeight: 300 }}>{selLead.challenge}</p></div>
+            <div style={{ background: B.off, padding: "12px 14px" }}><div style={{ fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1.5, marginBottom: 5 }}>GOAL</div><p style={{ fontSize: 12, color: B.charcoal, margin: 0, lineHeight: 1.6, fontWeight: 300 }}>{selLead.goal}</p></div>
+          </div>
+          <div style={{ background: B.black, padding: "14px 16px", marginBottom: 16, borderLeft: `3px solid ${B.blush}` }}>
+            <div style={{ fontSize: 8, fontWeight: 700, color: B.blushLight, letterSpacing: 1.5, marginBottom: 6 }}>REQUESTED TIME</div>
+            <div style={{ color: B.ivory, fontSize: 13, fontWeight: 700, letterSpacing: "0.03em" }}>{selLead.slot.day}, {selLead.slot.date}</div>
+            <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300 }}>{selLead.slot.time} EST · 20 min · Google Meet</div>
+            {selLead.status === "accepted" && <div style={{ marginTop: 6, fontSize: 9, color: B.success, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>✓ Confirmed · email sent</div>}
+          </div>
+          {selLead.status === "pending" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Btn full variant="blush" icon="check" onClick={() => { accept(selLead.id); setSelLead(p => ({ ...p, status: "accepted", acceptedAt: "Just now" })); }}>Accept & Confirm</Btn>
+              <Btn full variant="ghost" onClick={() => { decline(selLead.id); setSelLead(p => ({ ...p, status: "declined" })); }}>Decline</Btn>
+            </div>
+          )}
+          {selLead.status === "accepted" && <div style={{ background: B.successPale, borderLeft: `3px solid ${B.success}`, padding: "14px 16px", textAlign: "center" }}><div style={{ fontSize: 11, fontWeight: 700, color: B.success, letterSpacing: "0.05em" }}>✓ Call Accepted</div><div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 3 }}>{selLead.acceptedAt || "Confirmed"}</div></div>}
+          {selLead.status === "declined" && <Btn full variant="ghost" onClick={() => { accept(selLead.id); setSelLead(p => ({ ...p, status: "accepted", acceptedAt: "Just now" })); }}>Reconsider & Accept</Btn>}
+        </div>
+      </div>
+    );
+  })() : null;
+
+  // ── Kanban board ────────────────────────────────────────────────────────
+  const kanbanCols = [
+    { key: "pending",  label: "Pending",  color: B.amber,   pale: B.amberPale },
+    { key: "accepted", label: "Accepted", color: B.success, pale: B.successPale },
+    { key: "declined", label: "Declined", color: B.mid,     pale: B.off },
+  ];
+
+  const KanbanView = (
+    <div style={{ display: "flex", gap: 2, overflowX: "auto", paddingBottom: 16, minHeight: 400 }}>
+      {kanbanCols.map(col => {
+        const colLeads = leads.filter(l => l.status === col.key);
+        return (
+          <div key={col.key} style={{ flex: "0 0 280px", display: "flex", flexDirection: "column" }}>
+            {/* Column header */}
+            <div style={{ padding: "10px 14px", background: col.pale, borderTop: `3px solid ${col.color}`, marginBottom: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: col.color, letterSpacing: 2, textTransform: "uppercase" }}>{col.label}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: col.color, background: col.color + "22", padding: "2px 8px" }}>{colLeads.length}</span>
+            </div>
+            {/* Cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+              {colLeads.length === 0 && (
+                <div style={{ padding: "24px 14px", textAlign: "center", color: B.silver, fontSize: 11, fontWeight: 300, border: `1px dashed ${B.cloud}` }}>No leads</div>
+              )}
+              {colLeads.map(lead => (
+                <div key={lead.id} onClick={() => { setSelLead(lead); setShowDetail(true); }} style={{ background: B.white, border: `1px solid ${B.cloud}`, borderLeft: `3px solid ${col.color}`, padding: "12px 14px", cursor: "pointer" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <div style={{ width: 26, height: 26, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: B.white, flexShrink: 0 }}>{lead.name.split(" ").map(w => w[0]).join("")}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.name}</div>
+                      <div style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>{lead.ig}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: B.black, background: B.off, padding: "3px 8px", marginBottom: 8, display: "inline-block", letterSpacing: 0.5 }}>{lead.tier}</div>
+                  <p style={{ fontSize: 10, color: B.mid, margin: "0 0 10px", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", fontWeight: 300 }}>{lead.goal}</p>
+                  <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginBottom: col.key === "pending" ? 10 : 0 }}>{lead.slot.date} · {lead.slot.time}</div>
+                  {col.key === "pending" && (
+                    <div style={{ display: "flex", gap: 2 }}>
+                      <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); accept(lead.id); setSelLead(null); }}>Accept</Btn>
+                      <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); decline(lead.id); setSelLead(null); }}>Decline</Btn>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // ── Table view ──────────────────────────────────────────────────────────
+  const TableView = (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontFamily: FONTS.body }}>
+        <thead>
+          <tr style={{ borderBottom: `2px solid ${B.cloud}` }}>
+            {["Name", "Tier", "Slot", "Source", "Submitted", "Status", "Actions"].map(h => (
+              <th key={h} style={{ padding: "10px 12px", textAlign: "left", fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1.5, textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {filtered.map(lead => {
+            const [sc] = scMap[lead.status] || [B.mid];
+            return (
+              <tr key={lead.id} onClick={() => { setSelLead(lead); setShowDetail(true); }} style={{ borderBottom: `1px solid ${B.cloud}`, cursor: "pointer", background: selLead?.id === lead.id ? B.blushPale : "transparent" }}>
+                <td style={{ padding: "12px 12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 26, height: 26, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: B.white, flexShrink: 0 }}>{lead.name.split(" ").map(w => w[0]).join("")}</div>
+                    <div>
+                      <div style={{ fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{lead.name}</div>
+                      <div style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>{lead.ig}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ padding: "12px 12px", color: B.charcoal, fontWeight: 400, whiteSpace: "nowrap" }}>{lead.tier}</td>
+                <td style={{ padding: "12px 12px", color: B.charcoal, whiteSpace: "nowrap" }}>{lead.slot.date} · {lead.slot.time}</td>
+                <td style={{ padding: "12px 12px", color: B.mid, fontWeight: 300 }}>{lead.how}</td>
+                <td style={{ padding: "12px 12px", color: B.mid, fontWeight: 300, whiteSpace: "nowrap" }}>{lead.submitted}</td>
+                <td style={{ padding: "12px 12px" }}>
+                  <span style={{ fontSize: 8, fontWeight: 700, color: sc, letterSpacing: 1.5, textTransform: "uppercase", background: sc + "18", padding: "3px 8px" }}>{lead.status}</span>
+                </td>
+                <td style={{ padding: "12px 12px" }} onClick={e => e.stopPropagation()}>
+                  {lead.status === "pending" ? (
+                    <div style={{ display: "flex", gap: 2 }}>
+                      <Btn size="sm" variant="blush" onClick={() => accept(lead.id)}>Accept</Btn>
+                      <Btn size="sm" variant="ghost" onClick={() => decline(lead.id)}>Decline</Btn>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>—</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {filtered.length === 0 && (
+        <div style={{ padding: "40px", textAlign: "center", color: B.silver, fontSize: 13, fontWeight: 300 }}>No leads in this filter.</div>
+      )}
+    </div>
+  );
+
   const LeadsView = (
     <div style={{ display: "flex", height: useSidebar ? "calc(100vh - 56px)" : "auto", overflow: "hidden" }}>
       <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "20px 18px 40px" : "28px 28px", minWidth: 0 }}>
+
+        {/* Header */}
         <Section style={{ marginBottom: 8 }}>Discovery Calls</Section>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: 0, letterSpacing: "-0.5px" }}>Leads</h1>
-          {pending.length > 0 && <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 32, color: B.blush }}>{pending.length}</div>}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+          <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: 0, letterSpacing: "-0.5px" }}>Leads CRM</h1>
+          {/* View toggle */}
+          <div style={{ display: "flex", border: `1px solid ${B.cloud}`, overflow: "hidden" }}>
+            {[{ k: "kanban", label: "Kanban" }, { k: "table", label: "Table" }].map(v => (
+              <button key={v.k} onClick={() => setCrmView(v.k)} style={{ padding: "8px 16px", border: "none", background: crmView === v.k ? B.black : "transparent", color: crmView === v.k ? B.white : B.mid, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 1.5, textTransform: "uppercase", transition: "all 0.15s" }}>{v.label}</button>
+            ))}
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 2, marginBottom: 16, overflowX: "auto" }}>
-          {["all", "pending", "accepted", "declined"].map(f => (
-            <button key={f} onClick={() => setLeadFilter(f)} style={{ padding: "7px 14px", border: `1px solid ${leadFilter === f ? B.blush : B.cloud}`, background: leadFilter === f ? B.blushPale : "transparent", color: leadFilter === f ? B.blush : B.mid, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, whiteSpace: "nowrap", flexShrink: 0, letterSpacing: 1.5, textTransform: "uppercase" }}>{f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}</button>
+
+        {/* Stats bar */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2, marginBottom: 20 }}>
+          {[
+            { label: "Pending", value: leads.filter(l => l.status === "pending").length, color: B.amber },
+            { label: "Accepted", value: leads.filter(l => l.status === "accepted").length, color: B.success },
+            { label: "Declined", value: leads.filter(l => l.status === "declined").length, color: B.mid },
+          ].map(s => (
+            <div key={s.label} style={{ padding: "12px 16px", background: B.white, border: `1px solid ${B.cloud}`, borderTop: `3px solid ${s.color}` }}>
+              <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: s.color }}>{s.value}</div>
+              <div style={{ fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1.5, textTransform: "uppercase" }}>{s.label}</div>
+            </div>
           ))}
         </div>
-        {filtered.map(lead => {
-          const [sc] = scMap[lead.status] || [B.mid];
-          return (
-            <Card key={lead.id} onClick={() => { setSelLead(lead); setShowDetail(true); }} style={{ padding: "14px 18px", marginBottom: 2, borderLeft: `3px solid ${sc}`, cursor: "pointer" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                  <div style={{ width: 30, height: 30, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, flexShrink: 0 }}>{lead.name.split(" ").map(w => w[0]).join("")}</div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: B.black, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "0.02em" }}>{lead.name}</div>
-                    <div style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>{lead.email}</div>
-                  </div>
-                </div>
-                <span style={{ fontSize: 8, fontWeight: 700, color: sc, letterSpacing: 1.5, textTransform: "uppercase", flexShrink: 0 }}>{lead.status}</span>
-              </div>
-              <p style={{ fontSize: 11, color: B.mid, margin: "0 0 10px", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", fontWeight: 300 }}><strong style={{ color: B.charcoal, fontWeight: 600 }}>Goal:</strong> {lead.goal}</p>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: B.black, letterSpacing: 1, textTransform: "uppercase", background: B.off, padding: "3px 8px" }}>{lead.slot.date} · {lead.slot.time}</span>
-                  <span style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>{lead.submitted}</span>
-                </div>
-                {lead.status === "pending" && (
-                  <div style={{ display: "flex", gap: 2 }}>
-                    <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); accept(lead.id); }}>Accept</Btn>
-                    <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); decline(lead.id); }}>Decline</Btn>
-                  </div>
-                )}
-              </div>
-            </Card>
-          );
-        })}
+
+        {/* Filter tabs — only show on table view */}
+        {crmView === "table" && (
+          <div style={{ display: "flex", gap: 2, marginBottom: 16, overflowX: "auto" }}>
+            {["all", "pending", "accepted", "declined"].map(f => (
+              <button key={f} onClick={() => setLeadFilter(f)} style={{ padding: "7px 14px", border: `1px solid ${leadFilter === f ? B.blush : B.cloud}`, background: leadFilter === f ? B.blushPale : "transparent", color: leadFilter === f ? B.blush : B.mid, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, whiteSpace: "nowrap", flexShrink: 0, letterSpacing: 1.5, textTransform: "uppercase" }}>{f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}</button>
+            ))}
+          </div>
+        )}
+
+        {/* View content */}
+        {crmView === "kanban" ? KanbanView : TableView}
       </div>
 
-      {(!isMobile || showDetail) && selLead && (
-        <div style={{ width: isMobile ? "100%" : 320, position: isMobile ? "fixed" : "relative", inset: isMobile ? 0 : undefined, background: B.white, borderLeft: isMobile ? "none" : `1px solid ${B.cloud}`, zIndex: isMobile ? 200 : undefined, display: "flex", flexDirection: "column", overflowY: "auto" }}>
-          <div style={{ padding: "13px 18px", borderBottom: `1px solid ${B.cloud}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: B.white, zIndex: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}><LogoMark size={22} /><span style={{ fontSize: 11, fontWeight: 700, color: B.black, letterSpacing: "0.05em", textTransform: "uppercase" }}>Lead Detail</span></div>
-            <button onClick={() => setShowDetail(false)} style={{ width: 26, height: 26, border: `1px solid ${B.cloud}`, background: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Ic n="close" size={12} color={B.mid} /></button>
-          </div>
-          {(() => {
-            const [sc] = scMap[selLead.status] || [B.mid];
-            return (
-              <div style={{ padding: "18px 18px", flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                  <div style={{ width: 40, height: 40, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: B.ivory, flexShrink: 0 }}>{selLead.name.split(" ").map(w => w[0]).join("")}</div>
-                  <div><div style={{ fontSize: 15, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{selLead.name}</div><span style={{ fontSize: 8, fontWeight: 700, color: sc, letterSpacing: 2, textTransform: "uppercase" }}>{selLead.status}</span></div>
-                </div>
-                {[[selLead.email, "Email"], [selLead.phone, "Phone"], [selLead.ig, "Instagram"], [selLead.licensed, "Licensed"], [selLead.experience, "Experience"], [selLead.tier, "Interested in"], [selLead.how, "Found via"]].filter(([v]) => v).map(([v, l]) => (
-                  <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${B.cloud}` }}>
-                    <span style={{ fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1.5, textTransform: "uppercase" }}>{l}</span>
-                    <span style={{ fontSize: 11, fontWeight: 400, color: B.black, maxWidth: "58%", textAlign: "right" }}>{v}</span>
-                  </div>
-                ))}
-                <div style={{ marginTop: 14, marginBottom: 14 }}>
-                  <div style={{ background: B.blushPale, borderLeft: `3px solid ${B.blush}`, padding: "12px 14px", marginBottom: 8 }}><div style={{ fontSize: 8, fontWeight: 700, color: B.blush, letterSpacing: 1.5, marginBottom: 5 }}>CHALLENGE</div><p style={{ fontSize: 12, color: B.charcoal, margin: 0, lineHeight: 1.6, fontWeight: 300 }}>{selLead.challenge}</p></div>
-                  <div style={{ background: B.off, padding: "12px 14px" }}><div style={{ fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1.5, marginBottom: 5 }}>GOAL</div><p style={{ fontSize: 12, color: B.charcoal, margin: 0, lineHeight: 1.6, fontWeight: 300 }}>{selLead.goal}</p></div>
-                </div>
-                <div style={{ background: B.black, padding: "14px 16px", marginBottom: 16, borderLeft: `3px solid ${B.blush}` }}>
-                  <div style={{ fontSize: 8, fontWeight: 700, color: B.blushLight, letterSpacing: 1.5, marginBottom: 6 }}>REQUESTED TIME</div>
-                  <div style={{ color: B.ivory, fontSize: 13, fontWeight: 700, letterSpacing: "0.03em" }}>{selLead.slot.day}, {selLead.slot.date}</div>
-                  <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300 }}>{selLead.slot.time} EST · 20 min · Google Meet</div>
-                  {selLead.status === "accepted" && <div style={{ marginTop: 6, fontSize: 9, color: B.success, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>✓ Confirmed · email sent</div>}
-                </div>
-                {selLead.status === "pending" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <Btn full variant="blush" icon="check" onClick={() => { accept(selLead.id); setSelLead(p => ({ ...p, status: "accepted", acceptedAt: "Just now" })); }}>Accept & Confirm</Btn>
-                    <Btn full variant="ghost" onClick={() => { decline(selLead.id); setSelLead(p => ({ ...p, status: "declined" })); }}>Decline</Btn>
-                  </div>
-                )}
-                {selLead.status === "accepted" && <div style={{ background: B.successPale, borderLeft: `3px solid ${B.success}`, padding: "14px 16px", textAlign: "center" }}><div style={{ fontSize: 11, fontWeight: 700, color: B.success, letterSpacing: "0.05em" }}>✓ Call Accepted</div><div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 3 }}>{selLead.acceptedAt || "Confirmed"}</div></div>}
-                {selLead.status === "declined" && <Btn full variant="ghost" onClick={() => { accept(selLead.id); setSelLead(p => ({ ...p, status: "accepted", acceptedAt: "Just now" })); }}>Reconsider & Accept</Btn>}
-              </div>
-            );
-          })()}
-        </div>
-      )}
+      {/* Detail panel */}
+      {(!isMobile || showDetail) && selLead && LeadDetailPanel}
     </div>
   );
 
