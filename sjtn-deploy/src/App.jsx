@@ -3767,180 +3767,6 @@ const AdminDashboard = ({ onLogout }) => {
     </div>
   ) : null;
 
-  const MenteesView = (
-    <Pg title="Mentees" sub="All Enrolled">
-
-      {/* ── Mentee Detail Drawer ── */}
-      {menteeDrawer && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:500, display:"flex", justifyContent:"flex-end" }} onClick={() => setMenteeDrawer(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: isMobile ? "100%" : 400, background:B.white, height:"100%", overflowY:"auto", display:"flex", flexDirection:"column" }}>
-            {/* Drawer header */}
-            <div style={{ background:B.black, padding:"20px 24px", borderLeft:`4px solid ${B.blush}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexShrink:0 }}>
-              <div>
-                <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>{menteeDrawer.tab}</div>
-                <div style={{ fontSize:16, fontWeight:700, color:B.ivory }}>{menteeDrawer.mentee.name}</div>
-              </div>
-              <button onClick={() => setMenteeDrawer(null)} style={{ width:28, height:28, border:`1px solid #333`, background:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><Ic n="close" size={13} color={B.mid} /></button>
-            </div>
-            <div style={{ padding:"20px 24px", flex:1 }}>
-
-              {/* SESSIONS TAB */}
-              {menteeDrawer.tab === "Sessions" && (
-                <div>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-                    <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{menteeDrawer.mentee.sessionsCompleted} of {menteeDrawer.mentee.sessionsTotal} sessions completed</div>
-                    <Btn size="sm" variant="blush" icon="calendar" onClick={() => { setMenteeDrawer(null); setScheduleSession(menteeDrawer.mentee); }}>Schedule Next</Btn>
-                  </div>
-                  {Array.from({ length: menteeDrawer.mentee.sessionsTotal }, (_, i) => {
-                    const completed = i < menteeDrawer.mentee.sessionsCompleted;
-                    const isNext = i === menteeDrawer.mentee.sessionsCompleted;
-                    return (
-                      <div key={i} style={{ padding:"14px 16px", marginBottom:2, background: completed ? B.successPale : isNext ? B.blushPale : B.off, borderLeft:`3px solid ${completed ? B.success : isNext ? B.blush : B.cloud}` }}>
-                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                          <div>
-                            <div style={{ fontSize:12, fontWeight:700, color:B.black }}>Session {i+1}</div>
-                            <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>{completed ? "Completed" : isNext ? "Up next" : "Upcoming"}</div>
-                          </div>
-                          {completed && <Ic n="check" size={16} color={B.success} />}
-                          {isNext && <span style={{ fontSize:8, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase" }}>Next</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* DAYS LEFT TAB */}
-              {menteeDrawer.tab === "Days Left" && (
-                <div>
-                  <div style={{ marginBottom:20 }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
-                      <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>Started {menteeDrawer.mentee.startDate}</span>
-                      <span style={{ fontSize:11, fontWeight:700, color:B.blush }}>{menteeDrawer.mentee.daysRemaining} days left</span>
-                    </div>
-                    <PBar value={Math.round(((menteeDrawer.mentee.totalDays - menteeDrawer.mentee.daysRemaining) / menteeDrawer.mentee.totalDays) * 100)} h={8} />
-                    <div style={{ display:"flex", justifyContent:"space-between", marginTop:6 }}>
-                      <span style={{ fontSize:9, color:B.mid, fontWeight:300 }}>Day 1</span>
-                      <span style={{ fontSize:9, color:B.mid, fontWeight:300 }}>Day {menteeDrawer.mentee.totalDays}</span>
-                    </div>
-                  </div>
-                  {[
-                    { label:"Program Duration", value:`${menteeDrawer.mentee.totalDays} days` },
-                    { label:"Days Completed", value:`${menteeDrawer.mentee.totalDays - menteeDrawer.mentee.daysRemaining} days` },
-                    { label:"Days Remaining", value:`${menteeDrawer.mentee.daysRemaining} days` },
-                    { label:"Completion", value:`${Math.round(((menteeDrawer.mentee.totalDays - menteeDrawer.mentee.daysRemaining) / menteeDrawer.mentee.totalDays) * 100)}%` },
-                  ].map(({ label, value }) => (
-                    <div key={label} style={{ display:"flex", justifyContent:"space-between", padding:"10px 0", borderBottom:`1px solid ${B.cloud}` }}>
-                      <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{label}</span>
-                      <span style={{ fontSize:12, fontWeight:700, color:B.black }}>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* MILESTONES TAB */}
-              {menteeDrawer.tab === "Milestones" && (
-                <div>
-                  <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{menteeDrawer.mentee.milestones?.filter(x=>x.done).length || 0} of {menteeDrawer.mentee.milestones?.length || 0} completed</div>
-                  {(menteeDrawer.mentee.milestones || []).map((ms, i) => (
-                    <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 0", borderBottom:`1px solid ${B.cloud}` }}>
-                      <div style={{ width:22, height:22, background: ms.done ? B.blush : "transparent", border:`2px solid ${ms.done ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                        {ms.done && <Ic n="check" size={10} color={B.white} />}
-                      </div>
-                      <span style={{ fontSize:12, color: ms.done ? B.mid : B.black, textDecoration: ms.done ? "line-through" : "none", fontWeight:300, flex:1 }}>{ms.label}</span>
-                      {ms.done && <span style={{ fontSize:9, color:B.success, fontWeight:700, letterSpacing:1 }}>Done</span>}
-                    </div>
-                  ))}
-                  {(!menteeDrawer.mentee.milestones || menteeDrawer.mentee.milestones.length === 0) && (
-                    <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No milestones set yet.</div>
-                  )}
-                </div>
-              )}
-
-              {/* PROGRESS TAB */}
-              {menteeDrawer.tab === "Progress" && (
-                <div>
-                  {(() => {
-                    const m = menteeDrawer.mentee;
-                    const sessionPct = m.sessionsTotal ? Math.round((m.sessionsCompleted / m.sessionsTotal) * 100) : 0;
-                    const dayPct = m.totalDays ? Math.round(((m.totalDays - m.daysRemaining) / m.totalDays) * 100) : 0;
-                    const milestonePct = m.milestones?.length ? Math.round((m.milestones.filter(x=>x.done).length / m.milestones.length) * 100) : 0;
-                    const overall = Math.round((sessionPct + dayPct + milestonePct) / 3);
-                    return (
-                      <>
-                        <div style={{ padding:"20px", background:B.blushPale, borderLeft:`3px solid ${B.blush}`, marginBottom:20, textAlign:"center" }}>
-                          <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:56, color:B.blush, lineHeight:1 }}>{overall}%</div>
-                          <div style={{ fontSize:10, color:B.blush, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginTop:4 }}>Overall Progress</div>
-                        </div>
-                        {[["Sessions", sessionPct], ["Timeline", dayPct], ["Milestones", milestonePct]].map(([label, pct]) => (
-                          <div key={label} style={{ marginBottom:18 }}>
-                            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                              <span style={{ fontSize:11, color:B.steel, fontWeight:300 }}>{label}</span>
-                              <span style={{ fontSize:11, color:B.blush, fontWeight:700 }}>{pct}%</span>
-                            </div>
-                            <PBar value={pct} h={6} />
-                          </div>
-                        ))}
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Invite form ── */}
-      <InviteForm isMobile={isMobile} />
-
-      {/* ── Mentee cards ── */}
-      {menteeList.map((m, i) => {
-        const pct = Math.round((m.sessionsCompleted / m.sessionsTotal) * 100);
-        const done = m.milestones?.filter(x => x.done).length || 0;
-        const statTiles = [
-          { value:`${m.sessionsCompleted}/${m.sessionsTotal}`, label:"Sessions", tab:"Sessions" },
-          { value:m.daysRemaining, label:"Days Left", tab:"Days Left" },
-          { value:`${done}/${m.milestones?.length || 0}`, label:"Milestones", tab:"Milestones" },
-          { value:`${pct}%`, label:"Progress", tab:"Progress", accent:true },
-        ];
-        return (
-          <Card key={i} style={{ padding: "18px 20px", marginBottom: 2 }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
-              <div style={{ width: 42, height: 42, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: B.white, flexShrink: 0 }}>{m.avatar}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, flexWrap: "wrap" }}>
-                  <div><div style={{ fontSize: 16, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{m.name}</div><div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 2 }}>{m.email} · Started {m.startDate}</div></div>
-                  <Tag>{m.tier}</Tag>
-                </div>
-              </div>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 2, marginBottom: 12 }}>
-              {statTiles.map(({ value, label, tab, accent }) => (
-                <button key={label} onClick={() => setMenteeDrawer({ mentee: m, tab })} style={{ padding: "10px 14px", background: B.off, borderTop: accent ? `2px solid ${B.blush}` : `2px solid ${B.cloud}`, border:`1px solid ${B.cloud}`, borderTopWidth: 2, cursor:"pointer", textAlign:"left", fontFamily:FONTS.body, transition:"background .15s" }}
-                  onMouseEnter={e => e.currentTarget.style.background = accent ? B.blushPale : B.cloud}
-                  onMouseLeave={e => e.currentTarget.style.background = B.off}>
-                  <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 20, color: accent ? B.blush : B.black }}>{value}</div>
-                  <div style={{ fontSize: 8, color: B.mid, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 3 }}>{label}</div>
-                  <div style={{ fontSize: 7, color: B.blush, fontWeight: 700, letterSpacing: 1, marginTop: 2, textTransform:"uppercase" }}>View →</div>
-                </button>
-              ))}
-            </div>
-            <PBar value={pct} />
-            <div style={{ display: "flex", gap: 2, marginTop: 12, flexWrap: "wrap" }}>
-              <Btn size="sm" icon="video" onClick={() => setAdminCall(m.name)}>Start Call</Btn>
-              <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
-              <Btn size="sm" variant="ghost" icon="calendar" onClick={() => setScheduleSession(m)}>Schedule Session</Btn>
-              <Btn size="sm" variant="ghost" icon="file">View Files</Btn>
-              <Btn size="sm" variant="blush" icon="send" onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })}>Send Welcome Letter</Btn>
-            </div>
-          </Card>
-        );
-      })}
-    </Pg>
-  );
-
   const MessagesView = (
     <div style={{ display: "flex", height: isMobile ? "calc(100dvh - 116px)" : "calc(100vh - 56px)", overflow: "hidden" }}>
       {(!isMobile || showChatList) && (
@@ -4025,7 +3851,7 @@ const AdminDashboard = ({ onLogout }) => {
     </Pg>
   );
 
-  const viewMap = { overview: Overview, leads: LeadsView, mentees: MenteesView, messages: MessagesView, settings: SettingsView };
+  const viewMap = { overview: Overview, leads: LeadsView, messages: MessagesView, settings: SettingsView };
 
   return (
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
@@ -4066,7 +3892,166 @@ const AdminDashboard = ({ onLogout }) => {
             <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white }}>JR</div>
           </div>
         </div>
-        <div style={{ flex: 1, overflowY: "auto" }}>{view === "invoices" ? <InvoicesView /> : view === "applications" ? <ApplicationsView /> : (viewMap[view] || Overview)}</div>
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {view === "invoices" ? <InvoicesView /> :
+           view === "applications" ? <ApplicationsView /> :
+           view === "mentees" ? (
+             <div>
+               {menteeDrawer && (
+                 <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:500, display:"flex", justifyContent:"flex-end" }} onClick={() => setMenteeDrawer(null)}>
+                   <div onClick={e => e.stopPropagation()} style={{ width: isMobile ? "100%" : 400, background:B.white, height:"100%", overflowY:"auto", display:"flex", flexDirection:"column" }}>
+                     <div style={{ background:B.black, padding:"20px 24px", borderLeft:`4px solid ${B.blush}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexShrink:0 }}>
+                       <div>
+                         <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>{menteeDrawer.tab}</div>
+                         <div style={{ fontSize:16, fontWeight:700, color:B.ivory }}>{menteeDrawer.mentee.name}</div>
+                       </div>
+                       <button onClick={() => setMenteeDrawer(null)} style={{ width:28, height:28, border:`1px solid #333`, background:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><Ic n="close" size={13} color={B.mid} /></button>
+                     </div>
+                     <div style={{ padding:"20px 24px", flex:1 }}>
+                       {menteeDrawer.tab === "Sessions" && (
+                         <div>
+                           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+                             <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{menteeDrawer.mentee.sessionsCompleted} of {menteeDrawer.mentee.sessionsTotal} sessions completed</div>
+                             <Btn size="sm" variant="blush" icon="calendar" onClick={() => { setMenteeDrawer(null); setScheduleSession(menteeDrawer.mentee); }}>Schedule Next</Btn>
+                           </div>
+                           {Array.from({ length: menteeDrawer.mentee.sessionsTotal }, (_, i) => {
+                             const completed = i < menteeDrawer.mentee.sessionsCompleted;
+                             const isNext = i === menteeDrawer.mentee.sessionsCompleted;
+                             return (
+                               <div key={i} style={{ padding:"14px 16px", marginBottom:2, background: completed ? B.successPale : isNext ? B.blushPale : B.off, borderLeft:`3px solid ${completed ? B.success : isNext ? B.blush : B.cloud}` }}>
+                                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                                   <div>
+                                     <div style={{ fontSize:12, fontWeight:700, color:B.black }}>Session {i+1}</div>
+                                     <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>{completed ? "Completed" : isNext ? "Up next" : "Upcoming"}</div>
+                                   </div>
+                                   {completed && <Ic n="check" size={16} color={B.success} />}
+                                   {isNext && <span style={{ fontSize:8, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase" }}>Next</span>}
+                                 </div>
+                               </div>
+                             );
+                           })}
+                         </div>
+                       )}
+                       {menteeDrawer.tab === "Days Left" && (
+                         <div>
+                           <div style={{ marginBottom:20 }}>
+                             <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
+                               <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>Started {menteeDrawer.mentee.startDate}</span>
+                               <span style={{ fontSize:11, fontWeight:700, color:B.blush }}>{menteeDrawer.mentee.daysRemaining} days left</span>
+                             </div>
+                             <PBar value={Math.round(((menteeDrawer.mentee.totalDays - menteeDrawer.mentee.daysRemaining) / menteeDrawer.mentee.totalDays) * 100)} h={8} />
+                             <div style={{ display:"flex", justifyContent:"space-between", marginTop:6 }}>
+                               <span style={{ fontSize:9, color:B.mid, fontWeight:300 }}>Day 1</span>
+                               <span style={{ fontSize:9, color:B.mid, fontWeight:300 }}>Day {menteeDrawer.mentee.totalDays}</span>
+                             </div>
+                           </div>
+                           {[
+                             { label:"Program Duration", value:`${menteeDrawer.mentee.totalDays} days` },
+                             { label:"Days Completed", value:`${menteeDrawer.mentee.totalDays - menteeDrawer.mentee.daysRemaining} days` },
+                             { label:"Days Remaining", value:`${menteeDrawer.mentee.daysRemaining} days` },
+                             { label:"Completion", value:`${Math.round(((menteeDrawer.mentee.totalDays - menteeDrawer.mentee.daysRemaining) / menteeDrawer.mentee.totalDays) * 100)}%` },
+                           ].map(({ label, value }) => (
+                             <div key={label} style={{ display:"flex", justifyContent:"space-between", padding:"10px 0", borderBottom:`1px solid ${B.cloud}` }}>
+                               <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{label}</span>
+                               <span style={{ fontSize:12, fontWeight:700, color:B.black }}>{value}</span>
+                             </div>
+                           ))}
+                         </div>
+                       )}
+                       {menteeDrawer.tab === "Milestones" && (
+                         <div>
+                           <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{menteeDrawer.mentee.milestones?.filter(x=>x.done).length || 0} of {menteeDrawer.mentee.milestones?.length || 0} completed</div>
+                           {(menteeDrawer.mentee.milestones || []).map((ms, i) => (
+                             <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 0", borderBottom:`1px solid ${B.cloud}` }}>
+                               <div style={{ width:22, height:22, background: ms.done ? B.blush : "transparent", border:`2px solid ${ms.done ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                                 {ms.done && <Ic n="check" size={10} color={B.white} />}
+                               </div>
+                               <span style={{ fontSize:12, color: ms.done ? B.mid : B.black, textDecoration: ms.done ? "line-through" : "none", fontWeight:300, flex:1 }}>{ms.label}</span>
+                               {ms.done && <span style={{ fontSize:9, color:B.success, fontWeight:700, letterSpacing:1 }}>Done</span>}
+                             </div>
+                           ))}
+                           {(!menteeDrawer.mentee.milestones || menteeDrawer.mentee.milestones.length === 0) && (
+                             <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No milestones set yet.</div>
+                           )}
+                         </div>
+                       )}
+                       {menteeDrawer.tab === "Progress" && (() => {
+                         const m = menteeDrawer.mentee;
+                         const sessionPct = m.sessionsTotal ? Math.round((m.sessionsCompleted / m.sessionsTotal) * 100) : 0;
+                         const dayPct = m.totalDays ? Math.round(((m.totalDays - m.daysRemaining) / m.totalDays) * 100) : 0;
+                         const milestonePct = m.milestones?.length ? Math.round((m.milestones.filter(x=>x.done).length / m.milestones.length) * 100) : 0;
+                         const overall = Math.round((sessionPct + dayPct + milestonePct) / 3);
+                         return (
+                           <div>
+                             <div style={{ padding:"20px", background:B.blushPale, borderLeft:`3px solid ${B.blush}`, marginBottom:20, textAlign:"center" }}>
+                               <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:56, color:B.blush, lineHeight:1 }}>{overall}%</div>
+                               <div style={{ fontSize:10, color:B.blush, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginTop:4 }}>Overall Progress</div>
+                             </div>
+                             {[["Sessions", sessionPct], ["Timeline", dayPct], ["Milestones", milestonePct]].map(([label, pct]) => (
+                               <div key={label} style={{ marginBottom:18 }}>
+                                 <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                                   <span style={{ fontSize:11, color:B.steel, fontWeight:300 }}>{label}</span>
+                                   <span style={{ fontSize:11, color:B.blush, fontWeight:700 }}>{pct}%</span>
+                                 </div>
+                                 <PBar value={pct} h={6} />
+                               </div>
+                             ))}
+                           </div>
+                         );
+                       })()}
+                     </div>
+                   </div>
+                 </div>
+               )}
+               <div style={{ padding: isMobile ? "20px 18px 100px" : "28px 28px" }}>
+                 <Section style={{ marginBottom: 4 }}>Mentees</Section>
+                 <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: "0 0 20px", letterSpacing: "-0.5px" }}>All Enrolled</h1>
+                 <InviteForm isMobile={isMobile} />
+                 {menteeList.map((m, i) => {
+                   const pct = Math.round((m.sessionsCompleted / m.sessionsTotal) * 100);
+                   const done = m.milestones?.filter(x => x.done).length || 0;
+                   const statTiles = [
+                     { value:`${m.sessionsCompleted}/${m.sessionsTotal}`, label:"Sessions", tab:"Sessions" },
+                     { value:m.daysRemaining, label:"Days Left", tab:"Days Left" },
+                     { value:`${done}/${m.milestones?.length || 0}`, label:"Milestones", tab:"Milestones" },
+                     { value:`${pct}%`, label:"Progress", tab:"Progress", accent:true },
+                   ];
+                   return (
+                     <div key={i} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"18px 20px", marginBottom:2 }}>
+                       <div style={{ display:"flex", alignItems:"flex-start", gap:14, marginBottom:14 }}>
+                         <div style={{ width:42, height:42, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:B.white, flexShrink:0 }}>{m.avatar}</div>
+                         <div style={{ flex:1, minWidth:0 }}>
+                           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, flexWrap:"wrap" }}>
+                             <div><div style={{ fontSize:16, fontWeight:700, color:B.black, letterSpacing:"0.02em" }}>{m.name}</div><div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>{m.email} · Started {m.startDate}</div></div>
+                             <Tag>{m.tier}</Tag>
+                           </div>
+                         </div>
+                       </div>
+                       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:2, marginBottom:12 }}>
+                         {statTiles.map(({ value, label, tab, accent }) => (
+                           <button key={label} onClick={() => setMenteeDrawer({ mentee: m, tab })} style={{ padding:"10px 14px", background:B.off, borderTop: accent ? `2px solid ${B.blush}` : `2px solid ${B.cloud}`, border:`1px solid ${B.cloud}`, borderTopWidth:2, cursor:"pointer", textAlign:"left", fontFamily:FONTS.body }}>
+                             <div style={{ fontFamily:FONTS.display, fontWeight:800, fontSize:20, color: accent ? B.blush : B.black }}>{value}</div>
+                             <div style={{ fontSize:8, color:B.mid, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginTop:3 }}>{label}</div>
+                             <div style={{ fontSize:7, color:B.blush, fontWeight:700, letterSpacing:1, marginTop:2, textTransform:"uppercase" }}>View →</div>
+                           </button>
+                         ))}
+                       </div>
+                       <PBar value={pct} />
+                       <div style={{ display:"flex", gap:2, marginTop:12, flexWrap:"wrap" }}>
+                         <Btn size="sm" icon="video" onClick={() => setAdminCall(m.name)}>Start Call</Btn>
+                         <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
+                         <Btn size="sm" variant="ghost" icon="calendar" onClick={() => setScheduleSession(m)}>Schedule Session</Btn>
+                         <Btn size="sm" variant="ghost" icon="file">View Files</Btn>
+                         <Btn size="sm" variant="blush" icon="send" onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })}>Send Welcome Letter</Btn>
+                       </div>
+                     </div>
+                   );
+                 })}
+               </div>
+             </div>
+           ) :
+           (viewMap[view] || Overview)}
+        </div>
       </div>
 
       {!useSidebar && (
