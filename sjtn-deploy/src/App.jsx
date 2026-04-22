@@ -2827,6 +2827,7 @@ const AdminDashboard = ({ onLogout }) => {
   const { isMobile, useSidebar } = useLayout();
   const [view, setView] = useState("overview");
   const [adminCall, setAdminCall] = useState(null);
+  const [welcomeLetter, setWelcomeLetter] = useState(null); // { name, tier, startDate }
   const [leads, setLeads] = useState(DB.leads);
   const [selLead, setSelLead] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -3337,6 +3338,164 @@ const AdminDashboard = ({ onLogout }) => {
     </div>
   );
 
+  // ── Tier data for welcome letter ────────────────────────────────────────
+  const TIER_DATA = {
+    "Hourly Session": {
+      price: "$250", tagline: "per session / no commitment",
+      includes: [
+        { item: "1 virtual session (60 min)", value: "$500" },
+        { item: "Goal-focused agenda set by you", value: "$0" },
+        { item: "Written action plan after session", value: "$250" },
+        { item: "Perfect first step — No commitment", value: "" },
+      ],
+      standalone: "$750", investment: "$250", save: "+ $500 saved",
+      checkins: null, plan: null,
+    },
+    "30-Day Intensive": {
+      price: "$1,120", tagline: "one month / real momentum",
+      includes: [
+        { item: "2 virtual sessions (60 min each)", value: "$1,000" },
+        { item: "2 check-ins/week — 8 total", value: "$800" },
+        { item: "Personalized 30-day plan", value: "$400" },
+        { item: "Pricing + client attraction guidance", value: "$400" },
+        { item: "DM support during business hours", value: "$250" },
+        { item: "End-of-month review + roadmap", value: "$750" },
+      ],
+      standalone: "$3,600", investment: "$1,120", save: "+ $2,480 saved",
+      checkins: "2 weekly check-ins via email on Tuesday and Friday",
+      plan: "personalized 30-day plan",
+    },
+    "3-Month Elite": {
+      price: "$3,360", tagline: "full quarter / complete transformation",
+      includes: [
+        { item: "6 virtual sessions (60 min each)", value: "$3,000" },
+        { item: "2 check-ins/week — 24 total", value: "$2,400" },
+        { item: "Personalized 90-day plan", value: "$500" },
+        { item: "Skool community access (3 months)", value: "$1,000" },
+        { item: "Pricing + client attraction guidance", value: "$400" },
+        { item: "DM support during business hours", value: "$250" },
+        { item: "End-of-quarter review + roadmap", value: "$1,000" },
+      ],
+      standalone: "$8,550", investment: "$3,360", save: "+ $5,190 saved",
+      checkins: "2 weekly check-ins via email on Tuesday and Friday",
+      plan: "personalized 90-day plan",
+    },
+  };
+
+  // ── Welcome Letter Modal ─────────────────────────────────────────────────
+  const WelcomeLetterModal = welcomeLetter ? (() => {
+    const tier = TIER_DATA[welcomeLetter.tier] || TIER_DATA["30-Day Intensive"];
+    const tierKey = welcomeLetter.tier;
+    return (
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, overflowY: "auto", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 16px" }}>
+        <div style={{ background: B.white, width: "100%", maxWidth: 760, position: "relative" }}>
+          {/* Close */}
+          <button onClick={() => setWelcomeLetter(null)} style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, border: `1px solid ${B.cloud}`, background: B.white, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}><Ic n="close" size={14} color={B.mid} /></button>
+
+          {/* Letter */}
+          <div style={{ padding: "40px 48px", fontFamily: FONTS.body }}>
+
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 40 }}>
+              <Logo height={36} white={false} />
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 32, color: B.black, textTransform: "uppercase", lineHeight: 1 }}>A Mentor</div>
+                <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 22, color: B.mid, textTransform: "uppercase", letterSpacing: 2 }}>In Your Corner</div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 200px", gap: 32 }}>
+              <div>
+                <p style={{ fontSize: 14, color: B.black, marginBottom: 16 }}>Hi {welcomeLetter.name},</p>
+                <p style={{ fontSize: 13, color: B.charcoal, lineHeight: 1.8, marginBottom: 12, fontWeight: 300 }}>
+                  I'm so excited to support you in this next step of your nail journey. Congratulations on securing your spot in the <strong>{tierKey}</strong> mentorship with me. Most nail techs learn the technical side — but nobody teaches them the business side. How to price without underselling. How to attract clients who stay. How to stop trading time for barely-enough money.
+                </p>
+                <p style={{ fontSize: 13, color: B.charcoal, lineHeight: 1.8, marginBottom: 12, fontWeight: 300 }}>
+                  SayJessToNails was built to close that gap. Not with pressure — with presence.
+                </p>
+                <p style={{ fontSize: 13, color: B.black, lineHeight: 1.8, marginBottom: 12, fontWeight: 700, fontStyle: "italic" }}>
+                  Every session, every check-in, every plan is built around one goal: seeing you win.
+                </p>
+                <p style={{ fontSize: 13, color: B.charcoal, lineHeight: 1.8, marginBottom: 24, fontWeight: 300 }}>
+                  Throughout the program, we will communicate primarily through email so you have a permanent record of your progress and guidance. I look forward to helping you build clarity, confidence, and a stronger strategy for your business.
+                </p>
+                <div style={{ fontSize: 13, color: B.black, fontFamily: FONTS.script, fontStyle: "italic", marginBottom: 4 }}>Your Mentor, Jessica Ramos</div>
+                <div style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>— Jess</div>
+              </div>
+
+              {/* Contact + Next Steps */}
+              <div>
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 8, fontWeight: 700, color: B.blush, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>Staying in Touch</div>
+                  {[["website", "www.SayJessToNails.com"], ["instagram", "@sayjesstonails"], ["mobile", "954.544.2888"]].map(([l, v]) => (
+                    <div key={l} style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1, textTransform: "uppercase", fontStyle: "italic" }}>{l}</div>
+                      <div style={{ fontSize: 10, color: B.black, fontWeight: 400 }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ background: B.charcoal, padding: "16px" }}>
+                  <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: B.blush, textTransform: "uppercase", lineHeight: 1 }}>Next</div>
+                  <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: B.blush, textTransform: "uppercase", lineHeight: 1, marginBottom: 12 }}>Steps</div>
+                  {[
+                    "Secure Your Spot",
+                    "Complete your payment",
+                    "Start the transformation" + (welcomeLetter.startDate ? ` on ${welcomeLetter.startDate}` : ""),
+                  ].map((s, i) => (
+                    <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: B.blush, flexShrink: 0 }}>{i + 1}.</span>
+                      <span style={{ fontSize: 11, color: B.ivory, fontWeight: 400, lineHeight: 1.5 }}>{s}</span>
+                    </div>
+                  ))}
+                  <div style={{ borderTop: `1px solid ${B.steel}`, marginTop: 12, paddingTop: 12 }}>
+                    <p style={{ fontSize: 11, color: B.silver, fontStyle: "italic", lineHeight: 1.6, margin: 0 }}>"I want you to surpass every goal you set — not just hit them, exceed them." <strong style={{ color: B.ivory }}>— Jess</strong></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Program card */}
+            <div style={{ marginTop: 32, border: `2px solid ${B.cloud}`, padding: "24px" }}>
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: B.blush, letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>{tierKey}</div>
+                <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 48, color: B.black, lineHeight: 1 }}>{tier.price}</div>
+                <div style={{ fontSize: 11, color: B.mid, fontWeight: 300, marginTop: 4 }}>{tier.tagline}</div>
+              </div>
+              <div style={{ borderTop: `1px solid ${B.cloud}`, paddingTop: 16 }}>
+                {tier.includes.map((inc, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${B.cloud}` }}>
+                    <span style={{ fontSize: 11, color: B.charcoal, fontWeight: 300 }}>{inc.item}</span>
+                    {inc.value && <span style={{ fontSize: 11, color: B.mid, fontWeight: 400 }}>{inc.value}</span>}
+                  </div>
+                ))}
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${B.cloud}` }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: B.mid, letterSpacing: 1, textTransform: "uppercase" }}>Standalone Value</span>
+                  <span style={{ fontSize: 11, color: B.mid }}>{tier.standalone}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${B.cloud}` }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: B.black, letterSpacing: 1, textTransform: "uppercase" }}>Your Investment</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: B.black }}>{tier.investment}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0" }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: B.blush, letterSpacing: 1, textTransform: "uppercase" }}>You Save</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: B.blush }}>{tier.save}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: "flex", gap: 8, marginTop: 24, justifyContent: "flex-end" }}>
+              <Btn variant="ghost" onClick={() => setWelcomeLetter(null)}>Close</Btn>
+              <Btn variant="blush" icon="send" onClick={() => { alert(`Welcome letter sent to ${welcomeLetter.name}.`); setWelcomeLetter(null); }}>Send to {welcomeLetter.name}</Btn>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  })() : null;
+
   const MenteesView = (
     <Pg title="Mentees" sub="All Enrolled">
       <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderTop:`3px solid ${B.blush}`, padding:"20px", marginBottom:20 }}>
@@ -3414,6 +3573,7 @@ const AdminDashboard = ({ onLogout }) => {
               <Btn size="sm" icon="video" onClick={() => setAdminCall(m.name)}>Start Call</Btn>
               <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
               <Btn size="sm" variant="ghost" icon="file">View Files</Btn>
+              <Btn size="sm" variant="blush" icon="send" onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })}>Send Welcome Letter</Btn>
             </div>
           </Card>
         );
@@ -3510,6 +3670,7 @@ const AdminDashboard = ({ onLogout }) => {
   return (
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
       {adminCall && <VideoCallModal onClose={() => setAdminCall(null)} sessionName={`Session with ${adminCall}`} participantName={adminCall} isHost={true} />}
+      {WelcomeLetterModal}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:opacity .15s;cursor:pointer} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}}`}</style>
 
       {useSidebar && (
