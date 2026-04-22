@@ -2840,14 +2840,16 @@ const AdminDashboard = ({ onLogout }) => {
   const chatEnd = useRef(null);
 
   const pending = leads.filter(l => l.status === "pending");
-  const mainLeads = leads.filter(l => l.status === "pending" || l.status === "accepted");
+  const mainLeads = leads.filter(l => ["pending","accepted","happened","enrolled"].includes(l.status));
   const archivedLeads = leads.filter(l => l.status === "declined" || l.status === "followup");
   const filtered = leadFilter === "all" ? mainLeads : mainLeads.filter(l => l.status === leadFilter);
   const [showArchive, setShowArchive] = useState(false);
-  const accept = id => setLeads(p => p.map(l => l.id === id ? { ...l, status: "accepted", acceptedAt: "Just now" } : l));
-  const decline = id => { setLeads(p => p.map(l => l.id === id ? { ...l, status: "declined" } : l)); setSelLead(null); setShowDetail(false); };
-  const followup = id => { setLeads(p => p.map(l => l.id === id ? { ...l, status: "followup" } : l)); setSelLead(null); setShowDetail(false); };
-  const undoLead = id => { setLeads(p => p.map(l => l.id === id ? { ...l, status: "pending" } : l)); setSelLead(null); setShowDetail(false); };
+  const accept    = id => setLeads(p => p.map(l => l.id === id ? { ...l, status: "accepted",  acceptedAt: "Just now" } : l));
+  const markHappened = id => setLeads(p => p.map(l => l.id === id ? { ...l, status: "happened" } : l));
+  const enroll    = id => setLeads(p => p.map(l => l.id === id ? { ...l, status: "enrolled" } : l));
+  const decline   = id => { setLeads(p => p.map(l => l.id === id ? { ...l, status: "declined" } : l)); setSelLead(null); setShowDetail(false); };
+  const followup  = id => { setLeads(p => p.map(l => l.id === id ? { ...l, status: "followup" } : l)); setSelLead(null); setShowDetail(false); };
+  const undoLead  = id => { setLeads(p => p.map(l => l.id === id ? { ...l, status: "pending"  } : l)); setSelLead(null); setShowDetail(false); };
   const menteeList = Object.entries(DB.users).filter(([, u]) => u.role === "mentee").map(([email, u]) => ({ email, ...u }));
   const communityList = Object.entries(DB.users).filter(([, u]) => u.role === "community").map(([email, u]) => ({ email, ...u }));
   const totalRev = menteeList.reduce((s, m) => s + (m.tierKey === "elite" ? 3360 : m.tierKey === "intensive" ? 1120 : 250), 0);
@@ -2951,8 +2953,8 @@ const AdminDashboard = ({ onLogout }) => {
     }]);
   };
 
-  const scMap = { pending: [B.amber, B.amberPale], accepted: [B.success, B.successPale], declined: [B.mid, B.off], followup: [B.blush, B.blushPale] };
-  const stageLabel = { pending: "Waiting on Me", accepted: "Call Confirmed", declined: "Not a Fit", followup: "Follow Up Later" };
+  const scMap = { pending: [B.amber, B.amberPale], accepted: [B.success, B.successPale], happened: ["#7B5EA7", "#F3EEF9"], enrolled: [B.blush, B.blushPale], declined: [B.mid, B.off], followup: ["#B8860B", B.amberPale] };
+  const stageLabel = { pending: "Waiting on Me", accepted: "Call Confirmed", happened: "Call Happened", enrolled: "Enrolled", declined: "Not a Fit", followup: "Follow Up Later" };
 
   const ADMIN_NAV = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"applications",icon:"clipBoard",label:"Applications" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
   const ADMIN_TABS = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"applications",icon:"clipBoard",label:"Apps" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"settings",icon:"settings",label:"Settings" }];
@@ -3095,24 +3097,52 @@ const AdminDashboard = ({ onLogout }) => {
           </div>
           {selLead.status === "pending" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Btn full variant="blush" icon="check" onClick={() => { accept(selLead.id); setSelLead(p => ({ ...p, status: "accepted", acceptedAt: "Just now" })); }}>Confirm the Call</Btn>
+              <Btn full variant="blush" icon="check" onClick={() => { accept(selLead.id); setSelLead(p => ({ ...p, status: "accepted" })); }}>Confirm the Call</Btn>
               <Btn full variant="ghost" onClick={() => { followup(selLead.id); }}>Follow Up Later</Btn>
               <Btn full variant="ghost" onClick={() => { decline(selLead.id); }}>Not a Fit</Btn>
             </div>
           )}
-          {selLead.status === "accepted" && <div style={{ background: B.successPale, borderLeft: `3px solid ${B.success}`, padding: "14px 16px", textAlign: "center" }}><div style={{ fontSize: 11, fontWeight: 700, color: B.success, letterSpacing: "0.05em" }}>✓ Call Confirmed</div><div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 3 }}>{selLead.acceptedAt || "Confirmed"}</div></div>}
+          {selLead.status === "accepted" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <div style={{ background: B.successPale, borderLeft: `3px solid ${B.success}`, padding: "14px 16px", textAlign: "center", marginBottom: 2 }}><div style={{ fontSize: 11, fontWeight: 700, color: B.success }}>Call is Scheduled</div><div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 3 }}>When the call is done, mark it below</div></div>
+              <Btn full variant="blush" onClick={() => { markHappened(selLead.id); setSelLead(p => ({ ...p, status: "happened" })); }}>Mark Call as Done</Btn>
+              <Btn full variant="ghost" onClick={() => { undoLead(selLead.id); }}>Move Back to Waiting</Btn>
+            </div>
+          )}
+          {selLead.status === "happened" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <div style={{ background: "#F3EEF9", borderLeft: `3px solid #7B5EA7`, padding: "14px 16px", marginBottom: 2 }}><div style={{ fontSize: 11, fontWeight: 700, color: "#7B5EA7" }}>Call Complete — What happened?</div></div>
+              <Btn full variant="blush" onClick={() => { enroll(selLead.id); setSelLead(p => ({ ...p, status: "enrolled" })); }}>They Said Yes — Enroll</Btn>
+              <Btn full variant="ghost" onClick={() => { followup(selLead.id); }}>Follow Up Later</Btn>
+              <Btn full variant="ghost" onClick={() => { decline(selLead.id); }}>Not a Fit</Btn>
+              <Btn full variant="ghost" onClick={() => { undoLead(selLead.id); }}>Move Back</Btn>
+            </div>
+          )}
+          {selLead.status === "enrolled" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <div style={{ background: B.blushPale, borderLeft: `3px solid ${B.blush}`, padding: "14px 16px", marginBottom: 2 }}><div style={{ fontSize: 11, fontWeight: 700, color: B.blush }}>Ready to Enroll</div><div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 3 }}>Send the mentee invite to get them into the portal</div></div>
+              <Btn full variant="blush" onClick={() => {}}>Invite as Mentee</Btn>
+              <Btn full variant="ghost" onClick={() => { undoLead(selLead.id); }}>Move Back</Btn>
+            </div>
+          )}
           {selLead.status === "declined" && <Btn full variant="ghost" onClick={() => { undoLead(selLead.id); }}>Move Back to Waiting</Btn>}
-          {selLead.status === "followup" && <Btn full variant="blush" onClick={() => { accept(selLead.id); setSelLead(p => ({ ...p, status: "accepted", acceptedAt: "Just now" })); }}>Ready — Confirm the Call</Btn>}
-          {selLead.status === "followup" && <Btn full variant="ghost" onClick={() => { undoLead(selLead.id); }}>Move Back to Waiting</Btn>}
+          {selLead.status === "followup" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Btn full variant="blush" onClick={() => { accept(selLead.id); setSelLead(p => ({ ...p, status: "accepted" })); }}>Ready — Confirm the Call</Btn>
+              <Btn full variant="ghost" onClick={() => { undoLead(selLead.id); }}>Move Back to Waiting</Btn>
+            </div>
+          )}
         </div>
       </div>
     );
   })() : null;
 
-  // ── Board View columns (main board only — no declined/followup) ─────────
+  // ── Board View — 4 active columns ───────────────────────────────────────
   const boardCols = [
-    { key: "pending",  label: "Waiting on Me",  color: B.amber,   pale: B.amberPale },
-    { key: "accepted", label: "Call Confirmed",  color: B.success, pale: B.successPale },
+    { key: "pending",  label: "Waiting on Me",  color: B.amber,    pale: B.amberPale,    desc: "Booked — awaiting confirmation" },
+    { key: "accepted", label: "Call Confirmed",  color: B.success,  pale: B.successPale,  desc: "Scheduled — call hasn't happened yet" },
+    { key: "happened", label: "Call Happened",   color: "#7B5EA7",  pale: "#F3EEF9",      desc: "Call done — decide the outcome" },
+    { key: "enrolled", label: "Enrolled",        color: B.blush,    pale: B.blushPale,    desc: "They said yes — ready to invite" },
   ];
 
   const BoardView = (
@@ -3120,14 +3150,17 @@ const AdminDashboard = ({ onLogout }) => {
       {boardCols.map(col => {
         const colLeads = mainLeads.filter(l => l.status === col.key);
         return (
-          <div key={col.key} style={{ flex: "0 0 280px", display: "flex", flexDirection: "column" }}>
-            <div style={{ padding: "10px 14px", background: col.pale, borderTop: `3px solid ${col.color}`, marginBottom: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 9, fontWeight: 700, color: col.color, letterSpacing: 2, textTransform: "uppercase" }}>{col.label}</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: col.color, background: col.color + "22", padding: "2px 8px" }}>{colLeads.length}</span>
+          <div key={col.key} style={{ flex: "0 0 260px", display: "flex", flexDirection: "column" }}>
+            <div style={{ padding: "10px 14px", background: col.pale, borderTop: `3px solid ${col.color}`, marginBottom: 2 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: col.color, letterSpacing: 2, textTransform: "uppercase" }}>{col.label}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: col.color, background: col.color + "22", padding: "2px 8px" }}>{colLeads.length}</span>
+              </div>
+              <div style={{ fontSize: 9, color: col.color, fontWeight: 300, opacity: 0.8 }}>{col.desc}</div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
               {colLeads.length === 0 && (
-                <div style={{ padding: "24px 14px", textAlign: "center", color: B.silver, fontSize: 11, fontWeight: 300, border: `1px dashed ${B.cloud}` }}>None here yet 💅</div>
+                <div style={{ padding: "24px 14px", textAlign: "center", color: B.silver, fontSize: 11, fontWeight: 300, border: `1px dashed ${B.cloud}` }}>None here yet</div>
               )}
               {colLeads.map(lead => (
                 <div key={lead.id} onClick={() => { setSelLead(lead); setShowDetail(true); }} style={{ background: B.white, border: `1px solid ${B.cloud}`, borderLeft: `3px solid ${col.color}`, padding: "12px 14px", cursor: "pointer" }}>
@@ -3138,18 +3171,41 @@ const AdminDashboard = ({ onLogout }) => {
                       <div style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>{lead.ig}</div>
                     </div>
                   </div>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: B.black, background: B.off, padding: "3px 8px", marginBottom: 8, display: "inline-block", letterSpacing: 0.5 }}>{lead.tier}</div>
-                  <p style={{ fontSize: 10, color: B.mid, margin: "0 0 10px", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", fontWeight: 300 }}>{lead.goal}</p>
-                  <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginBottom: col.key === "pending" ? 10 : 8 }}>{lead.slot.date} · {lead.slot.time}</div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: B.black, background: B.off, padding: "3px 8px", marginBottom: 8, display: "inline-block" }}>{lead.tier}</div>
+                  <p style={{ fontSize: 10, color: B.mid, margin: "0 0 8px", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", fontWeight: 300 }}>{lead.goal}</p>
+                  <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginBottom: 10 }}>{lead.slot.date} · {lead.slot.time}</div>
+
+                  {/* Actions per stage */}
                   {col.key === "pending" && (
-                    <div style={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                       <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); accept(lead.id); }}>Confirm Call</Btn>
-                      <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); followup(lead.id); }}>Follow Up Later</Btn>
-                      <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); decline(lead.id); }}>Not a Fit</Btn>
+                      <div style={{ display: "flex", gap: 2 }}>
+                        <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); followup(lead.id); }}>Follow Up Later</Btn>
+                        <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); decline(lead.id); }}>Not a Fit</Btn>
+                      </div>
                     </div>
                   )}
                   {col.key === "accepted" && (
-                    <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); markHappened(lead.id); }}>Mark Call as Done</Btn>
+                      <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
+                    </div>
+                  )}
+                  {col.key === "happened" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); enroll(lead.id); }}>They Said Yes — Enroll</Btn>
+                      <div style={{ display: "flex", gap: 2 }}>
+                        <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); followup(lead.id); }}>Follow Up Later</Btn>
+                        <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); decline(lead.id); }}>Not a Fit</Btn>
+                      </div>
+                      <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
+                    </div>
+                  )}
+                  {col.key === "enrolled" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); }}>Invite as Mentee</Btn>
+                      <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
+                    </div>
                   )}
                 </div>
               ))}
@@ -3166,7 +3222,7 @@ const AdminDashboard = ({ onLogout }) => {
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontFamily: FONTS.body }}>
         <thead>
           <tr style={{ borderBottom: `2px solid ${B.cloud}` }}>
-            {["Name", "Tier", "Call Slot", "Found Via", "Submitted", "Status", "Actions"].map(h => (
+            {["Name", "Tier", "Call Slot", "Found Via", "Submitted", "Stage", "Actions"].map(h => (
               <th key={h} style={{ padding: "10px 12px", textAlign: "left", fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1.5, textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
             ))}
           </tr>
@@ -3193,13 +3249,12 @@ const AdminDashboard = ({ onLogout }) => {
                   <span style={{ fontSize: 8, fontWeight: 700, color: sc, letterSpacing: 1.5, textTransform: "uppercase", background: sc + "18", padding: "3px 8px" }}>{stageLabel[lead.status] || lead.status}</span>
                 </td>
                 <td style={{ padding: "12px 12px" }} onClick={e => e.stopPropagation()}>
-                  {lead.status === "pending" ? (
-                    <div style={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                      <Btn size="sm" variant="blush" onClick={() => accept(lead.id)}>Confirm</Btn>
-                      <Btn size="sm" variant="ghost" onClick={() => followup(lead.id)}>Later</Btn>
-                      <Btn size="sm" variant="ghost" onClick={() => decline(lead.id)}>Not a Fit</Btn>
-                    </div>
-                  ) : <span style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>—</span>}
+                  <div style={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                    {lead.status === "pending" && <><Btn size="sm" variant="blush" onClick={() => accept(lead.id)}>Confirm</Btn><Btn size="sm" variant="ghost" onClick={() => followup(lead.id)}>Later</Btn><Btn size="sm" variant="ghost" onClick={() => decline(lead.id)}>Not a Fit</Btn></>}
+                    {lead.status === "accepted" && <><Btn size="sm" variant="blush" onClick={() => markHappened(lead.id)}>Call Done</Btn><Btn size="sm" variant="ghost" onClick={() => undoLead(lead.id)}>Move Back</Btn></>}
+                    {lead.status === "happened" && <><Btn size="sm" variant="blush" onClick={() => enroll(lead.id)}>Enroll</Btn><Btn size="sm" variant="ghost" onClick={() => followup(lead.id)}>Later</Btn><Btn size="sm" variant="ghost" onClick={() => decline(lead.id)}>Not a Fit</Btn></>}
+                    {lead.status === "enrolled" && <Btn size="sm" variant="blush" onClick={() => {}}>Invite</Btn>}
+                  </div>
                 </td>
               </tr>
             );
@@ -3207,7 +3262,7 @@ const AdminDashboard = ({ onLogout }) => {
         </tbody>
       </table>
       {mainLeads.length === 0 && (
-        <div style={{ padding: "40px", textAlign: "center", color: B.silver, fontSize: 13, fontWeight: 300 }}>Your board is clear — you're all caught up! 💅</div>
+        <div style={{ padding: "40px", textAlign: "center", color: B.silver, fontSize: 13, fontWeight: 300 }}>Your board is clear — you are all caught up.</div>
       )}
     </div>
   );
@@ -3219,11 +3274,7 @@ const AdminDashboard = ({ onLogout }) => {
         {/* Header */}
         <Section style={{ marginBottom: 4 }}>Discovery Calls</Section>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-          <div>
-            <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: 0, letterSpacing: "-0.5px" }}>Future Nail Bosses</h1>
-            <p style={{ fontSize: 12, color: B.mid, fontWeight: 300, margin: "4px 0 0" }}>Discovery Calls</p>
-          </div>
-          {/* View toggle */}
+          <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: 0, letterSpacing: "-0.5px" }}>Future Nail Bosses</h1>
           <div style={{ display: "flex", border: `1px solid ${B.cloud}`, overflow: "hidden" }}>
             {[{ k: "board", label: "Board View" }, { k: "list", label: "List View" }].map(v => (
               <button key={v.k} onClick={() => setCrmView(v.k)} style={{ padding: "8px 16px", border: "none", background: crmView === v.k ? B.black : "transparent", color: crmView === v.k ? B.white : B.mid, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 1.5, textTransform: "uppercase" }}>{v.label}</button>
@@ -3232,12 +3283,12 @@ const AdminDashboard = ({ onLogout }) => {
         </div>
 
         {/* Stats bar */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2, marginBottom: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 2, marginBottom: 20 }}>
           {[
-            { label: "Waiting on Me",    value: leads.filter(l => l.status === "pending").length,  color: B.amber },
-            { label: "Call Confirmed",   value: leads.filter(l => l.status === "accepted").length, color: B.success },
-            { label: "Follow Up Later",  value: leads.filter(l => l.status === "followup").length, color: B.blush },
-            { label: "Not a Fit",        value: leads.filter(l => l.status === "declined").length, color: B.mid },
+            { label: "Waiting on Me",   value: leads.filter(l => l.status === "pending").length,  color: B.amber },
+            { label: "Call Confirmed",  value: leads.filter(l => l.status === "accepted").length, color: B.success },
+            { label: "Call Happened",   value: leads.filter(l => l.status === "happened").length, color: "#7B5EA7" },
+            { label: "Enrolled",        value: leads.filter(l => l.status === "enrolled").length, color: B.blush },
           ].map(s => (
             <div key={s.label} style={{ padding: "12px 16px", background: B.white, border: `1px solid ${B.cloud}`, borderTop: `3px solid ${s.color}` }}>
               <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: s.color }}>{s.value}</div>
@@ -3246,10 +3297,10 @@ const AdminDashboard = ({ onLogout }) => {
           ))}
         </div>
 
-        {/* Main board */}
+        {/* Main view */}
         {crmView === "board" ? BoardView : ListView}
 
-        {/* Archive section */}
+        {/* Archive */}
         {archivedLeads.length > 0 && (
           <div style={{ marginTop: 32 }}>
             <button onClick={() => setShowArchive(p => !p)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 12 }}>
