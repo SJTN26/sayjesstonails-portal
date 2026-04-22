@@ -2965,6 +2965,27 @@ const AdminDashboard = ({ onLogout }) => {
   const decline   = id => { setLeads(p => p.map(l => l.id === id ? { ...l, status: "declined" } : l)); setSelLead(null); setShowDetail(false); };
   const followup  = id => { setLeads(p => p.map(l => l.id === id ? { ...l, status: "followup" } : l)); setSelLead(null); setShowDetail(false); };
   const undoLead  = id => { setLeads(p => p.map(l => l.id === id ? { ...l, status: "pending"  } : l)); setSelLead(null); setShowDetail(false); };
+
+  const [invitingLead, setInvitingLead] = useState(null);
+  const inviteMenteeFromLead = async (lead) => {
+    if (!lead?.email) { alert("No email found for this lead."); return; }
+    setInvitingLead(lead.id);
+    const tierClean = lead.tier.replace(/\s*\(\$[\d,]+\)/, "").trim();
+    const firstName = lead.name.split(" ")[0];
+    try {
+      const { data, error } = await supabase.functions.invoke('invite-mentee', {
+        body: { email: lead.email, tier: tierClean, first_name: firstName }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setLeads(p => p.map(l => l.id === lead.id ? { ...l, invited: true, invitedAt: "Just now" } : l));
+      if (selLead?.id === lead.id) setSelLead(p => ({ ...p, invited: true, invitedAt: "Just now" }));
+      alert(`Invite sent to ${firstName} at ${lead.email}. They will receive an email to set their password and access their portal.`);
+    } catch (e) {
+      alert(`Error sending invite: ${e.message}`);
+    }
+    setInvitingLead(null);
+  };
   const menteeList = Object.entries(DB.users).filter(([, u]) => u.role === "mentee").map(([email, u]) => ({ email, ...u }));
   const communityList = Object.entries(DB.users).filter(([, u]) => u.role === "community").map(([email, u]) => ({ email, ...u }));
   const totalRev = menteeList.reduce((s, m) => s + (m.tierKey === "elite" ? 3360 : m.tierKey === "intensive" ? 1120 : 250), 0);
@@ -3236,7 +3257,7 @@ const AdminDashboard = ({ onLogout }) => {
           {selLead.status === "enrolled" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <div style={{ background: B.blushPale, borderLeft: `3px solid ${B.blush}`, padding: "14px 16px", marginBottom: 2 }}><div style={{ fontSize: 11, fontWeight: 700, color: B.blush }}>Ready to Enroll</div><div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 3 }}>Send the mentee invite to get them into the portal</div></div>
-              <Btn full variant="blush" onClick={() => {}}>Invite as Mentee</Btn>
+              <Btn full variant="blush" onClick={() => inviteMenteeFromLead(selLead)} disabled={!!selLead?.invited || invitingLead === selLead?.id}>{invitingLead === selLead?.id ? "Sending Invite…" : selLead?.invited ? `Invited ${selLead.invitedAt}` : "Invite as Mentee"}</Btn>
               <Btn full variant="ghost" onClick={() => { undoLead(selLead.id); }}>Move Back</Btn>
             </div>
           )}
@@ -3318,7 +3339,7 @@ const AdminDashboard = ({ onLogout }) => {
                   )}
                   {col.key === "enrolled" && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                      <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); }}>Invite as Mentee</Btn>
+                      <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); inviteMenteeFromLead(lead); }} disabled={!!lead.invited || invitingLead === lead.id}>{invitingLead === lead.id ? "Sending…" : lead.invited ? "Invited" : "Invite as Mentee"}</Btn>
                       <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
                     </div>
                   )}
