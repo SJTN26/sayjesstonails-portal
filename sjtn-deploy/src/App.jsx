@@ -1487,8 +1487,44 @@ const MenteePortal = ({ user, onLogout }) => {
 
   const [sessionPrep, setSessionPrep] = useState({ win:"", challenge:"", need:"", submitted:false });
   const [referralCopied, setReferralCopied] = useState(false);
-
   const [audioPlaying, setAudioPlaying] = useState(false);
+
+  // Welcome experience — show until dismissed, persisted in localStorage
+  const welcomeKey = `sjtn_welcomed_${user.email}`;
+  const [showWelcome, setShowWelcome] = useState(() => {
+    try { return !localStorage.getItem(welcomeKey); } catch { return true; }
+  });
+  const dismissWelcome = () => {
+    try { localStorage.setItem(welcomeKey, "1"); } catch {}
+    setShowWelcome(false);
+  };
+
+  const TIER_WELCOME = {
+    "3-Month Elite": {
+      headline: "Your 90-Day Transformation Starts Now",
+      sessions: "6 live sessions with Jess",
+      checkins: "2 check-ins per week — 24 total",
+      plan: "A personalized 90-day growth plan",
+      community: "Full community access for 3 months",
+      firstSession: "Your first session will be scheduled within 48 hours. Watch for an email from Jess.",
+    },
+    "30-Day Intensive": {
+      headline: "Your 30 Days of Real Momentum Begin",
+      sessions: "2 live sessions with Jess",
+      checkins: "2 check-ins per week — 8 total",
+      plan: "A personalized 30-day plan built around you",
+      community: null,
+      firstSession: "Your first session will be scheduled within 48 hours. Watch for an email from Jess.",
+    },
+    "Hourly Session": {
+      headline: "Your Session is Almost Here",
+      sessions: "1 focused 60-minute session with Jess",
+      checkins: null,
+      plan: "A written action plan after your session",
+      community: null,
+      firstSession: "Your session will be scheduled within 48 hours. Watch for an email from Jess.",
+    },
+  };
 
   // ── Computed ────────────────────────────────────────────────────────
   const unread = view === "messages" ? 0 : msgs.filter(m => m.unread && m.from !== "You").length;
@@ -1611,6 +1647,83 @@ const MenteePortal = ({ user, onLogout }) => {
       <div style={{ fontSize: 9, fontWeight: 700, color: B.mid, marginTop: 6, letterSpacing: 1.5, textTransform: "uppercase" }}>{label}</div>
     </div>
   );
+
+  const tierWelcome = TIER_WELCOME[profile.tier] || TIER_WELCOME["Hourly Session"];
+
+  const WelcomeModal = showWelcome ? (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, overflowY: "auto", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: isMobile ? "0" : "40px 16px" }}>
+      <div style={{ background: B.white, width: "100%", maxWidth: 600, minHeight: isMobile ? "100dvh" : "auto", display: "flex", flexDirection: "column" }}>
+
+        {/* Blush header with logo */}
+        <div style={{ background: B.blush, padding: "32px 32px 24px", textAlign: "center" }}>
+          <Logo height={56} white />
+        </div>
+
+        {/* Black greeting bar */}
+        <div style={{ background: B.black, padding: "24px 32px", borderLeft: `4px solid ${B.blush}` }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Welcome to Your Portal</div>
+          <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 40, textTransform: "uppercase", color: B.ivory, margin: 0, letterSpacing: "-0.5px", lineHeight: 1.05 }}>
+            Hi {profile.firstName},<br/>
+            <span style={{ color: B.blushLight, fontStyle: "italic", fontWeight: 300 }}>{tierWelcome.headline}.</span>
+          </h2>
+        </div>
+
+        {/* Letter body */}
+        <div style={{ padding: "28px 32px", flex: 1 }}>
+          <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.85, marginBottom: 16, fontWeight: 300 }}>
+            I'm so excited to support you in this next step of your nail journey. Congratulations on securing your spot in the <strong style={{ fontWeight: 700 }}>{profile.tier}</strong> mentorship with me.
+          </p>
+          <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.85, marginBottom: 16, fontWeight: 300 }}>
+            Most nail techs learn the technical side — but nobody teaches them the business side. How to price without underselling. How to attract clients who stay. How to stop trading time for barely-enough money. SayJessToNails was built to close that gap. Not with pressure — with presence.
+          </p>
+          <p style={{ fontSize: 14, color: B.black, lineHeight: 1.85, marginBottom: 24, fontWeight: 700, fontStyle: "italic" }}>
+            Every session, every check-in, every plan is built around one goal: seeing you win.
+          </p>
+
+          {/* What's included */}
+          <div style={{ background: B.off, border: `1px solid ${B.cloud}`, borderLeft: `3px solid ${B.blush}`, padding: "20px 24px", marginBottom: 20 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: B.blush, letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>Your Program Includes</div>
+            {[
+              tierWelcome.sessions,
+              tierWelcome.checkins,
+              tierWelcome.plan,
+              tierWelcome.community,
+              "DM support during business hours",
+              "Access to your personal portal — always on",
+            ].filter(Boolean).map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <div style={{ width: 18, height: 18, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Ic n="check" size={9} color={B.white} sw={2.5} />
+                </div>
+                <span style={{ fontSize: 12, color: B.charcoal, fontWeight: 300 }}>{item}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* First session */}
+          <div style={{ background: B.black, padding: "18px 22px", marginBottom: 24, borderLeft: `3px solid ${B.blush}` }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Your First Session</div>
+            <p style={{ fontSize: 13, color: B.ivory, fontWeight: 300, lineHeight: 1.7, margin: 0 }}>{tierWelcome.firstSession}</p>
+          </div>
+
+          {/* Jess sign off */}
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28, paddingTop: 8, borderTop: `1px solid ${B.cloud}` }}>
+            <div style={{ width: 44, height: 44, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: B.white, flexShrink: 0 }}>JR</div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: B.black, fontFamily: FONTS.script, fontStyle: "italic" }}>Your Mentor, Jessica Ramos</div>
+              <div style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>info@sayjesstonails.com · 954.544.2888</div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <Btn full variant="blush" onClick={dismissWelcome} style={{ padding: "16px" }}>
+            I'm Ready — Take Me to My Portal
+          </Btn>
+          <p style={{ fontSize: 10, color: B.mid, textAlign: "center", marginTop: 10, fontWeight: 300 }}>This letter will be saved in your Documents tab for future reference.</p>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   const views = {
     dashboard: (
@@ -2135,6 +2248,7 @@ const MenteePortal = ({ user, onLogout }) => {
   return (
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off, position: "relative" }}>
       {callActive && <VideoCallModal onClose={() => setCallActive(false)} sessionName={profile.nextSession?.type || "Session"} participantName="Jess" isHost={false} />}
+      {WelcomeModal}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:all .18s} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}} @keyframes celebPop{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.08) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}} @keyframes celebFade{0%{opacity:1}70%{opacity:1}100%{opacity:0}} @keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(80px) rotate(360deg);opacity:0}}`}</style>
 
       {/* ── Celebration overlays ── */}
