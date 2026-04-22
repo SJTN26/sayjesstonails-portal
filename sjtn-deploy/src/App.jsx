@@ -3058,7 +3058,44 @@ const AdminDashboard = ({ onLogout }) => {
     }
     setInvitingLead(null);
   };
-  const menteeList = Object.entries(DB.users).filter(([, u]) => u.role === "mentee").map(([email, u]) => ({ email, ...u }));
+  const [menteeList, setMenteeList] = useState(
+    Object.entries(DB.users).filter(([, u]) => u.role === "mentee").map(([email, u]) => ({ email, ...u }))
+  );
+
+  // Fetch real mentees from Supabase and merge with demo data
+  useEffect(() => {
+    supabase.from("mentee_profiles").select("*").order("start_date", { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const realMentees = data.map(m => ({
+            email: m.email,
+            name: m.first_name || m.email.split("@")[0],
+            firstName: m.first_name || m.email.split("@")[0],
+            avatar: (m.first_name || m.email.split("@")[0]).slice(0, 2).toUpperCase(),
+            tier: m.tier || "Hourly Session",
+            tierKey: m.tier_key || "hourly",
+            startDate: m.start_date || "Recently",
+            daysRemaining: m.days_remaining ?? 0,
+            totalDays: m.total_days || 30,
+            sessionsCompleted: m.sessions_completed ?? 0,
+            sessionsTotal: m.sessions_total || 2,
+            goal: m.goal || "",
+            milestones: m.milestones || [],
+            nextSession: m.next_session_date ? {
+              date: m.next_session_date,
+              time: m.next_session_time || "",
+              type: m.next_session_type || "Session"
+            } : null,
+          }));
+          // Merge: keep demo users + add any real mentees not in demo
+          const demoEmails = Object.entries(DB.users).filter(([, u]) => u.role === "mentee").map(([e]) => e);
+          const demoMentees = Object.entries(DB.users).filter(([, u]) => u.role === "mentee").map(([email, u]) => ({ email, ...u }));
+          const newRealMentees = realMentees.filter(m => !demoEmails.includes(m.email));
+          setMenteeList([...demoMentees, ...newRealMentees]);
+        }
+      });
+  }, []);
+
   const communityList = Object.entries(DB.users).filter(([, u]) => u.role === "community").map(([email, u]) => ({ email, ...u }));
   const totalRev = menteeList.reduce((s, m) => s + (m.tierKey === "elite" ? 3360 : m.tierKey === "intensive" ? 1120 : 250), 0);
 
