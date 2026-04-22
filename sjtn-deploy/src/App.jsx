@@ -2941,7 +2941,10 @@ const AdminDashboard = ({ onLogout }) => {
   const { isMobile, useSidebar } = useLayout();
   const [view, setView] = useState("overview");
   const [adminCall, setAdminCall] = useState(null);
-  const [welcomeLetter, setWelcomeLetter] = useState(null); // { name, tier, startDate }
+  const [welcomeLetter, setWelcomeLetter] = useState(null);
+  const [scheduleSession, setScheduleSession] = useState(null); // { mentee }
+  const [sessionForm, setSessionForm] = useState({ type:"", date:"", time:"", notes:"" });
+  const [sessionBusy, setSessionBusy] = useState(false); // { name, tier, startDate }
   const [leads, setLeads] = useState(DB.leads);
   const [selLead, setSelLead] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -3631,6 +3634,79 @@ const AdminDashboard = ({ onLogout }) => {
     );
   })() : null;
 
+  // ── Session Scheduling Modal ─────────────────────────────────────────────
+  const SessionScheduleModal = scheduleSession ? (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ background: B.white, width: "100%", maxWidth: 480 }}>
+
+        {/* Header */}
+        <div style={{ background: B.black, padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: `4px solid ${B.blush}` }}>
+          <div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Schedule Session</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: B.ivory }}>{scheduleSession.name}</div>
+            <div style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>{scheduleSession.tier}</div>
+          </div>
+          <button onClick={() => { setScheduleSession(null); setSessionForm({ type:"", date:"", time:"", notes:"" }); }} style={{ width: 28, height: 28, border: `1px solid #333`, background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Ic n="close" size={13} color={B.mid} /></button>
+        </div>
+
+        {/* Form */}
+        <div style={{ padding: "24px" }}>
+          {/* Session type */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: B.steel, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Session Type</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {["Session 1 — Foundation & Plan", "Session 2 — Pricing & Technique", "Session 3 — Marketing Deep Dive", "Session 4 — Client Retention", "Session 5 — Scale & Systems", "Session 6 — End-of-Quarter Review", "Check-in", "End-of-Month Review"].map(opt => (
+                <button key={opt} onClick={() => setSessionForm(p => ({ ...p, type: opt }))} style={{ padding: "10px 14px", border: `1px solid ${sessionForm.type === opt ? B.blush : B.cloud}`, background: sessionForm.type === opt ? B.blushPale : "transparent", color: sessionForm.type === opt ? B.blush : B.steel, fontSize: 12, fontWeight: sessionForm.type === opt ? 700 : 400, cursor: "pointer", fontFamily: FONTS.body, textAlign: "left" }}>{opt}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Date and time */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 700, color: B.steel, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Date</div>
+              <input type="date" value={sessionForm.date} onChange={e => setSessionForm(p => ({ ...p, date: e.target.value }))} style={{ width: "100%", padding: "10px 12px", border: `1px solid ${B.cloud}`, fontSize: 13, fontFamily: FONTS.body, outline: "none", color: B.black, boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 700, color: B.steel, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Time (EST)</div>
+              <input type="time" value={sessionForm.time} onChange={e => setSessionForm(p => ({ ...p, time: e.target.value }))} style={{ width: "100%", padding: "10px 12px", border: `1px solid ${B.cloud}`, fontSize: 13, fontFamily: FONTS.body, outline: "none", color: B.black, boxSizing: "border-box" }} />
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: B.steel, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Notes for Mentee (optional)</div>
+            <textarea value={sessionForm.notes} onChange={e => setSessionForm(p => ({ ...p, notes: e.target.value }))} rows={3} placeholder="e.g. We'll focus on your rebooking language and pricing language for the consultation..." style={{ width: "100%", padding: "10px 12px", border: `1px solid ${B.cloud}`, fontSize: 13, fontFamily: FONTS.body, outline: "none", color: B.black, boxSizing: "border-box", resize: "vertical" }} />
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 8 }}>
+            <Btn variant="ghost" onClick={() => { setScheduleSession(null); setSessionForm({ type:"", date:"", time:"", notes:"" }); }}>Cancel</Btn>
+            <Btn full variant="blush" icon="calendar" disabled={sessionBusy || !sessionForm.type || !sessionForm.date || !sessionForm.time} onClick={async () => {
+              setSessionBusy(true);
+              const dateFormatted = new Date(sessionForm.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+              const timeFormatted = new Date("1970-01-01T" + sessionForm.time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+              try {
+                await supabase.from("mentee_profiles").upsert({
+                  email: scheduleSession.email,
+                  next_session_date: `${dateFormatted}`,
+                  next_session_time: `${timeFormatted} EST`,
+                  next_session_type: sessionForm.type,
+                }, { onConflict: "email" });
+                alert(`Session scheduled for ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]} on ${dateFormatted} at ${timeFormatted} EST. They will see it on their dashboard.`);
+                setScheduleSession(null);
+                setSessionForm({ type:"", date:"", time:"", notes:"" });
+              } catch (e) {
+                alert(`Error scheduling session: ${e.message}`);
+              }
+              setSessionBusy(false);
+            }}>{sessionBusy ? "Scheduling…" : "Schedule & Notify"}</Btn>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   const MenteesView = (
     <Pg title="Mentees" sub="All Enrolled">
       <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderTop:`3px solid ${B.blush}`, padding:"20px", marginBottom:20 }}>
@@ -3707,6 +3783,7 @@ const AdminDashboard = ({ onLogout }) => {
             <div style={{ display: "flex", gap: 2, marginTop: 12, flexWrap: "wrap" }}>
               <Btn size="sm" icon="video" onClick={() => setAdminCall(m.name)}>Start Call</Btn>
               <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
+              <Btn size="sm" variant="ghost" icon="calendar" onClick={() => setScheduleSession(m)}>Schedule Session</Btn>
               <Btn size="sm" variant="ghost" icon="file">View Files</Btn>
               <Btn size="sm" variant="blush" icon="send" onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })}>Send Welcome Letter</Btn>
             </div>
@@ -3806,6 +3883,7 @@ const AdminDashboard = ({ onLogout }) => {
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
       {adminCall && <VideoCallModal onClose={() => setAdminCall(null)} sessionName={`Session with ${adminCall}`} participantName={adminCall} isHost={true} />}
       {WelcomeLetterModal}
+      {SessionScheduleModal}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:opacity .15s;cursor:pointer} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}}`}</style>
 
       {useSidebar && (
