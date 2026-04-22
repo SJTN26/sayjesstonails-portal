@@ -2939,23 +2939,31 @@ const ApplicationsView = () => {
 
 /* ── Invite Mentee Form — standalone component to prevent remount on state change ── */
 const InviteForm = ({ isMobile }) => {
-  const [form, setForm] = useState({ name:"", email:"", tier:"Hourly Session" });
+  const nameRef = useRef(null);
+  const emailRef = useRef(null);
+  const tierRef = useRef(null);
   const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
 
-  const inp = { width:"100%", padding:"10px 12px", border:`1px solid #E8E8E8`, fontSize:13, fontFamily:"'DM Sans', 'Helvetica Neue', sans-serif", outline:"none", color:"#0D0D0D", boxSizing:"border-box" };
+  const inp = { width:"100%", padding:"10px 12px", border:"1px solid #E8E8E8", fontSize:16, fontFamily:"'DM Sans', 'Helvetica Neue', sans-serif", outline:"none", color:"#0D0D0D", boxSizing:"border-box", borderRadius:0, WebkitAppearance:"none" };
 
   const send = async () => {
-    if (!form.name.trim()) { alert("Please enter the mentee's first name."); return; }
-    if (!form.email.trim()) { alert("Please enter an email address."); return; }
+    const firstName = nameRef.current?.value?.trim();
+    const email = emailRef.current?.value?.trim();
+    const tier = tierRef.current?.value || "Hourly Session";
+    if (!firstName) { alert("Please enter the mentee's first name."); nameRef.current?.focus(); return; }
+    if (!email) { alert("Please enter an email address."); emailRef.current?.focus(); return; }
     setBusy(true);
     try {
       const { data, error } = await supabase.functions.invoke('invite-mentee', {
-        body: { email: form.email.trim(), tier: form.tier, first_name: form.name.trim() }
+        body: { email, tier, first_name: firstName }
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      alert(`Invite sent to ${form.name} at ${form.email} — they will receive an email to set their password.`);
-      setForm({ name:"", email:"", tier:"Hourly Session" });
+      if (nameRef.current) nameRef.current.value = "";
+      if (emailRef.current) emailRef.current.value = "";
+      setSent(true);
+      setTimeout(() => setSent(false), 4000);
     } catch (e) {
       alert(`Error: ${e.message}`);
     }
@@ -2965,27 +2973,28 @@ const InviteForm = ({ isMobile }) => {
   return (
     <div style={{ background:"#FFFFFF", border:"1px solid #E8E8E8", borderTop:"3px solid #C4607A", padding:"20px", marginBottom:20 }}>
       <p style={{ fontSize:9, fontWeight:700, color:"#C4607A", letterSpacing:3, textTransform:"uppercase", margin:"0 0 14px" }}>Invite a Mentee</p>
+      {sent && <div style={{ background:"#E8F5EE", border:"1px solid #2D7D4E", borderLeft:"3px solid #2D7D4E", padding:"10px 14px", marginBottom:14, fontSize:12, color:"#2D7D4E", fontWeight:500 }}>Invite sent successfully. They will receive an email to set their password.</div>}
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:10, marginBottom:10 }}>
         <div>
           <div style={{ fontSize:9, fontWeight:700, color:"#4A4A4A", letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>First Name</div>
-          <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Taylor" style={inp} />
+          <input ref={nameRef} type="text" defaultValue="" placeholder="e.g. Taylor" style={inp} />
         </div>
         <div>
           <div style={{ fontSize:9, fontWeight:700, color:"#4A4A4A", letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>Email Address</div>
-          <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="mentee@email.com" style={inp} />
+          <input ref={emailRef} type="email" defaultValue="" placeholder="mentee@email.com" style={inp} />
         </div>
       </div>
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr", gap:10 }}>
         <div>
           <div style={{ fontSize:9, fontWeight:700, color:"#4A4A4A", letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>Program Tier</div>
-          <select value={form.tier} onChange={e => setForm(p => ({ ...p, tier: e.target.value }))} style={{ ...inp, background:"#FFFFFF" }}>
+          <select ref={tierRef} defaultValue="Hourly Session" style={{ ...inp, background:"#FFFFFF" }}>
             <option value="Hourly Session">Hourly Session</option>
             <option value="30-Day Intensive">30-Day Intensive</option>
             <option value="3-Month Elite">3-Month Elite</option>
           </select>
         </div>
         <div style={{ display:"flex", alignItems:"flex-end" }}>
-          <button disabled={busy} onClick={send} style={{ width:"100%", padding:"10px 16px", background: busy ? "#888" : "#C4607A", border:"none", color:"#FFFFFF", fontSize:11, fontWeight:700, cursor: busy ? "default" : "pointer", fontFamily:"'DM Sans', 'Helvetica Neue', sans-serif", letterSpacing:"0.08em", textTransform:"uppercase", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+          <button disabled={busy} onClick={send} style={{ width:"100%", padding:"11px 16px", background: busy ? "#888" : "#C4607A", border:"none", color:"#FFFFFF", fontSize:11, fontWeight:700, cursor: busy ? "default" : "pointer", fontFamily:"'DM Sans', 'Helvetica Neue', sans-serif", letterSpacing:"0.08em", textTransform:"uppercase" }}>
             {busy ? "Sending…" : "Invite Mentee"}
           </button>
         </div>
