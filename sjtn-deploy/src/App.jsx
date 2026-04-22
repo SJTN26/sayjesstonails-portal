@@ -2944,7 +2944,10 @@ const AdminDashboard = ({ onLogout }) => {
   const [welcomeLetter, setWelcomeLetter] = useState(null);
   const [scheduleSession, setScheduleSession] = useState(null); // { mentee }
   const [sessionForm, setSessionForm] = useState({ type:"", date:"", time:"", notes:"" });
-  const [sessionBusy, setSessionBusy] = useState(false); // { name, tier, startDate }
+  const [sessionBusy, setSessionBusy] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ name:"", email:"", tier:"Hourly Session" });
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [menteeDrawer, setMenteeDrawer] = useState(null); // { mentee, tab }
   const [leads, setLeads] = useState(DB.leads);
   const [selLead, setSelLead] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -3709,57 +3712,185 @@ const AdminDashboard = ({ onLogout }) => {
 
   const MenteesView = (
     <Pg title="Mentees" sub="All Enrolled">
+
+      {/* ── Mentee Detail Drawer ── */}
+      {menteeDrawer && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:500, display:"flex", justifyContent:"flex-end" }} onClick={() => setMenteeDrawer(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: isMobile ? "100%" : 400, background:B.white, height:"100%", overflowY:"auto", display:"flex", flexDirection:"column" }}>
+            {/* Drawer header */}
+            <div style={{ background:B.black, padding:"20px 24px", borderLeft:`4px solid ${B.blush}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexShrink:0 }}>
+              <div>
+                <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>{menteeDrawer.tab}</div>
+                <div style={{ fontSize:16, fontWeight:700, color:B.ivory }}>{menteeDrawer.mentee.name}</div>
+              </div>
+              <button onClick={() => setMenteeDrawer(null)} style={{ width:28, height:28, border:`1px solid #333`, background:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><Ic n="close" size={13} color={B.mid} /></button>
+            </div>
+            <div style={{ padding:"20px 24px", flex:1 }}>
+
+              {/* SESSIONS TAB */}
+              {menteeDrawer.tab === "Sessions" && (
+                <div>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+                    <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{menteeDrawer.mentee.sessionsCompleted} of {menteeDrawer.mentee.sessionsTotal} sessions completed</div>
+                    <Btn size="sm" variant="blush" icon="calendar" onClick={() => { setMenteeDrawer(null); setScheduleSession(menteeDrawer.mentee); }}>Schedule Next</Btn>
+                  </div>
+                  {Array.from({ length: menteeDrawer.mentee.sessionsTotal }, (_, i) => {
+                    const completed = i < menteeDrawer.mentee.sessionsCompleted;
+                    const isNext = i === menteeDrawer.mentee.sessionsCompleted;
+                    return (
+                      <div key={i} style={{ padding:"14px 16px", marginBottom:2, background: completed ? B.successPale : isNext ? B.blushPale : B.off, borderLeft:`3px solid ${completed ? B.success : isNext ? B.blush : B.cloud}` }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                          <div>
+                            <div style={{ fontSize:12, fontWeight:700, color:B.black }}>Session {i+1}</div>
+                            <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>{completed ? "Completed" : isNext ? "Up next" : "Upcoming"}</div>
+                          </div>
+                          {completed && <Ic n="check" size={16} color={B.success} />}
+                          {isNext && <span style={{ fontSize:8, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase" }}>Next</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* DAYS LEFT TAB */}
+              {menteeDrawer.tab === "Days Left" && (
+                <div>
+                  <div style={{ marginBottom:20 }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
+                      <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>Started {menteeDrawer.mentee.startDate}</span>
+                      <span style={{ fontSize:11, fontWeight:700, color:B.blush }}>{menteeDrawer.mentee.daysRemaining} days left</span>
+                    </div>
+                    <PBar value={Math.round(((menteeDrawer.mentee.totalDays - menteeDrawer.mentee.daysRemaining) / menteeDrawer.mentee.totalDays) * 100)} h={8} />
+                    <div style={{ display:"flex", justifyContent:"space-between", marginTop:6 }}>
+                      <span style={{ fontSize:9, color:B.mid, fontWeight:300 }}>Day 1</span>
+                      <span style={{ fontSize:9, color:B.mid, fontWeight:300 }}>Day {menteeDrawer.mentee.totalDays}</span>
+                    </div>
+                  </div>
+                  {[
+                    { label:"Program Duration", value:`${menteeDrawer.mentee.totalDays} days` },
+                    { label:"Days Completed", value:`${menteeDrawer.mentee.totalDays - menteeDrawer.mentee.daysRemaining} days` },
+                    { label:"Days Remaining", value:`${menteeDrawer.mentee.daysRemaining} days` },
+                    { label:"Completion", value:`${Math.round(((menteeDrawer.mentee.totalDays - menteeDrawer.mentee.daysRemaining) / menteeDrawer.mentee.totalDays) * 100)}%` },
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ display:"flex", justifyContent:"space-between", padding:"10px 0", borderBottom:`1px solid ${B.cloud}` }}>
+                      <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{label}</span>
+                      <span style={{ fontSize:12, fontWeight:700, color:B.black }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* MILESTONES TAB */}
+              {menteeDrawer.tab === "Milestones" && (
+                <div>
+                  <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{menteeDrawer.mentee.milestones?.filter(x=>x.done).length || 0} of {menteeDrawer.mentee.milestones?.length || 0} completed</div>
+                  {(menteeDrawer.mentee.milestones || []).map((ms, i) => (
+                    <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 0", borderBottom:`1px solid ${B.cloud}` }}>
+                      <div style={{ width:22, height:22, background: ms.done ? B.blush : "transparent", border:`2px solid ${ms.done ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                        {ms.done && <Ic n="check" size={10} color={B.white} />}
+                      </div>
+                      <span style={{ fontSize:12, color: ms.done ? B.mid : B.black, textDecoration: ms.done ? "line-through" : "none", fontWeight:300, flex:1 }}>{ms.label}</span>
+                      {ms.done && <span style={{ fontSize:9, color:B.success, fontWeight:700, letterSpacing:1 }}>Done</span>}
+                    </div>
+                  ))}
+                  {(!menteeDrawer.mentee.milestones || menteeDrawer.mentee.milestones.length === 0) && (
+                    <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No milestones set yet.</div>
+                  )}
+                </div>
+              )}
+
+              {/* PROGRESS TAB */}
+              {menteeDrawer.tab === "Progress" && (
+                <div>
+                  {(() => {
+                    const m = menteeDrawer.mentee;
+                    const sessionPct = m.sessionsTotal ? Math.round((m.sessionsCompleted / m.sessionsTotal) * 100) : 0;
+                    const dayPct = m.totalDays ? Math.round(((m.totalDays - m.daysRemaining) / m.totalDays) * 100) : 0;
+                    const milestonePct = m.milestones?.length ? Math.round((m.milestones.filter(x=>x.done).length / m.milestones.length) * 100) : 0;
+                    const overall = Math.round((sessionPct + dayPct + milestonePct) / 3);
+                    return (
+                      <>
+                        <div style={{ padding:"20px", background:B.blushPale, borderLeft:`3px solid ${B.blush}`, marginBottom:20, textAlign:"center" }}>
+                          <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:56, color:B.blush, lineHeight:1 }}>{overall}%</div>
+                          <div style={{ fontSize:10, color:B.blush, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginTop:4 }}>Overall Progress</div>
+                        </div>
+                        {[["Sessions", sessionPct], ["Timeline", dayPct], ["Milestones", milestonePct]].map(([label, pct]) => (
+                          <div key={label} style={{ marginBottom:18 }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                              <span style={{ fontSize:11, color:B.steel, fontWeight:300 }}>{label}</span>
+                              <span style={{ fontSize:11, color:B.blush, fontWeight:700 }}>{pct}%</span>
+                            </div>
+                            <PBar value={pct} h={6} />
+                          </div>
+                        ))}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Invite form — proper React state ── */}
       <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderTop:`3px solid ${B.blush}`, padding:"20px", marginBottom:20 }}>
         <p style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", margin:"0 0 14px" }}>Invite a Mentee</p>
         <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:10, marginBottom:10 }}>
           <div>
             <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>First Name</div>
-            <input id="invite-name-input" type="text" placeholder="e.g. Taylor" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
+            <input type="text" value={inviteForm.name} onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Taylor" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
           </div>
           <div>
             <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>Email Address</div>
-            <input id="invite-email-input" type="email" placeholder="mentee@email.com" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
+            <input type="email" value={inviteForm.email} onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))} placeholder="mentee@email.com" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
           </div>
         </div>
         <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr", gap:10 }}>
           <div>
             <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>Program Tier</div>
-            <select id="invite-tier-select" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, background:B.white, boxSizing:"border-box" }}>
+            <select value={inviteForm.tier} onChange={e => setInviteForm(p => ({ ...p, tier: e.target.value }))} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, background:B.white, boxSizing:"border-box" }}>
               <option value="Hourly Session">Hourly Session</option>
               <option value="30-Day Intensive">30-Day Intensive</option>
               <option value="3-Month Elite">3-Month Elite</option>
             </select>
           </div>
           <div style={{ display:"flex", alignItems:"flex-end" }}>
-            <button onClick={async () => {
-              const nameEl = document.getElementById("invite-name-input");
-              const emailEl = document.getElementById("invite-email-input");
-              const tierEl = document.getElementById("invite-tier-select");
-              const firstName = nameEl?.value?.trim();
-              const email = emailEl?.value?.trim();
-              if (!firstName) { alert("Please enter the mentee's first name."); return; }
-              if (!email) { alert("Please enter an email address."); return; }
+            <button disabled={inviteBusy} onClick={async () => {
+              if (!inviteForm.name.trim()) { alert("Please enter the mentee's first name."); return; }
+              if (!inviteForm.email.trim()) { alert("Please enter an email address."); return; }
+              setInviteBusy(true);
               try {
                 const { data, error } = await supabase.functions.invoke('invite-mentee', {
-                  body: { email, tier: tierEl?.value || "Hourly Session", first_name: firstName }
+                  body: { email: inviteForm.email.trim(), tier: inviteForm.tier, first_name: inviteForm.name.trim() }
                 });
                 if (error) throw error;
                 if (data?.error) throw new Error(data.error);
-                alert(`✓ Invite sent to ${firstName} at ${email} — they'll receive an email to set their password.`);
-                if (nameEl) nameEl.value = "";
-                if (emailEl) emailEl.value = "";
+                alert(`Invite sent to ${inviteForm.name} at ${inviteForm.email} — they will receive an email to set their password.`);
+                setInviteForm({ name:"", email:"", tier:"Hourly Session" });
               } catch (e) {
                 alert(`Error: ${e.message}`);
               }
-            }} style={{ width:"100%", padding:"10px 16px", background:B.blush, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-              <Ic n="send" size={12} color={B.white} />Invite Mentee
+              setInviteBusy(false);
+            }} style={{ width:"100%", padding:"10px 16px", background: inviteBusy ? B.mid : B.blush, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor: inviteBusy ? "default" : "pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+              <Ic n="send" size={12} color={B.white} />{inviteBusy ? "Sending…" : "Invite Mentee"}
             </button>
           </div>
         </div>
       </div>
+
+      {/* ── Mentee cards ── */}
       {menteeList.map((m, i) => {
         const pct = Math.round((m.sessionsCompleted / m.sessionsTotal) * 100);
         const done = m.milestones?.filter(x => x.done).length || 0;
+        const statTiles = [
+          { value:`${m.sessionsCompleted}/${m.sessionsTotal}`, label:"Sessions", tab:"Sessions" },
+          { value:m.daysRemaining, label:"Days Left", tab:"Days Left" },
+          { value:`${done}/${m.milestones?.length || 0}`, label:"Milestones", tab:"Milestones" },
+          { value:`${pct}%`, label:"Progress", tab:"Progress", accent:true },
+        ];
         return (
           <Card key={i} style={{ padding: "18px 20px", marginBottom: 2 }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
@@ -3772,11 +3903,14 @@ const AdminDashboard = ({ onLogout }) => {
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 2, marginBottom: 12 }}>
-              {[[`${m.sessionsCompleted}/${m.sessionsTotal}`, "Sessions"], [m.daysRemaining, "Days Left"], [`${done}/${m.milestones?.length || 0}`, "Milestones"], [`${pct}%`, "Progress"]].map(([v, l], idx) => (
-                <div key={l} style={{ padding: "10px 14px", background: B.off, borderTop: idx === 3 ? `2px solid ${B.blush}` : `2px solid ${B.cloud}` }}>
-                  <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 20, color: idx === 3 ? B.blush : B.black }}>{v}</div>
-                  <div style={{ fontSize: 8, color: B.mid, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 3 }}>{l}</div>
-                </div>
+              {statTiles.map(({ value, label, tab, accent }) => (
+                <button key={label} onClick={() => setMenteeDrawer({ mentee: m, tab })} style={{ padding: "10px 14px", background: B.off, borderTop: accent ? `2px solid ${B.blush}` : `2px solid ${B.cloud}`, border:`1px solid ${B.cloud}`, borderTopWidth: 2, cursor:"pointer", textAlign:"left", fontFamily:FONTS.body, transition:"background .15s" }}
+                  onMouseEnter={e => e.currentTarget.style.background = accent ? B.blushPale : B.cloud}
+                  onMouseLeave={e => e.currentTarget.style.background = B.off}>
+                  <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 20, color: accent ? B.blush : B.black }}>{value}</div>
+                  <div style={{ fontSize: 8, color: B.mid, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 3 }}>{label}</div>
+                  <div style={{ fontSize: 7, color: B.blush, fontWeight: 700, letterSpacing: 1, marginTop: 2, textTransform:"uppercase" }}>View →</div>
+                </button>
               ))}
             </div>
             <PBar value={pct} />
