@@ -2937,6 +2937,63 @@ const ApplicationsView = () => {
   );
 };
 
+/* ── Invite Mentee Form — standalone component to prevent remount on state change ── */
+const InviteForm = ({ isMobile }) => {
+  const [form, setForm] = useState({ name:"", email:"", tier:"Hourly Session" });
+  const [busy, setBusy] = useState(false);
+
+  const inp = { width:"100%", padding:"10px 12px", border:`1px solid #E8E8E8`, fontSize:13, fontFamily:"'DM Sans', 'Helvetica Neue', sans-serif", outline:"none", color:"#0D0D0D", boxSizing:"border-box" };
+
+  const send = async () => {
+    if (!form.name.trim()) { alert("Please enter the mentee's first name."); return; }
+    if (!form.email.trim()) { alert("Please enter an email address."); return; }
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('invite-mentee', {
+        body: { email: form.email.trim(), tier: form.tier, first_name: form.name.trim() }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      alert(`Invite sent to ${form.name} at ${form.email} — they will receive an email to set their password.`);
+      setForm({ name:"", email:"", tier:"Hourly Session" });
+    } catch (e) {
+      alert(`Error: ${e.message}`);
+    }
+    setBusy(false);
+  };
+
+  return (
+    <div style={{ background:"#FFFFFF", border:"1px solid #E8E8E8", borderTop:"3px solid #C4607A", padding:"20px", marginBottom:20 }}>
+      <p style={{ fontSize:9, fontWeight:700, color:"#C4607A", letterSpacing:3, textTransform:"uppercase", margin:"0 0 14px" }}>Invite a Mentee</p>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:10, marginBottom:10 }}>
+        <div>
+          <div style={{ fontSize:9, fontWeight:700, color:"#4A4A4A", letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>First Name</div>
+          <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Taylor" style={inp} />
+        </div>
+        <div>
+          <div style={{ fontSize:9, fontWeight:700, color:"#4A4A4A", letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>Email Address</div>
+          <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="mentee@email.com" style={inp} />
+        </div>
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr", gap:10 }}>
+        <div>
+          <div style={{ fontSize:9, fontWeight:700, color:"#4A4A4A", letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>Program Tier</div>
+          <select value={form.tier} onChange={e => setForm(p => ({ ...p, tier: e.target.value }))} style={{ ...inp, background:"#FFFFFF" }}>
+            <option value="Hourly Session">Hourly Session</option>
+            <option value="30-Day Intensive">30-Day Intensive</option>
+            <option value="3-Month Elite">3-Month Elite</option>
+          </select>
+        </div>
+        <div style={{ display:"flex", alignItems:"flex-end" }}>
+          <button disabled={busy} onClick={send} style={{ width:"100%", padding:"10px 16px", background: busy ? "#888" : "#C4607A", border:"none", color:"#FFFFFF", fontSize:11, fontWeight:700, cursor: busy ? "default" : "pointer", fontFamily:"'DM Sans', 'Helvetica Neue', sans-serif", letterSpacing:"0.08em", textTransform:"uppercase", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+            {busy ? "Sending…" : "Invite Mentee"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = ({ onLogout }) => {
   const { isMobile, useSidebar } = useLayout();
   const [view, setView] = useState("overview");
@@ -3835,51 +3892,8 @@ const AdminDashboard = ({ onLogout }) => {
         </div>
       )}
 
-      {/* ── Invite form — proper React state ── */}
-      <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderTop:`3px solid ${B.blush}`, padding:"20px", marginBottom:20 }}>
-        <p style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", margin:"0 0 14px" }}>Invite a Mentee</p>
-        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:10, marginBottom:10 }}>
-          <div>
-            <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>First Name</div>
-            <input type="text" value={inviteForm.name} onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Taylor" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
-          </div>
-          <div>
-            <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>Email Address</div>
-            <input type="email" value={inviteForm.email} onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))} placeholder="mentee@email.com" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
-          </div>
-        </div>
-        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr", gap:10 }}>
-          <div>
-            <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:6 }}>Program Tier</div>
-            <select value={inviteForm.tier} onChange={e => setInviteForm(p => ({ ...p, tier: e.target.value }))} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, background:B.white, boxSizing:"border-box" }}>
-              <option value="Hourly Session">Hourly Session</option>
-              <option value="30-Day Intensive">30-Day Intensive</option>
-              <option value="3-Month Elite">3-Month Elite</option>
-            </select>
-          </div>
-          <div style={{ display:"flex", alignItems:"flex-end" }}>
-            <button disabled={inviteBusy} onClick={async () => {
-              if (!inviteForm.name.trim()) { alert("Please enter the mentee's first name."); return; }
-              if (!inviteForm.email.trim()) { alert("Please enter an email address."); return; }
-              setInviteBusy(true);
-              try {
-                const { data, error } = await supabase.functions.invoke('invite-mentee', {
-                  body: { email: inviteForm.email.trim(), tier: inviteForm.tier, first_name: inviteForm.name.trim() }
-                });
-                if (error) throw error;
-                if (data?.error) throw new Error(data.error);
-                alert(`Invite sent to ${inviteForm.name} at ${inviteForm.email} — they will receive an email to set their password.`);
-                setInviteForm({ name:"", email:"", tier:"Hourly Session" });
-              } catch (e) {
-                alert(`Error: ${e.message}`);
-              }
-              setInviteBusy(false);
-            }} style={{ width:"100%", padding:"10px 16px", background: inviteBusy ? B.mid : B.blush, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor: inviteBusy ? "default" : "pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-              <Ic n="send" size={12} color={B.white} />{inviteBusy ? "Sending…" : "Invite Mentee"}
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* ── Invite form ── */}
+      <InviteForm isMobile={isMobile} />
 
       {/* ── Mentee cards ── */}
       {menteeList.map((m, i) => {
