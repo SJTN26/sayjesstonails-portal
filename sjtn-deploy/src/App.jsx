@@ -1404,7 +1404,7 @@ const MenteePortal = ({ user, onLogout }) => {
                   date: data.next_session_date,
                   time: data.next_session_time || "",
                   type: data.next_session_type || "Session"
-                } : p.nextSession,
+                } : null,
               }));
             }
           });
