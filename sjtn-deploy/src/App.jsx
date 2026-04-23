@@ -1758,17 +1758,24 @@ const MenteePortal = ({ user, onLogout }) => {
         </div>
 
         {/* ── Next session + prep card ── */}
-        <div style={{ background: B.black, padding: isMobile ? "20px" : "24px 28px", marginBottom: 16, borderLeft: `3px solid ${B.blush}`, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", right: -20, top: -20, width: 100, height: 100, borderRadius: "50%", background: `${B.blush}0A` }} />
-          <Section style={{ color: B.blushLight, marginBottom: 10 }}>Next Session</Section>
-          <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{profile.nextSession?.type}</div>
-          <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{profile.nextSession?.date} · {profile.nextSession?.time}</div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
-            {!sessionPrep.submitted && <Btn variant="ghostDark" icon="clipBoard" onClick={() => setView("sessionprep")}>Prepare for Session</Btn>}
-            {sessionPrep.submitted && <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: B.success }}><Ic n="check" size={12} color={B.success} />Prep submitted</div>}
+        {profile.nextSession?.date ? (
+          <div style={{ background: B.black, padding: isMobile ? "20px" : "24px 28px", marginBottom: 16, borderLeft: `3px solid ${B.blush}`, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", right: -20, top: -20, width: 100, height: 100, borderRadius: "50%", background: `${B.blush}0A` }} />
+            <Section style={{ color: B.blushLight, marginBottom: 10 }}>Next Live Session</Section>
+            <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{profile.nextSession?.type}</div>
+            <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{profile.nextSession?.date} · {profile.nextSession?.time}</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
+              {!sessionPrep.submitted && <Btn variant="ghostDark" icon="clipBoard" onClick={() => setView("sessionprep")}>Prepare for Session</Btn>}
+              {sessionPrep.submitted && <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: B.success }}><Ic n="check" size={12} color={B.success} />Prep submitted</div>}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div style={{ background: "#111", padding: isMobile ? "20px" : "24px 28px", marginBottom: 16, borderLeft: `3px solid #333` }}>
+            <Section style={{ color: "#555", marginBottom: 8 }}>Next Live Session</Section>
+            <div style={{ color: "#555", fontSize: 13, fontWeight: 300 }}>No session scheduled yet. Jess will be in touch soon.</div>
+          </div>
+        )}
 
         {/* ── Quick wins ── */}
         <Card style={{ padding: "18px 20px", marginBottom: 16 }}>
