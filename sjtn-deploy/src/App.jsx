@@ -1918,6 +1918,8 @@ const MenteePortal = ({ user, onLogout }) => {
         )}
       </Pg>
     ),
+
+    sessions: (
       <Pg title="Sessions" sub="Live Sessions">
         <div style={{ background: B.black, padding: "22px 24px", marginBottom: 14, borderLeft: `3px solid ${B.blush}` }}>
           <Section style={{ color: B.blushLight, marginBottom: 8 }}>Up Next</Section>
