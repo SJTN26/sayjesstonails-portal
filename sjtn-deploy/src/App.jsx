@@ -1410,7 +1410,7 @@ const MenteePortal = ({ user, onLogout }) => {
           });
       };
       fetchProfile();
-      const interval = setInterval(fetchProfile, 30000);
+      const interval = setInterval(fetchProfile, 10000);
       return () => clearInterval(interval);
     }
   }, [user.email]);
@@ -1628,7 +1628,7 @@ const MenteePortal = ({ user, onLogout }) => {
     { id:"dashboard", icon:"home",   label:"Dashboard" },
     { id:"wins",      icon:"trophy",  label:"My Wins" },
     { id:"community", icon:"users",   label:"Community" },
-    { id:"sessions",  icon:"video",   label:"Sessions" },
+    { id:"sessions",  icon:"video",   label:"Live Sessions" },
     { id:"schedule",  icon:"calendar",label:"Schedule" },
     { id:"messages",  icon:"message", label:"Messages" },
     { id:"resources", icon:"book",    label:"Resources" },
@@ -1751,7 +1751,7 @@ const MenteePortal = ({ user, onLogout }) => {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 2, marginBottom: 16 }}>
-          <StatTile value={`${profile.sessionsCompleted}/${profile.sessionsTotal}`} label="Sessions" />
+          <StatTile value={`${profile.sessionsCompleted}/${profile.sessionsTotal}`} label="Live Sessions" />
           <StatTile value={profile.daysRemaining} label="Days Left" />
           <StatTile value={`${done}/${milestones.length}`} label="Milestones" />
           <StatTile value={`${pct}%`} label="Progress" accent />
@@ -3771,7 +3771,7 @@ const AdminDashboard = ({ onLogout }) => {
               <div style={{ fontSize: 11, color: B.steel, fontWeight: 300 }}>{scheduleSession.nextSession.date} · {scheduleSession.nextSession.time}</div>
             </div>
             <button disabled={sessionBusy} onClick={async () => {
-              if (!window.confirm(`Cancel the session for ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]}? They will be notified.`)) return;
+              if (!window.confirm(`Cancel the session for ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]}? They will receive a message in their portal.`)) return;
               setSessionBusy(true);
               try {
                 await supabase.from("mentee_profiles").upsert({
@@ -3780,10 +3780,16 @@ const AdminDashboard = ({ onLogout }) => {
                   next_session_time: null,
                   next_session_type: null,
                 }, { onConflict: "email" });
-                alert(`Session cancelled for ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]}.`);
+                // Send automated message to mentee
+                await supabase.from("messages").insert([{
+                  mentee_email: scheduleSession.email,
+                  sender: "jess",
+                  text: `Hi ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]}, I need to cancel our upcoming session (${scheduleSession.nextSession?.type}). I'll be in touch shortly to reschedule. Sorry for any inconvenience!`,
+                  read: false
+                }]);
+                setMenteeList(p => p.map(m => m.email === scheduleSession.email ? { ...m, nextSession: null } : m));
                 setScheduleSession(null);
                 setSessionForm({ type:"", date:"", time:"", notes:"" });
-                setMenteeList(p => p.map(m => m.email === scheduleSession.email ? { ...m, nextSession: null } : m));
               } catch (e) {
                 alert(`Error: ${e.message}`);
               }
@@ -3841,7 +3847,16 @@ const AdminDashboard = ({ onLogout }) => {
                   next_session_type: sessionForm.type,
                 }, { onConflict: "email" });
                 const firstName = scheduleSession.firstName || scheduleSession.name.split(" ")[0];
-                alert(`${hasExistingSession ? "Session rescheduled" : "Session scheduled"} for ${firstName} on ${dateFormatted} at ${timeFormatted} EST.`);
+                // Send automated message to mentee
+                const msgText = hasExistingSession
+                  ? `Hi ${firstName}, your session has been rescheduled to ${dateFormatted} at ${timeFormatted} EST — ${sessionForm.type}. See you then!`
+                  : `Hi ${firstName}, your live session has been scheduled for ${dateFormatted} at ${timeFormatted} EST — ${sessionForm.type}. Looking forward to it!`;
+                await supabase.from("messages").insert([{
+                  mentee_email: scheduleSession.email,
+                  sender: "jess",
+                  text: msgText,
+                  read: false
+                }]);
                 setMenteeList(p => p.map(m => m.email === scheduleSession.email ? { ...m, nextSession: { date: dateFormatted, time: `${timeFormatted} EST`, type: sessionForm.type } } : m));
                 setScheduleSession(null);
                 setSessionForm({ type:"", date:"", time:"", notes:"" });
@@ -4100,7 +4115,7 @@ const AdminDashboard = ({ onLogout }) => {
                    const pct = Math.round((m.sessionsCompleted / m.sessionsTotal) * 100);
                    const done = m.milestones?.filter(x => x.done).length || 0;
                    const statTiles = [
-                     { value:`${m.sessionsCompleted}/${m.sessionsTotal}`, label:"Sessions", tab:"Sessions" },
+                     { value:`${m.sessionsCompleted}/${m.sessionsTotal}`, label:"Live Sessions", tab:"Sessions" },
                      { value:m.daysRemaining, label:"Days Left", tab:"Days Left" },
                      { value:`${done}/${m.milestones?.length || 0}`, label:"Milestones", tab:"Milestones" },
                      { value:`${pct}%`, label:"Progress", tab:"Progress", accent:true },
