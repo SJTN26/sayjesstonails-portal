@@ -1497,12 +1497,15 @@ const MenteePortal = ({ user, onLogout }) => {
   const [editingTaskNote, setEditingTaskNote] = useState(null); // task id
   const [taskNoteInput, setTaskNoteInput] = useState("");
 
-  // Fetch tasks from Supabase
+  // Fetch tasks from Supabase via edge function
   useEffect(() => {
     if (!user.email || !!user.password) return;
     const fetchTasks = () => {
-      supabase.from("tasks").select("*").eq("mentee_email", user.email).order("created_at", { ascending: false })
-        .then(({ data }) => { if (data) setTasks(data); });
+      supabase.functions.invoke('assign-task', {
+        body: { action: 'fetch', mentee_email: user.email }
+      }).then(({ data }) => {
+        if (data?.tasks) setTasks(data.tasks);
+      });
     };
     fetchTasks();
     const interval = setInterval(fetchTasks, 10000);
@@ -3114,11 +3117,11 @@ const AdminDashboard = ({ onLogout }) => {
 
   useEffect(() => {
     const fetchTasks = () => {
-      supabase.from("tasks").select("*").order("created_at", { ascending: false })
+      supabase.functions.invoke('assign-task', { body: { action: 'fetch_all' } })
         .then(({ data }) => {
-          if (data) {
+          if (data?.tasks) {
             const grouped = {};
-            data.forEach(t => {
+            data.tasks.forEach(t => {
               if (!grouped[t.mentee_email]) grouped[t.mentee_email] = [];
               grouped[t.mentee_email].push(t);
             });
