@@ -1381,32 +1381,37 @@ const MenteePortal = ({ user, onLogout }) => {
   const [docFilter, setDocFilter] = useState("All");
   const msgEnd = useRef(null);
 
-  // Merge real Supabase profile data for non-demo users
+  // Merge real Supabase profile data for non-demo users — polls every 30s
   const [profile, setProfile] = useState(user);
   useEffect(() => {
-    const isDemoUser = !!user.password; // demo users have password in their object
+    const isDemoUser = !!user.password;
     if (!isDemoUser && user.email) {
-      supabase.from("mentee_profiles").select("*").eq("email", user.email).single()
-        .then(({ data }) => {
-          if (data) {
-            setProfile(p => ({
-              ...p,
-              tier: data.tier || p.tier,
-              tierKey: data.tier_key || p.tierKey,
-              startDate: data.start_date || p.startDate,
-              daysRemaining: data.days_remaining ?? p.daysRemaining,
-              totalDays: data.total_days || p.totalDays,
-              sessionsCompleted: data.sessions_completed ?? p.sessionsCompleted,
-              sessionsTotal: data.sessions_total || p.sessionsTotal,
-              goal: data.goal || p.goal,
-              nextSession: data.next_session_date ? {
-                date: data.next_session_date,
-                time: data.next_session_time || "",
-                type: data.next_session_type || "Session"
-              } : p.nextSession,
-            }));
-          }
-        });
+      const fetchProfile = () => {
+        supabase.from("mentee_profiles").select("*").eq("email", user.email).single()
+          .then(({ data }) => {
+            if (data) {
+              setProfile(p => ({
+                ...p,
+                tier: data.tier || p.tier,
+                tierKey: data.tier_key || p.tierKey,
+                startDate: data.start_date || p.startDate,
+                daysRemaining: data.days_remaining ?? p.daysRemaining,
+                totalDays: data.total_days || p.totalDays,
+                sessionsCompleted: data.sessions_completed ?? p.sessionsCompleted,
+                sessionsTotal: data.sessions_total || p.sessionsTotal,
+                goal: data.goal || p.goal,
+                nextSession: data.next_session_date ? {
+                  date: data.next_session_date,
+                  time: data.next_session_time || "",
+                  type: data.next_session_type || "Session"
+                } : p.nextSession,
+              }));
+            }
+          });
+      };
+      fetchProfile();
+      const interval = setInterval(fetchProfile, 30000);
+      return () => clearInterval(interval);
     }
   }, [user.email]);
 
@@ -3741,26 +3746,62 @@ const AdminDashboard = ({ onLogout }) => {
   })() : null;
 
   // ── Session Scheduling Modal ─────────────────────────────────────────────
+  const hasExistingSession = scheduleSession?.nextSession?.date;
+
   const SessionScheduleModal = scheduleSession ? (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div style={{ background: B.white, width: "100%", maxWidth: 480 }}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }}>
+      <div style={{ background: B.white, width: "100%", maxWidth: 480, margin: "auto" }}>
 
         {/* Header */}
         <div style={{ background: B.black, padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: `4px solid ${B.blush}` }}>
           <div>
-            <div style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Schedule Session</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>{hasExistingSession ? "Manage Session" : "Schedule Session"}</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: B.ivory }}>{scheduleSession.name}</div>
             <div style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>{scheduleSession.tier}</div>
           </div>
           <button onClick={() => { setScheduleSession(null); setSessionForm({ type:"", date:"", time:"", notes:"" }); }} style={{ width: 28, height: 28, border: `1px solid #333`, background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Ic n="close" size={13} color={B.mid} /></button>
         </div>
 
+        {/* Existing session banner */}
+        {hasExistingSession && (
+          <div style={{ background: B.amberPale, borderLeft: `3px solid ${B.amber}`, padding: "14px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 700, color: B.amber, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>Currently Scheduled</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: B.black }}>{scheduleSession.nextSession.type}</div>
+              <div style={{ fontSize: 11, color: B.steel, fontWeight: 300 }}>{scheduleSession.nextSession.date} · {scheduleSession.nextSession.time}</div>
+            </div>
+            <button disabled={sessionBusy} onClick={async () => {
+              if (!window.confirm(`Cancel the session for ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]}? They will be notified.`)) return;
+              setSessionBusy(true);
+              try {
+                await supabase.from("mentee_profiles").upsert({
+                  email: scheduleSession.email,
+                  next_session_date: null,
+                  next_session_time: null,
+                  next_session_type: null,
+                }, { onConflict: "email" });
+                alert(`Session cancelled for ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]}.`);
+                setScheduleSession(null);
+                setSessionForm({ type:"", date:"", time:"", notes:"" });
+                setMenteeList(p => p.map(m => m.email === scheduleSession.email ? { ...m, nextSession: null } : m));
+              } catch (e) {
+                alert(`Error: ${e.message}`);
+              }
+              setSessionBusy(false);
+            }} style={{ padding: "8px 14px", background: "none", border: `1px solid ${B.amber}`, color: B.amber, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 1, textTransform: "uppercase" }}>
+              Cancel Session
+            </button>
+          </div>
+        )}
+
         {/* Form */}
         <div style={{ padding: "24px" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: B.black, marginBottom: 16 }}>{hasExistingSession ? "Reschedule to a new date:" : "Set a new session:"}</div>
+
           {/* Session type */}
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 9, fontWeight: 700, color: B.steel, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Session Type</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: 220, overflowY: "auto" }}>
               {["Session 1 — Foundation & Plan", "Session 2 — Pricing & Technique", "Session 3 — Marketing Deep Dive", "Session 4 — Client Retention", "Session 5 — Scale & Systems", "Session 6 — End-of-Quarter Review", "Check-in", "End-of-Month Review"].map(opt => (
                 <button key={opt} onClick={() => setSessionForm(p => ({ ...p, type: opt }))} style={{ padding: "10px 14px", border: `1px solid ${sessionForm.type === opt ? B.blush : B.cloud}`, background: sessionForm.type === opt ? B.blushPale : "transparent", color: sessionForm.type === opt ? B.blush : B.steel, fontSize: 12, fontWeight: sessionForm.type === opt ? 700 : 400, cursor: "pointer", fontFamily: FONTS.body, textAlign: "left" }}>{opt}</button>
               ))}
@@ -3782,12 +3823,12 @@ const AdminDashboard = ({ onLogout }) => {
           {/* Notes */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 9, fontWeight: 700, color: B.steel, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Notes for Mentee (optional)</div>
-            <textarea value={sessionForm.notes} onChange={e => setSessionForm(p => ({ ...p, notes: e.target.value }))} rows={3} placeholder="e.g. We'll focus on your rebooking language and pricing language for the consultation..." style={{ width: "100%", padding: "10px 12px", border: `1px solid ${B.cloud}`, fontSize: 13, fontFamily: FONTS.body, outline: "none", color: B.black, boxSizing: "border-box", resize: "vertical" }} />
+            <textarea value={sessionForm.notes} onChange={e => setSessionForm(p => ({ ...p, notes: e.target.value }))} rows={3} placeholder="e.g. We'll focus on your rebooking language..." style={{ width: "100%", padding: "10px 12px", border: `1px solid ${B.cloud}`, fontSize: 13, fontFamily: FONTS.body, outline: "none", color: B.black, boxSizing: "border-box", resize: "vertical" }} />
           </div>
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 8 }}>
-            <Btn variant="ghost" onClick={() => { setScheduleSession(null); setSessionForm({ type:"", date:"", time:"", notes:"" }); }}>Cancel</Btn>
+            <Btn variant="ghost" onClick={() => { setScheduleSession(null); setSessionForm({ type:"", date:"", time:"", notes:"" }); }}>Close</Btn>
             <Btn full variant="blush" icon="calendar" disabled={sessionBusy || !sessionForm.type || !sessionForm.date || !sessionForm.time} onClick={async () => {
               setSessionBusy(true);
               const dateFormatted = new Date(sessionForm.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -3795,18 +3836,20 @@ const AdminDashboard = ({ onLogout }) => {
               try {
                 await supabase.from("mentee_profiles").upsert({
                   email: scheduleSession.email,
-                  next_session_date: `${dateFormatted}`,
+                  next_session_date: dateFormatted,
                   next_session_time: `${timeFormatted} EST`,
                   next_session_type: sessionForm.type,
                 }, { onConflict: "email" });
-                alert(`Session scheduled for ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]} on ${dateFormatted} at ${timeFormatted} EST. They will see it on their dashboard.`);
+                const firstName = scheduleSession.firstName || scheduleSession.name.split(" ")[0];
+                alert(`${hasExistingSession ? "Session rescheduled" : "Session scheduled"} for ${firstName} on ${dateFormatted} at ${timeFormatted} EST.`);
+                setMenteeList(p => p.map(m => m.email === scheduleSession.email ? { ...m, nextSession: { date: dateFormatted, time: `${timeFormatted} EST`, type: sessionForm.type } } : m));
                 setScheduleSession(null);
                 setSessionForm({ type:"", date:"", time:"", notes:"" });
               } catch (e) {
-                alert(`Error scheduling session: ${e.message}`);
+                alert(`Error: ${e.message}`);
               }
               setSessionBusy(false);
-            }}>{sessionBusy ? "Scheduling…" : "Schedule & Notify"}</Btn>
+            }}>{sessionBusy ? "Saving…" : hasExistingSession ? "Reschedule Session" : "Schedule & Save"}</Btn>
           </div>
         </div>
       </div>
@@ -4220,9 +4263,22 @@ export default function App() {
         const s = JSON.parse(stored);
         if (Sec.valid(s)) {
           const u = DB.users[s.userId];
-          if (u) { setActiveUser(u); setActiveSession(s);
+          if (u) {
+            setActiveUser(u); setActiveSession(s);
             const dest = s.role === "admin" ? "admin" : s.role === "community" ? "community" : "portal";
             setScreen(dest);
+          } else if (s.role === "mentee" && s.userId) {
+            // Real Supabase mentee — restore from stored session data
+            const storedUser = sessionStorage.getItem("sjtn_user");
+            if (storedUser) {
+              const userData = JSON.parse(storedUser);
+              setActiveUser(userData); setActiveSession(s);
+              setScreen("portal");
+            } else {
+              sessionStorage.removeItem("sjtn_session");
+            }
+          } else {
+            sessionStorage.removeItem("sjtn_session");
           }
         } else { sessionStorage.removeItem("sjtn_session"); }
       }
@@ -4233,6 +4289,7 @@ export default function App() {
     const userWithEmail = { ...userData, email };
     setActiveUser(userWithEmail); setActiveSession(session);
     sessionStorage.setItem("sjtn_session", JSON.stringify(session));
+    sessionStorage.setItem("sjtn_user", JSON.stringify(userWithEmail));
     const dest = userData.role === "admin" ? "admin" : userData.role === "community" ? "community" : "portal";
     setScreen(dest);
   }, []);
@@ -4240,6 +4297,7 @@ export default function App() {
   const handleLogout = useCallback(() => {
     setActiveUser(null); setActiveSession(null);
     sessionStorage.removeItem("sjtn_session");
+    sessionStorage.removeItem("sjtn_user");
     setScreen("landing");
   }, []);
 
