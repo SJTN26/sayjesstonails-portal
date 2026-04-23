@@ -3780,13 +3780,14 @@ const AdminDashboard = ({ onLogout }) => {
                   next_session_time: null,
                   next_session_type: null,
                 }, { onConflict: "email" });
-                // Send automated message to mentee
-                await supabase.from("messages").insert([{
-                  mentee_email: scheduleSession.email,
-                  sender: "jess",
-                  text: `Hi ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]}, I need to cancel our upcoming session (${scheduleSession.nextSession?.type}). I'll be in touch shortly to reschedule. Sorry for any inconvenience!`,
-                  read: false
-                }]);
+                // Send automated message via edge function
+                await supabase.functions.invoke('send-message', {
+                  body: {
+                    mentee_email: scheduleSession.email,
+                    sender: "jess",
+                    text: `Hi ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]}, I need to cancel our upcoming session (${scheduleSession.nextSession?.type}). I'll be in touch shortly to reschedule. Sorry for any inconvenience!`
+                  }
+                });
                 setMenteeList(p => p.map(m => m.email === scheduleSession.email ? { ...m, nextSession: null } : m));
                 setScheduleSession(null);
                 setSessionForm({ type:"", date:"", time:"", notes:"" });
@@ -3847,16 +3848,13 @@ const AdminDashboard = ({ onLogout }) => {
                   next_session_type: sessionForm.type,
                 }, { onConflict: "email" });
                 const firstName = scheduleSession.firstName || scheduleSession.name.split(" ")[0];
-                // Send automated message to mentee
+                // Send automated message via edge function
                 const msgText = hasExistingSession
                   ? `Hi ${firstName}, your session has been rescheduled to ${dateFormatted} at ${timeFormatted} EST — ${sessionForm.type}. See you then!`
                   : `Hi ${firstName}, your live session has been scheduled for ${dateFormatted} at ${timeFormatted} EST — ${sessionForm.type}. Looking forward to it!`;
-                await supabase.from("messages").insert([{
-                  mentee_email: scheduleSession.email,
-                  sender: "jess",
-                  text: msgText,
-                  read: false
-                }]);
+                await supabase.functions.invoke('send-message', {
+                  body: { mentee_email: scheduleSession.email, sender: "jess", text: msgText }
+                });
                 setMenteeList(p => p.map(m => m.email === scheduleSession.email ? { ...m, nextSession: { date: dateFormatted, time: `${timeFormatted} EST`, type: sessionForm.type } } : m));
                 setScheduleSession(null);
                 setSessionForm({ type:"", date:"", time:"", notes:"" });
