@@ -1493,6 +1493,33 @@ const MenteePortal = ({ user, onLogout }) => {
   const [sessionPrep, setSessionPrep] = useState({ win:"", challenge:"", need:"", submitted:false });
   const [referralCopied, setReferralCopied] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [editingTaskNote, setEditingTaskNote] = useState(null); // task id
+  const [taskNoteInput, setTaskNoteInput] = useState("");
+
+  // Fetch tasks from Supabase
+  useEffect(() => {
+    if (!user.email || !!user.password) return;
+    const fetchTasks = () => {
+      supabase.from("tasks").select("*").eq("mentee_email", user.email).order("created_at", { ascending: false })
+        .then(({ data }) => { if (data) setTasks(data); });
+    };
+    fetchTasks();
+    const interval = setInterval(fetchTasks, 10000);
+    return () => clearInterval(interval);
+  }, [user.email]);
+
+  const completeTask = async (task) => {
+    setTasks(p => p.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t));
+    await supabase.from("tasks").update({ completed: !task.completed }).eq("id", task.id);
+  };
+
+  const saveTaskNote = async (taskId) => {
+    setTasks(p => p.map(t => t.id === taskId ? { ...t, mentee_notes: taskNoteInput } : t));
+    await supabase.from("tasks").update({ mentee_notes: taskNoteInput }).eq("id", taskId);
+    setEditingTaskNote(null);
+    setTaskNoteInput("");
+  };
 
   // Welcome experience — show until dismissed, persisted in localStorage
   const welcomeKey = `sjtn_welcomed_${user.email}`;
@@ -1838,10 +1865,59 @@ const MenteePortal = ({ user, onLogout }) => {
             ))}
           </Card>
         </div>
+
+        {/* ── Assignments from Jess ── */}
+        {tasks.length > 0 && (
+          <Card style={{ padding:"18px 20px", marginTop: 2 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+              <Section>Assignments</Section>
+              <span style={{ fontSize:9, color:B.mid, fontWeight:300 }}>{tasks.filter(t=>t.completed).length}/{tasks.length} done</span>
+            </div>
+            {tasks.map((task) => (
+              <div key={task.id} style={{ padding:"12px 0", borderBottom:`1px solid ${B.cloud}` }}>
+                <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+                  <button onClick={() => completeTask(task)} style={{ width:20, height:20, background: task.completed ? B.blush : "transparent", border:`2px solid ${task.completed ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:"pointer", marginTop:2, padding:0 }}>
+                    {task.completed && <Ic n="check" size={10} color={B.white} />}
+                  </button>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color: task.completed ? B.mid : B.black, textDecoration: task.completed ? "line-through" : "none" }}>{task.title}</div>
+                    {task.due_date && <div style={{ fontSize:9, color: B.blush, fontWeight:700, letterSpacing:1, textTransform:"uppercase", marginTop:3 }}>Due {task.due_date}</div>}
+                    {task.jess_notes && (
+                      <div style={{ marginTop:8, background:B.blushPale, borderLeft:`2px solid ${B.blush}`, padding:"8px 10px" }}>
+                        <div style={{ fontSize:8, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase", marginBottom:4 }}>From Jess</div>
+                        <p style={{ fontSize:11, color:B.charcoal, margin:0, fontWeight:300, lineHeight:1.6 }}>{task.jess_notes}</p>
+                      </div>
+                    )}
+                    {/* Mentee notes */}
+                    {editingTaskNote === task.id ? (
+                      <div style={{ marginTop:8 }}>
+                        <textarea value={taskNoteInput} onChange={e => setTaskNoteInput(e.target.value)} rows={3} placeholder="Add your notes, questions, or updates..." style={{ width:"100%", padding:"8px 10px", border:`1px solid ${B.cloud}`, fontSize:12, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box", resize:"vertical" }} />
+                        <div style={{ display:"flex", gap:6, marginTop:6 }}>
+                          <Btn size="sm" variant="blush" onClick={() => saveTaskNote(task.id)}>Save Note</Btn>
+                          <Btn size="sm" variant="ghost" onClick={() => { setEditingTaskNote(null); setTaskNoteInput(""); }}>Cancel</Btn>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ marginTop:6 }}>
+                        {task.mentee_notes && (
+                          <div style={{ background:B.off, borderLeft:`2px solid ${B.cloud}`, padding:"8px 10px", marginBottom:4 }}>
+                            <div style={{ fontSize:8, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", marginBottom:4 }}>Your Notes</div>
+                            <p style={{ fontSize:11, color:B.charcoal, margin:0, fontWeight:300, lineHeight:1.6 }}>{task.mentee_notes}</p>
+                          </div>
+                        )}
+                        <button onClick={() => { setEditingTaskNote(task.id); setTaskNoteInput(task.mentee_notes || ""); }} style={{ fontSize:9, color:B.blush, border:"none", background:"none", cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase", padding:0 }}>
+                          {task.mentee_notes ? "Edit Note" : "+ Add Note"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </Card>
+        )}
       </Pg>
     ),
-
-    sessions: (
       <Pg title="Sessions" sub="Live Sessions">
         <div style={{ background: B.black, padding: "22px 24px", marginBottom: 14, borderLeft: `3px solid ${B.blush}` }}>
           <Section style={{ color: B.blushLight, marginBottom: 8 }}>Up Next</Section>
@@ -3020,12 +3096,34 @@ const AdminDashboard = ({ onLogout }) => {
   const [view, setView] = useState("overview");
   const [adminCall, setAdminCall] = useState(null);
   const [welcomeLetter, setWelcomeLetter] = useState(null);
-  const [scheduleSession, setScheduleSession] = useState(null); // { mentee }
+  const [scheduleSession, setScheduleSession] = useState(null);
   const [sessionForm, setSessionForm] = useState({ type:"", date:"", time:"", notes:"" });
   const [sessionBusy, setSessionBusy] = useState(false);
   const [inviteForm, setInviteForm] = useState({ name:"", email:"", tier:"Hourly Session" });
-  const [inviteBusy, setInviteBusy] = useState(false);
-  const [menteeDrawer, setMenteeDrawer] = useState(null); // { mentee, tab }
+  const [menteeDrawer, setMenteeDrawer] = useState(null);
+  const [assignTask, setAssignTask] = useState(null); // { mentee }
+  const [taskForm, setTaskForm] = useState({ title:"", due_date:"", jess_notes:"" });
+  const [taskBusy, setTaskBusy] = useState(false);
+  const [adminTasks, setAdminTasks] = useState({});
+
+  useEffect(() => {
+    const fetchTasks = () => {
+      supabase.from("tasks").select("*").order("created_at", { ascending: false })
+        .then(({ data }) => {
+          if (data) {
+            const grouped = {};
+            data.forEach(t => {
+              if (!grouped[t.mentee_email]) grouped[t.mentee_email] = [];
+              grouped[t.mentee_email].push(t);
+            });
+            setAdminTasks(grouped);
+          }
+        });
+    };
+    fetchTasks();
+    const interval = setInterval(fetchTasks, 15000);
+    return () => clearInterval(interval);
+  }, []);
   const [leads, setLeads] = useState(DB.leads);
   const [selLead, setSelLead] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -3752,6 +3850,76 @@ const AdminDashboard = ({ onLogout }) => {
     );
   })() : null;
 
+  // ── Assign Task Modal ────────────────────────────────────────────────────
+  const AssignTaskModal = assignTask ? (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
+      <div style={{ background:B.white, width:"100%", maxWidth:460 }}>
+
+        {/* Header */}
+        <div style={{ background:B.black, padding:"20px 24px", display:"flex", justifyContent:"space-between", alignItems:"center", borderLeft:`4px solid ${B.blush}` }}>
+          <div>
+            <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>Assign Task</div>
+            <div style={{ fontSize:16, fontWeight:700, color:B.ivory }}>{assignTask.name}</div>
+            <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{assignTask.tier}</div>
+          </div>
+          <button onClick={() => { setAssignTask(null); setTaskForm({ title:"", due_date:"", jess_notes:"" }); }} style={{ width:28, height:28, border:`1px solid #333`, background:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><Ic n="close" size={13} color={B.mid} /></button>
+        </div>
+
+        {/* Form */}
+        <div style={{ padding:"24px" }}>
+          <div style={{ marginBottom:16 }}>
+            <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1.5, textTransform:"uppercase", marginBottom:8 }}>Task Title</div>
+            <input type="text" value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Post 3 reels this week" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
+          </div>
+
+          <div style={{ marginBottom:16 }}>
+            <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1.5, textTransform:"uppercase", marginBottom:8 }}>Due Date</div>
+            <input type="date" value={taskForm.due_date} onChange={e => setTaskForm(p => ({ ...p, due_date: e.target.value }))} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
+          </div>
+
+          <div style={{ marginBottom:20 }}>
+            <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1.5, textTransform:"uppercase", marginBottom:8 }}>Notes for Mentee (optional)</div>
+            <textarea value={taskForm.jess_notes} onChange={e => setTaskForm(p => ({ ...p, jess_notes: e.target.value }))} rows={3} placeholder="Add context, instructions, or encouragement..." style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box", resize:"vertical" }} />
+          </div>
+
+          <div style={{ display:"flex", gap:8 }}>
+            <Btn variant="ghost" onClick={() => { setAssignTask(null); setTaskForm({ title:"", due_date:"", jess_notes:"" }); }}>Cancel</Btn>
+            <Btn full variant="blush" icon="check" disabled={taskBusy || !taskForm.title.trim()} onClick={async () => {
+              setTaskBusy(true);
+              try {
+                const dueDateFormatted = taskForm.due_date
+                  ? new Date(taskForm.due_date + "T00:00:00").toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })
+                  : null;
+                const { error } = await supabase.from("tasks").insert([{
+                  mentee_email: assignTask.email,
+                  title: taskForm.title.trim(),
+                  due_date: dueDateFormatted,
+                  jess_notes: taskForm.jess_notes.trim() || null,
+                  mentee_notes: null,
+                  completed: false,
+                }]);
+                if (error) throw error;
+                // Send automated message
+                await supabase.functions.invoke('send-message', {
+                  body: {
+                    mentee_email: assignTask.email,
+                    sender: "jess",
+                    text: `Hi ${assignTask.firstName || assignTask.name.split(" ")[0]}, I just assigned you a new task: "${taskForm.title}"${dueDateFormatted ? ` — due ${dueDateFormatted}` : ""}. Check your Assignments tab for details!`
+                  }
+                });
+                setTaskForm({ title:"", due_date:"", jess_notes:"" });
+                setAssignTask(null);
+              } catch (e) {
+                alert(`Error: ${e.message}`);
+              }
+              setTaskBusy(false);
+            }}>{taskBusy ? "Assigning…" : "Assign Task"}</Btn>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   // ── Session Scheduling Modal ─────────────────────────────────────────────
   const hasExistingSession = scheduleSession?.nextSession?.date;
 
@@ -3967,6 +4135,7 @@ const AdminDashboard = ({ onLogout }) => {
       {adminCall && <VideoCallModal onClose={() => setAdminCall(null)} sessionName={`Session with ${adminCall}`} participantName={adminCall} isHost={true} />}
       {WelcomeLetterModal}
       {SessionScheduleModal}
+      {AssignTaskModal}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:opacity .15s;cursor:pointer} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}}`}</style>
 
       {useSidebar && (
@@ -4108,6 +4277,44 @@ const AdminDashboard = ({ onLogout }) => {
                            </div>
                          );
                        })()}
+
+                       {menteeDrawer.tab === "Tasks" && (() => {
+                         const mTasks = adminTasks[menteeDrawer.mentee.email] || [];
+                         return (
+                           <div>
+                             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+                               <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{mTasks.filter(t=>t.completed).length} of {mTasks.length} completed</div>
+                               <Btn size="sm" variant="blush" icon="check" onClick={() => { setMenteeDrawer(null); setAssignTask(menteeDrawer.mentee); }}>Assign New</Btn>
+                             </div>
+                             {mTasks.length === 0 && <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No tasks assigned yet.</div>}
+                             {mTasks.map(task => (
+                               <div key={task.id} style={{ padding:"12px 14px", marginBottom:2, background: task.completed ? B.successPale : B.off, borderLeft:`3px solid ${task.completed ? B.success : B.cloud}` }}>
+                                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8 }}>
+                                   <div style={{ flex:1 }}>
+                                     <div style={{ fontSize:12, fontWeight:700, color: task.completed ? B.mid : B.black, textDecoration: task.completed ? "line-through" : "none" }}>{task.title}</div>
+                                     {task.due_date && <div style={{ fontSize:9, color:B.blush, fontWeight:700, letterSpacing:1, textTransform:"uppercase", marginTop:3 }}>Due {task.due_date}</div>}
+                                     {task.mentee_notes && (
+                                       <div style={{ marginTop:6, background:B.white, borderLeft:`2px solid ${B.cloud}`, padding:"6px 8px" }}>
+                                         <div style={{ fontSize:8, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", marginBottom:3 }}>Mentee's Notes</div>
+                                         <p style={{ fontSize:11, color:B.charcoal, margin:0, fontWeight:300 }}>{task.mentee_notes}</p>
+                                       </div>
+                                     )}
+                                   </div>
+                                   <button onClick={async () => {
+                                     if (!window.confirm(`Remove task "${task.title}"?`)) return;
+                                     await supabase.from("tasks").delete().eq("id", task.id);
+                                     setAdminTasks(p => {
+                                       const updated = { ...p };
+                                       updated[menteeDrawer.mentee.email] = (updated[menteeDrawer.mentee.email] || []).filter(t => t.id !== task.id);
+                                       return updated;
+                                     });
+                                   }} style={{ fontSize:9, color:B.mid, border:`1px solid ${B.cloud}`, background:"none", padding:"3px 8px", cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase", flexShrink:0 }}>Remove</button>
+                                 </div>
+                               </div>
+                             ))}
+                           </div>
+                         );
+                       })()}
                      </div>
                    </div>
                  </div>
@@ -4119,10 +4326,12 @@ const AdminDashboard = ({ onLogout }) => {
                  {menteeList.map((m, i) => {
                    const pct = Math.round((m.sessionsCompleted / m.sessionsTotal) * 100);
                    const done = m.milestones?.filter(x => x.done).length || 0;
+                   const mTasks = adminTasks[m.email] || [];
                    const statTiles = [
                      { value:`${m.sessionsCompleted}/${m.sessionsTotal}`, label:"Live Sessions", tab:"Sessions" },
                      { value:m.daysRemaining, label:"Days Left", tab:"Days Left" },
                      { value:`${done}/${m.milestones?.length || 0}`, label:"Milestones", tab:"Milestones" },
+                     { value:`${mTasks.filter(t=>t.completed).length}/${mTasks.length}`, label:"Tasks", tab:"Tasks" },
                      { value:`${pct}%`, label:"Progress", tab:"Progress", accent:true },
                    ];
                    return (
@@ -4150,6 +4359,7 @@ const AdminDashboard = ({ onLogout }) => {
                          <Btn size="sm" icon="video" onClick={() => setAdminCall(m.name)}>Start Call</Btn>
                          <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
                          <Btn size="sm" variant="ghost" icon="calendar" onClick={() => setScheduleSession(m)}>Schedule Session</Btn>
+                         <Btn size="sm" variant="ghost" icon="check" onClick={() => setAssignTask(m)}>Assign Task</Btn>
                          <Btn size="sm" variant="ghost" icon="file">View Files</Btn>
                          <Btn size="sm" variant="blush" icon="send" onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })}>Send Welcome Letter</Btn>
                        </div>
