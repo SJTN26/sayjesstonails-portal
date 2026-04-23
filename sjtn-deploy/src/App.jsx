@@ -1511,12 +1511,16 @@ const MenteePortal = ({ user, onLogout }) => {
 
   const completeTask = async (task) => {
     setTasks(p => p.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t));
-    await supabase.from("tasks").update({ completed: !task.completed }).eq("id", task.id);
+    await supabase.functions.invoke('assign-task', {
+      body: { action: 'update', task_id: task.id, completed: !task.completed }
+    });
   };
 
   const saveTaskNote = async (taskId) => {
     setTasks(p => p.map(t => t.id === taskId ? { ...t, mentee_notes: taskNoteInput } : t));
-    await supabase.from("tasks").update({ mentee_notes: taskNoteInput }).eq("id", taskId);
+    await supabase.functions.invoke('assign-task', {
+      body: { action: 'update', task_id: taskId, mentee_notes: taskNoteInput }
+    });
     setEditingTaskNote(null);
     setTaskNoteInput("");
   };
@@ -3892,15 +3896,17 @@ const AdminDashboard = ({ onLogout }) => {
                 const dueDateFormatted = taskForm.due_date
                   ? new Date(taskForm.due_date + "T00:00:00").toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })
                   : null;
-                const { error } = await supabase.from("tasks").insert([{
-                  mentee_email: assignTask.email,
-                  title: taskForm.title.trim(),
-                  due_date: dueDateFormatted,
-                  jess_notes: taskForm.jess_notes.trim() || null,
-                  mentee_notes: null,
-                  completed: false,
-                }]);
+                const { data, error } = await supabase.functions.invoke('assign-task', {
+                  body: {
+                    action: 'insert',
+                    mentee_email: assignTask.email,
+                    title: taskForm.title.trim(),
+                    due_date: dueDateFormatted,
+                    jess_notes: taskForm.jess_notes.trim() || null,
+                  }
+                });
                 if (error) throw error;
+                if (data?.error) throw new Error(data.error);
                 // Send automated message
                 await supabase.functions.invoke('send-message', {
                   body: {
@@ -4304,7 +4310,9 @@ const AdminDashboard = ({ onLogout }) => {
                                    </div>
                                    <button onClick={async () => {
                                      if (!window.confirm(`Remove task "${task.title}"?`)) return;
-                                     await supabase.from("tasks").delete().eq("id", task.id);
+                                     await supabase.functions.invoke('assign-task', {
+                                       body: { action: 'delete', task_id: task.id }
+                                     });
                                      setAdminTasks(p => {
                                        const updated = { ...p };
                                        updated[menteeDrawer.mentee.email] = (updated[menteeDrawer.mentee.email] || []).filter(t => t.id !== task.id);
