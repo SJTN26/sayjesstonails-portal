@@ -1812,12 +1812,23 @@ const MenteePortal = ({ user, onLogout }) => {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap: 2, marginBottom: 16 }}>
-          <StatTile value={`${profile.sessionsCompleted}/${profile.sessionsTotal}`} label="Live Sessions" />
-          <StatTile value={profile.daysRemaining} label="Days Left" />
-          <StatTile value={`${done}/${milestones.length}`} label="Milestones" />
-          <StatTile value={`${tasks.filter(t=>t.completed).length}/${tasks.length}`} label="Assignments" />
-          <StatTile value={`${pct}%`} label="Progress" accent />
+  const [menteeStatDrawer, setMenteeStatDrawer] = useState(null); // "sessions" | "days" | "milestones" | "assignments" | "progress"
+          {[
+            { value:`${profile.sessionsCompleted}/${profile.sessionsTotal}`, label:"Live Sessions", key:"sessions" },
+            { value:profile.daysRemaining, label:"Days Left", key:"days" },
+            { value:`${done}/${milestones.length}`, label:"Milestones", key:"milestones" },
+            { value:`${tasks.filter(t=>t.completed).length}/${tasks.length}`, label:"Assignments", key:"assignments" },
+            { value:`${pct}%`, label:"Progress", key:"progress", accent:true },
+          ].map(({ value, label, key, accent }) => (
+            <button key={key} onClick={() => setMenteeStatDrawer(key)}
+              style={{ padding:"14px 8px", background:B.white, border:`1px solid ${B.cloud}`, borderTop: accent ? `3px solid ${B.blush}` : `3px solid ${B.cloud}`, cursor:"pointer", textAlign:"center", fontFamily:FONTS.body, transition:"background .15s" }}
+              onMouseEnter={e => e.currentTarget.style.background = B.off}
+              onMouseLeave={e => e.currentTarget.style.background = B.white}>
+              <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize: isMobile ? 24 : 28, color: accent ? B.blush : B.black, lineHeight:1 }}>{value}</div>
+              <div style={{ fontSize:8, color:B.mid, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginTop:5 }}>{label}</div>
+              <div style={{ fontSize:7, color:B.blush, fontWeight:700, letterSpacing:1, marginTop:2, textTransform:"uppercase" }}>view →</div>
+            </button>
+          ))}
         </div>
 
         {/* ── Next Live Session card ── */}
@@ -2421,6 +2432,138 @@ const MenteePortal = ({ user, onLogout }) => {
         presetRoomUrl={profile.roomUrl || null}
       />}
       {WelcomeModal}
+
+      {/* Mentee stat drawer */}
+      {menteeStatDrawer && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:500, display:"flex", justifyContent:"flex-end" }} onClick={() => setMenteeStatDrawer(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: isMobile ? "100%" : 380, background:B.white, height:"100%", overflowY:"auto", display:"flex", flexDirection:"column" }}>
+            <div style={{ background:B.black, padding:"20px 24px", borderLeft:`4px solid ${B.blush}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexShrink:0 }}>
+              <div>
+                <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>Your Progress</div>
+                <div style={{ fontSize:16, fontWeight:700, color:B.ivory }}>{{ sessions:"Live Sessions", days:"Days Left", milestones:"Milestones", assignments:"Assignments", progress:"Overall Progress" }[menteeStatDrawer]}</div>
+              </div>
+              <button onClick={() => setMenteeStatDrawer(null)} style={{ width:28, height:28, border:`1px solid #333`, background:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><Ic n="close" size={13} color={B.mid} /></button>
+            </div>
+            <div style={{ padding:"20px 24px", flex:1 }}>
+
+              {menteeStatDrawer === "sessions" && (
+                <div>
+                  <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{profile.sessionsCompleted} of {profile.sessionsTotal} sessions completed</div>
+                  <PBar value={Math.round((profile.sessionsCompleted / profile.sessionsTotal) * 100)} h={6} />
+                  <div style={{ marginTop:20 }}>
+                    {profile.nextSession && (
+                      <div style={{ padding:"14px 16px", marginBottom:2, background:B.blushPale, borderLeft:`3px solid ${B.blush}` }}>
+                        <div style={{ fontSize:12, fontWeight:700, color:B.black }}>{profile.nextSession.type}</div>
+                        <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>{profile.nextSession.date} · {profile.nextSession.time} — Scheduled</div>
+                      </div>
+                    )}
+                    {Array.from({ length: profile.sessionsTotal }, (_, i) => {
+                      const completed = i < profile.sessionsCompleted;
+                      return (
+                        <div key={i} style={{ padding:"14px 16px", marginBottom:2, background: completed ? B.successPale : B.off, borderLeft:`3px solid ${completed ? B.success : B.cloud}` }}>
+                          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                            <div style={{ fontSize:12, fontWeight:700, color: completed ? B.black : B.mid }}>Session {i+1}</div>
+                            {completed ? <Ic n="check" size={14} color={B.success} /> : <span style={{ fontSize:9, color:B.mid, fontWeight:300 }}>Upcoming</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {menteeStatDrawer === "days" && (
+                <div>
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
+                    <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>Started {profile.startDate}</span>
+                    <span style={{ fontSize:11, fontWeight:700, color:B.blush }}>{profile.daysRemaining} days left</span>
+                  </div>
+                  <PBar value={Math.round(((profile.totalDays - profile.daysRemaining) / profile.totalDays) * 100)} h={8} />
+                  <div style={{ display:"flex", justifyContent:"space-between", marginTop:6, marginBottom:20 }}>
+                    <span style={{ fontSize:9, color:B.mid }}>Day 1</span>
+                    <span style={{ fontSize:9, color:B.mid }}>Day {profile.totalDays}</span>
+                  </div>
+                  {[
+                    { label:"Program Duration", value:`${profile.totalDays} days` },
+                    { label:"Days Completed", value:`${profile.totalDays - profile.daysRemaining}` },
+                    { label:"Days Remaining", value:`${profile.daysRemaining}` },
+                    { label:"Completion", value:`${Math.round(((profile.totalDays - profile.daysRemaining) / profile.totalDays) * 100)}%` },
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ display:"flex", justifyContent:"space-between", padding:"10px 0", borderBottom:`1px solid ${B.cloud}` }}>
+                      <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{label}</span>
+                      <span style={{ fontSize:12, fontWeight:700, color:B.black }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {menteeStatDrawer === "milestones" && (
+                <div>
+                  <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{done} of {milestones.length} completed</div>
+                  {milestones.map((ms, i) => (
+                    <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 0", borderBottom:`1px solid ${B.cloud}` }}>
+                      <button onClick={() => !ms.done && completeMilestone(i)} style={{ width:22, height:22, background: ms.done ? B.blush : "transparent", border:`2px solid ${ms.done ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor: ms.done ? "default" : "pointer", padding:0 }}>
+                        {ms.done && <Ic n="check" size={10} color={B.white} />}
+                      </button>
+                      <span style={{ fontSize:12, color: ms.done ? B.mid : B.black, textDecoration: ms.done ? "line-through" : "none", fontWeight:300, flex:1 }}>{ms.label}</span>
+                      {ms.done && <span style={{ fontSize:9, color:B.success, fontWeight:700 }}>Done</span>}
+                    </div>
+                  ))}
+                  {milestones.length === 0 && <p style={{ fontSize:12, color:B.mid, fontStyle:"italic", fontWeight:300 }}>No milestones set yet.</p>}
+                </div>
+              )}
+
+              {menteeStatDrawer === "assignments" && (
+                <div>
+                  <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{tasks.filter(t=>t.completed).length} of {tasks.length} completed</div>
+                  {tasks.length === 0 && <p style={{ fontSize:12, color:B.mid, fontStyle:"italic", fontWeight:300 }}>No assignments yet.</p>}
+                  {tasks.map(task => (
+                    <div key={task.id} style={{ padding:"12px 0", borderBottom:`1px solid ${B.cloud}` }}>
+                      <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+                        <button onClick={() => completeTask(task)} style={{ width:20, height:20, background: task.completed ? B.blush : "transparent", border:`2px solid ${task.completed ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:"pointer", marginTop:2, padding:0 }}>
+                          {task.completed && <Ic n="check" size={9} color={B.white} />}
+                        </button>
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontSize:13, fontWeight:700, color: task.completed ? B.mid : B.black, textDecoration: task.completed ? "line-through" : "none" }}>{task.title}</div>
+                          {task.due_date && <div style={{ fontSize:9, color:B.blush, fontWeight:700, letterSpacing:1, textTransform:"uppercase", marginTop:3 }}>Due {task.due_date}</div>}
+                          {task.jess_notes && <div style={{ marginTop:6, background:B.blushPale, borderLeft:`2px solid ${B.blush}`, padding:"6px 10px" }}>
+                            <div style={{ fontSize:8, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase", marginBottom:3 }}>From Jess</div>
+                            <p style={{ fontSize:11, color:B.charcoal, margin:0, fontWeight:300 }}>{task.jess_notes}</p>
+                          </div>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {menteeStatDrawer === "progress" && (() => {
+                const sessionPct = profile.sessionsTotal ? Math.round((profile.sessionsCompleted / profile.sessionsTotal) * 100) : 0;
+                const dayPct = profile.totalDays ? Math.round(((profile.totalDays - profile.daysRemaining) / profile.totalDays) * 100) : 0;
+                const milestonePct = milestones.length ? Math.round((done / milestones.length) * 100) : 0;
+                const overall = Math.round((sessionPct + dayPct + milestonePct) / 3);
+                return (
+                  <div>
+                    <div style={{ padding:"24px", background:B.blushPale, borderLeft:`3px solid ${B.blush}`, marginBottom:20, textAlign:"center" }}>
+                      <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:64, color:B.blush, lineHeight:1 }}>{overall}%</div>
+                      <div style={{ fontSize:10, color:B.blush, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginTop:6 }}>Overall Progress</div>
+                    </div>
+                    {[["Live Sessions", sessionPct], ["Timeline", dayPct], ["Milestones", milestonePct]].map(([label, p]) => (
+                      <div key={label} style={{ marginBottom:18 }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                          <span style={{ fontSize:11, color:B.steel, fontWeight:300 }}>{label}</span>
+                          <span style={{ fontSize:11, color:B.blush, fontWeight:700 }}>{p}%</span>
+                        </div>
+                        <PBar value={p} h={6} />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:all .18s} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}} @keyframes celebPop{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.08) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}} @keyframes celebFade{0%{opacity:1}70%{opacity:1}100%{opacity:0}} @keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(80px) rotate(360deg);opacity:0}}`}</style>
 
       {/* ── Celebration overlays ── */}
@@ -3472,6 +3615,7 @@ const AdminDashboard = ({ onLogout }) => {
   const [taskForm, setTaskForm] = useState({ title:"", due_date:"", jess_notes:"" });
   const [taskBusy, setTaskBusy] = useState(false);
   const [adminTasks, setAdminTasks] = useState({});
+  const [sessionsHistory, setSessionsHistory] = useState({});
 
   useEffect(() => {
     const fetchTasks = () => {
@@ -3491,6 +3635,21 @@ const AdminDashboard = ({ onLogout }) => {
     const interval = setInterval(fetchTasks, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  // Fetch sessions history grouped by mentee email
+  useEffect(() => {
+    supabase.from("sessions_history").select("*").order("occurred_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          const grouped = {};
+          data.forEach(s => {
+            if (!grouped[s.mentee_email]) grouped[s.mentee_email] = [];
+            grouped[s.mentee_email].push(s);
+          });
+          setSessionsHistory(grouped);
+        }
+      });
+  }, [menteeList]);
   const [leads, setLeads] = useState(DB.leads);
   const [selLead, setSelLead] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -4698,22 +4857,48 @@ const AdminDashboard = ({ onLogout }) => {
                              <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{menteeDrawer.mentee.sessionsCompleted} of {menteeDrawer.mentee.sessionsTotal} sessions completed</div>
                              <Btn size="sm" variant="blush" icon="calendar" onClick={() => { setMenteeDrawer(null); setScheduleSession(menteeDrawer.mentee); }}>Schedule Next</Btn>
                            </div>
-                           {Array.from({ length: menteeDrawer.mentee.sessionsTotal }, (_, i) => {
-                             const completed = i < menteeDrawer.mentee.sessionsCompleted;
-                             const isNext = i === menteeDrawer.mentee.sessionsCompleted;
-                             return (
-                               <div key={i} style={{ padding:"14px 16px", marginBottom:2, background: completed ? B.successPale : isNext ? B.blushPale : B.off, borderLeft:`3px solid ${completed ? B.success : isNext ? B.blush : B.cloud}` }}>
-                                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                                   <div>
-                                     <div style={{ fontSize:12, fontWeight:700, color:B.black }}>Session {i+1}</div>
-                                     <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>{completed ? "Completed" : isNext ? "Up next" : "Upcoming"}</div>
+
+                           {/* Completed sessions from history */}
+                           {(sessionsHistory[menteeDrawer.mentee.email] || []).map((s, i) => (
+                             <div key={s.id || i} style={{ padding:"14px 16px", marginBottom:2, background:B.successPale, borderLeft:`3px solid ${B.success}` }}>
+                               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                                 <div>
+                                   <div style={{ fontSize:12, fontWeight:700, color:B.black }}>{s.session_type}</div>
+                                   <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>
+                                     {new Date(s.occurred_at).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })} · Completed
                                    </div>
-                                   {completed && <Ic n="check" size={16} color={B.success} />}
-                                   {isNext && <span style={{ fontSize:8, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase" }}>Next</span>}
                                  </div>
+                                 <Ic n="check" size={16} color={B.success} />
                                </div>
-                             );
-                           })}
+                             </div>
+                           ))}
+
+                           {/* Upcoming sessions */}
+                           {menteeDrawer.mentee.nextSession && (
+                             <div style={{ padding:"14px 16px", marginBottom:2, background:B.blushPale, borderLeft:`3px solid ${B.blush}` }}>
+                               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                                 <div>
+                                   <div style={{ fontSize:12, fontWeight:700, color:B.black }}>{menteeDrawer.mentee.nextSession.type}</div>
+                                   <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>
+                                     {menteeDrawer.mentee.nextSession.date} · {menteeDrawer.mentee.nextSession.time}
+                                   </div>
+                                 </div>
+                                 <span style={{ fontSize:8, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase" }}>Scheduled</span>
+                               </div>
+                             </div>
+                           )}
+
+                           {/* Remaining slots */}
+                           {Array.from({ length: Math.max(0, menteeDrawer.mentee.sessionsTotal - menteeDrawer.mentee.sessionsCompleted - (menteeDrawer.mentee.nextSession ? 1 : 0)) }, (_, i) => (
+                             <div key={`upcoming-${i}`} style={{ padding:"14px 16px", marginBottom:2, background:B.off, borderLeft:`3px solid ${B.cloud}` }}>
+                               <div style={{ fontSize:12, fontWeight:700, color:B.mid }}>Session {menteeDrawer.mentee.sessionsCompleted + (menteeDrawer.mentee.nextSession ? 1 : 0) + i + 1}</div>
+                               <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>Not yet scheduled</div>
+                             </div>
+                           ))}
+
+                           {(sessionsHistory[menteeDrawer.mentee.email] || []).length === 0 && !menteeDrawer.mentee.nextSession && (
+                             <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic", padding:"20px 0" }}>No sessions completed yet.</div>
+                           )}
                          </div>
                        )}
                        {menteeDrawer.tab === "Days Left" && (
