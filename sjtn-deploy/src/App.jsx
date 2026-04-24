@@ -3053,6 +3053,92 @@ const ApplicationsView = () => {
   );
 };
 
+/* ── Community Voice Recorder — standalone to prevent remount on state change ── */
+const CommunityVoiceRecorder = ({ onPost }) => {
+  const titleRef = useRef(null);
+  const [recording, setRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const timerRef = useRef(null);
+
+  const fmtTime = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+
+  const startRec = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" :
+                       MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
+      const mr = new MediaRecorder(stream, { mimeType });
+      audioChunksRef.current = [];
+      mr.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+      setRecordingTime(0);
+      timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+    } catch (e) {
+      alert("Microphone access is required. Please allow microphone access and try again.");
+    }
+  };
+
+  const stopRec = () => new Promise(resolve => {
+    const mr = mediaRecorderRef.current;
+    if (!mr) { resolve(null); return; }
+    mr.onstop = async () => {
+      clearInterval(timerRef.current);
+      setRecording(false);
+      const mimeType = mr.mimeType || "audio/webm";
+      const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+      const blob = new Blob(audioChunksRef.current, { type: mimeType });
+      const fileName = `voice-${Date.now()}.${ext}`;
+      const { data, error } = await supabase.storage.from("voice-notes").upload(fileName, blob, { contentType: mimeType });
+      if (error) { alert("Failed to upload voice note."); resolve(null); return; }
+      const { data: urlData } = supabase.storage.from("voice-notes").getPublicUrl(fileName);
+      resolve(urlData.publicUrl);
+      mr.stream.getTracks().forEach(t => t.stop());
+    };
+    mr.stop();
+  });
+
+  const handleClick = async () => {
+    if (!recording) {
+      startRec();
+    } else {
+      const audioUrl = await stopRec();
+      if (!audioUrl) return;
+      const title = titleRef.current?.value?.trim() || "This week's voice note from Jess";
+      if (titleRef.current) titleRef.current.value = "";
+      onPost(title, audioUrl);
+    }
+  };
+
+  return (
+    <div style={{ background:"#0D0D0D", borderLeft:"3px solid #C4607A", padding:"18px 20px", marginBottom:16 }}>
+      <p style={{ fontSize:9, fontWeight:700, color:"#E8A0B0", letterSpacing:3, textTransform:"uppercase", margin:"0 0 12px" }}>Jess's Voice — This Week</p>
+      <input
+        ref={titleRef}
+        type="text"
+        defaultValue=""
+        placeholder="Give this week's note a title..."
+        style={{ width:"100%", padding:"10px 12px", background:"#1a1a1a", border:`1px solid ${recording ? "#C4607A" : "#333"}`, color:"#FAF6F1", fontSize:13, fontFamily:"'DM Sans', 'Helvetica Neue', sans-serif", outline:"none", boxSizing:"border-box", marginBottom:12 }}
+      />
+      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <button onClick={handleClick} style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 20px", background: recording ? "#C4607A" : "#333", border:"none", color:"#FAF6F1", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans', 'Helvetica Neue', sans-serif", letterSpacing:1, textTransform:"uppercase" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          {recording ? `Stop & Post — ${fmtTime(recordingTime)}` : "Start Recording"}
+        </button>
+        {recording && (
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            <div style={{ width:8, height:8, borderRadius:"50%", background:"#C4607A" }} />
+            <span style={{ fontSize:11, color:"#E8A0B0", fontWeight:300 }}>Recording...</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* ── Invite Mentee Form — standalone component to prevent remount on state change ── */
 const InviteForm = ({ isMobile }) => {
   const nameRef = useRef(null);
@@ -4309,37 +4395,14 @@ const AdminDashboard = ({ onLogout }) => {
       {/* FEED TAB */}
       {communityTab === "feed" && (
         <div>
-          {/* Jess's Voice — click to record with custom title */}
-          <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"18px 20px", marginBottom:16 }}>
-            <p style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:3, textTransform:"uppercase", margin:"0 0 12px" }}>Jess's Voice — This Week</p>
-            <input
-              type="text"
-              ref={communityVoiceTitleRef}
-              defaultValue=""
-              placeholder="Give this week's note a title..."
-              style={{ width:"100%", padding:"10px 12px", background:"#1a1a1a", border:`1px solid ${recording && recordingFor==="community" ? B.blush : "#333"}`, color:B.ivory, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", marginBottom:12 }}
-            />
-            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-              <button
-                onClick={async () => {
-                  if (!recording) {
-                    startRecording("community");
-                  } else if (recordingFor === "community") {
-                    await sendCommunityVoiceNote();
-                  }
-                }}
-                style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 20px", background: recording && recordingFor==="community" ? B.blush : "#333", border:"none", color:B.white, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", transition:"all .2s" }}>
-                <Ic n="mic" size={14} color={B.white} />
-                {recording && recordingFor==="community" ? `Stop & Post — ${fmtTime(recordingTime)}` : "Start Recording"}
-              </button>
-              {recording && recordingFor==="community" && (
-                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                  <div style={{ width:8, height:8, borderRadius:"50%", background:B.blush }} />
-                  <span style={{ fontSize:11, color:B.blushLight, fontWeight:300 }}>Recording...</span>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Jess's Voice — standalone component prevents input remount */}
+          <CommunityVoiceRecorder onPost={async (title, audioUrl) => {
+            const { data } = await supabase.from("community_posts").insert([{
+              author: "Jess", avatar: "J", text: title,
+              cat: "tip", likes: 0, is_jess: true, pinned: true, audio_url: audioUrl
+            }]).select().single();
+            if (data) setCommunityPosts(p => [{ id:data.id, author:"Jess", avatar:"J", time:"Just now", text:title, likes:0, isJess:true, cat:"tip", pinned:true, audioUrl }, ...p]);
+          }} />
 
           {/* Post composer — same style as mentee side */}
           <div style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"18px 20px", marginBottom:16, borderTop:`3px solid ${B.blush}` }}>
