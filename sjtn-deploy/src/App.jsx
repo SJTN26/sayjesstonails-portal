@@ -3234,6 +3234,21 @@ const AdminCommunity = ({ menteeList, communityList }) => {
     setCommunityPostInput("");
   };
 
+  const removePost = async (postId) => {
+    if (!window.confirm("Remove this post?")) return;
+    await supabase.from("community_posts").delete().eq("id", postId);
+    setCommunityPosts(p => p.filter(x => x.id !== postId));
+  };
+
+  const pinPost = async (post) => {
+    await supabase.from("community_posts").update({ pinned: !post.pinned }).eq("id", post.id);
+    setCommunityPosts(p => p.map(x => x.id === post.id ? { ...x, pinned: !x.pinned } : x));
+  };
+
+  const catColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
+  const catLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
+  const catIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
+
   // ── Admin Community state moved to standalone AdminCommunity component ──
 
   return (
