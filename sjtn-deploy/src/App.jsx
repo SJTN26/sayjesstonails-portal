@@ -3208,7 +3208,6 @@ const InviteForm = ({ isMobile }) => {
 /* ── Admin Community — fully standalone to prevent remounting ── */
 const AdminCommunity = ({ menteeList, communityList }) => {
   const { isMobile } = useLayout();
-  const [posts, setCommunityPosts] = useState([]);
   const [postInput, setCommunityPostInput] = useState("");
   const [postCat, setCommunityPostCat] = useState("tip");
   const [tab, setTab] = useState("feed");
@@ -4477,9 +4476,6 @@ const AdminDashboard = ({ onLogout }) => {
         </div>
       )}
     </div>
-  );
-
-  // ── Admin Community state moved to standalone AdminCommunity component ──
   );
 
   const SettingsView = (
