@@ -3241,11 +3241,13 @@ const AdminDashboard = ({ onLogout }) => {
           const contactList = Object.entries(grouped).map(([email, msgs]) => {
             const currentContactEmail = selChatRef.current !== null && contacts[selChatRef.current]?.email;
             const isCurrentlyViewed = viewRef.current === "messages" && currentContactEmail === email;
+            const mentee = menteeList.find(m => m.email?.toLowerCase() === email?.toLowerCase());
+            const name = mentee ? (mentee.firstName || mentee.name || email.split("@")[0]) : email.split("@")[0];
             return {
-              email, name: email.split("@")[0],
+              email, name,
               preview: msgs[msgs.length - 1]?.text || "",
               unread: isCurrentlyViewed ? 0 : msgs.filter(m => !m.read && m.sender === "mentee").length,
-              tier: "mentee"
+              tier: mentee?.tierKey || "mentee"
             };
           });
           setContacts(contactList);
