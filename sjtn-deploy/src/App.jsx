@@ -1465,9 +1465,6 @@ const MenteePortal = ({ user, onLogout }) => {
       supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
         .then(({ data }) => {
           if (data && data.length > 0) {
-            // Find Jess's pinned voice note for the top card
-            const voicePost = data.find(p => p.is_jess && p.audio_url && p.pinned);
-            if (voicePost) setJessVoice({ text: voicePost.text, audioUrl: voicePost.audio_url });
             setCommunityPosts(data.map(p => ({
               id: p.id, author: p.author, avatar: p.avatar,
               time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
@@ -1486,6 +1483,15 @@ const MenteePortal = ({ user, onLogout }) => {
     fetchPosts();
     const interval = setInterval(fetchPosts, 15000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Fetch Jess's Voice separately
+  useEffect(() => {
+    supabase.functions.invoke('jess-voice', { body: { action:'get' } })
+      .then(({ data }) => {
+        if (data?.voice) setJessVoice({ text: data.voice.title, audioUrl: data.voice.audio_url });
+      });
+  }, []);
   }, []);
 
   const submitCommPost = async () => {
@@ -1507,11 +1513,11 @@ const MenteePortal = ({ user, onLogout }) => {
   const [taskNoteInput, setTaskNoteInput] = useState("");
   const [jessVoice, setJessVoice] = useState(null);
 
-  // Fetch Jess's latest pinned voice note for dashboard
+  // Fetch Jess's latest voice note for dashboard
   useEffect(() => {
-    supabase.from("community_posts").select("text, audio_url").eq("is_jess", true).eq("pinned", true).not("audio_url", "is", null).order("created_at", { ascending: false }).limit(1)
+    supabase.functions.invoke('jess-voice', { body: { action:'get' } })
       .then(({ data }) => {
-        if (data && data.length > 0) setJessVoice({ text: data[0].text, audioUrl: data[0].audio_url });
+        if (data?.voice) setJessVoice({ text: data.voice.title, audioUrl: data.voice.audio_url });
       });
   }, []);
 
@@ -1788,28 +1794,26 @@ const MenteePortal = ({ user, onLogout }) => {
       <Pg title={`Hi, ${user.firstName}.`} sub="Welcome Back">
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 18px", fontWeight: 300 }}>{profile.daysRemaining} days remaining in your {profile.tier}.</p>
 
-        {/* ── Jess's Voice — weekly audio message ── */}
-        {jessVoice ? (
-          <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "18px 20px", marginBottom: 16 }}>
-            <Section style={{ color: B.blushLight, marginBottom: 8 }}>Jess's Voice — This Week</Section>
-            <div style={{ color: B.ivory, fontSize: 13, fontWeight: 300, marginBottom: 10, lineHeight: 1.5 }}>"{jessVoice.text}"</div>
-            <audio controls src={jessVoice.audioUrl} style={{ width:"100%", height:36, outline:"none" }} controlsList="nodownload" />
+        {/* ── Jess's Voice — original card with real audio ── */}
+        <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ width: 44, height: 44, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
+            <Ic n="mic" size={20} color={B.white} />
           </div>
-        ) : (
-          <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 16, cursor: "pointer" }} onClick={() => setAudioPlaying(p => !p)}>
-            <div style={{ width: 44, height: 44, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
-              <Ic n={audioPlaying ? "zap" : "mic"} size={20} color={B.white} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <Section style={{ color: B.blushLight, marginBottom: 4 }}>Jess's Voice — This Week</Section>
-              <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>"Your pricing confidence starts with your language."</div>
-              <div style={{ marginTop: 8, height: 3, background: "#2a2a2a", borderRadius: 2 }}>
-                <div style={{ height: "100%", width: audioPlaying ? "45%" : "0%", background: B.blush, borderRadius: 2, transition: audioPlaying ? "width 60s linear" : "none" }} />
-              </div>
-            </div>
-            <div style={{ fontSize: 9, color: "#9a8880", fontWeight: 300, flexShrink: 0 }}>{audioPlaying ? "Playing…" : "Tap to play"}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Section style={{ color: B.blushLight, marginBottom: 4 }}>Jess's Voice — This Week</Section>
+            {jessVoice ? (
+              <>
+                <div style={{ color: B.ivory, fontSize: 13, fontWeight: 300, marginBottom: 10 }}>"{jessVoice.text}"</div>
+                <audio controls src={jessVoice.audioUrl} style={{ width:"100%", height:32, outline:"none" }} controlsList="nodownload" />
+              </>
+            ) : (
+              <>
+                <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>"Your pricing confidence starts with your language."</div>
+                <div style={{ marginTop: 8, height: 3, background: "#2a2a2a", borderRadius: 2 }} />
+              </>
+            )}
           </div>
-        )}
+        </div>
 
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap: 2, marginBottom: 16 }}>
           <StatTile value={`${profile.sessionsCompleted}/${profile.sessionsTotal}`} label="Live Sessions" />
@@ -2155,29 +2159,26 @@ const MenteePortal = ({ user, onLogout }) => {
       <Pg title="Community Feed" sub="The Inner Circle">
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Your people. Real nail techs doing the work alongside you.</p>
 
-        {/* Jess's Voice audio — real from database */}
-        {jessVoice && (
-          <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16 }}>
-            <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 8px" }}>Jess's Voice — This Week</p>
-            <p style={{ color: B.ivory, fontSize: 13, fontWeight: 300, margin: "0 0 10px", lineHeight: 1.4 }}>"{jessVoice.text}"</p>
-            <audio controls src={jessVoice.audioUrl} style={{ width:"100%", height:36, outline:"none" }} controlsList="nodownload" />
+        {/* Jess's Voice — original card style with real audio */}
+        <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 40, height: 40, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
+            <Ic n="mic" size={18} color={B.white} />
           </div>
-        )}
-        {!jessVoice && (
-          <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setAudioPlaying(p => !p)}>
-            <div style={{ width: 40, height: 40, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
-              <Ic n={audioPlaying ? "zap" : "mic"} size={18} color={B.white} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 3px" }}>Jess's Voice — This Week</p>
-              <p style={{ color: B.ivory, fontSize: 13, fontWeight: 300, margin: "0 0 8px", lineHeight: 1.4 }}>"Your pricing confidence starts with your language."</p>
-              <div style={{ height: 3, background: "#333", borderRadius: 2 }}>
-                <div style={{ height: "100%", width: audioPlaying ? "45%" : "0%", background: B.blush, borderRadius: 2, transition: audioPlaying ? "width 60s linear" : "none" }} />
-              </div>
-            </div>
-            <div style={{ fontSize: 9, color: "#9a8880", fontWeight: 300, flexShrink: 0 }}>{audioPlaying ? "Playing…" : "Tap to play"}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 4px" }}>Jess's Voice — This Week</p>
+            {jessVoice ? (
+              <>
+                <p style={{ color: B.ivory, fontSize: 13, fontWeight: 300, margin: "0 0 10px", lineHeight: 1.4 }}>"{jessVoice.text}"</p>
+                <audio controls src={jessVoice.audioUrl} style={{ width:"100%", height:32, outline:"none" }} controlsList="nodownload" />
+              </>
+            ) : (
+              <>
+                <p style={{ color: B.ivory, fontSize: 13, fontWeight: 300, margin: "0 0 8px", lineHeight: 1.4 }}>"Your pricing confidence starts with your language."</p>
+                <div style={{ height: 3, background: "#333", borderRadius: 2 }} />
+              </>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Post composer */}
         <div style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "18px 20px", marginBottom: 16, borderTop: `3px solid ${B.blush}` }}>
@@ -3258,6 +3259,12 @@ const AdminCommunity = ({ menteeList, communityList }) => {
   const [postInput, setCommunityPostInput] = useState("");
   const [postCat, setCommunityPostCat] = useState("tip");
   const [tab, setTab] = useState("feed");
+  const [jessVoiceAdmin, setJessVoiceAdmin] = useState(null);
+
+  useEffect(() => {
+    supabase.functions.invoke('jess-voice', { body: { action:'get' } })
+      .then(({ data }) => { if (data?.voice) setJessVoiceAdmin(data.voice); });
+  }, []);
 
   useEffect(() => {
     supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
@@ -3313,11 +3320,21 @@ const AdminCommunity = ({ menteeList, communityList }) => {
       {tab === "feed" && (
         <div>
           <CommunityVoiceRecorder onPost={async (title, audioUrl) => {
-            const { data, error } = await supabase.functions.invoke('community-post', {
-              body: { action:'insert', author:"Jess", avatar:"J", text:title, cat:"tip", is_jess:true, pinned:true, audio_url:audioUrl }
+            const { data, error } = await supabase.functions.invoke('jess-voice', {
+              body: { action:'post', title, audio_url: audioUrl }
             });
-            if (!error && data?.post) setCommunityPosts(p => [{ id:data.post.id, author:"Jess", avatar:"J", time:"Just now", text:title, likes:0, isJess:true, cat:"tip", pinned:true, audioUrl }, ...p]);
+            if (error) { alert(`Error: ${error.message}`); return; }
+            if (data?.voice) setJessVoiceAdmin({ title: data.voice.title, audio_url: data.voice.audio_url });
           }} />
+
+          {/* Show current Jess's Voice */}
+          {jessVoiceAdmin && (
+            <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"16px 20px", marginBottom:16 }}>
+              <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:3, textTransform:"uppercase", marginBottom:8 }}>Current — Jess's Voice This Week</div>
+              <div style={{ color:B.ivory, fontSize:13, fontWeight:300, marginBottom:10 }}>"{jessVoiceAdmin.title}"</div>
+              <audio controls src={jessVoiceAdmin.audio_url} style={{ width:"100%", height:32, outline:"none" }} controlsList="nodownload" />
+            </div>
+          )}
 
           <div style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"18px 20px", marginBottom:16, borderTop:`3px solid ${B.blush}` }}>
             <div style={{ display:"flex", gap:2, marginBottom:12, flexWrap:"nowrap", overflowX:"auto" }}>
