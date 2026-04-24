@@ -3231,23 +3231,22 @@ const AdminCommunity = ({ menteeList, communityList }) => {
 
   const submitPost = async () => {
     if (!postInput.trim()) return;
-    const { data } = await supabase.from("community_posts").insert([{
-      author: "Jess", avatar: "J", text: postInput,
-      cat: postCat, likes: 0, is_jess: true, pinned: false
-    }]).select().single();
-    if (data) setCommunityPosts(p => [{ id:data.id, author:"Jess", avatar:"J", time:"Just now", text:postInput, likes:0, isJess:true, cat:postCat, pinned:false }, ...p]);
+    const { data, error } = await supabase.functions.invoke('community-post', {
+      body: { action:'insert', author:"Jess", avatar:"J", text:postInput, cat:postCat, is_jess:true, pinned:false }
+    });
+    if (!error && data?.post) setCommunityPosts(p => [{ id:data.post.id, author:"Jess", avatar:"J", time:"Just now", text:postInput, likes:0, isJess:true, cat:postCat, pinned:false, audioUrl:null }, ...p]);
     setCommunityPostInput("");
   };
 
   const removePost = async (postId) => {
     if (!window.confirm("Remove this post?")) return;
-    await supabase.from("community_posts").delete().eq("id", postId);
+    await supabase.functions.invoke('community-post', { body: { action:'delete', id:postId } });
     setCommunityPosts(p => p.filter(x => x.id !== postId));
   };
 
   const pinPost = async (post) => {
-    await supabase.from("community_posts").update({ pinned: !post.pinned }).eq("id", post.id);
-    setCommunityPosts(p => p.map(x => x.id === post.id ? { ...x, pinned: !x.pinned } : x));
+    await supabase.functions.invoke('community-post', { body: { action:'update', id:post.id, pinned:!post.pinned } });
+    setCommunityPosts(p => p.map(x => x.id === post.id ? { ...x, pinned:!x.pinned } : x));
   };
 
   const catColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
@@ -3271,11 +3270,10 @@ const AdminCommunity = ({ menteeList, communityList }) => {
       {tab === "feed" && (
         <div>
           <CommunityVoiceRecorder onPost={async (title, audioUrl) => {
-            const { data } = await supabase.from("community_posts").insert([{
-              author: "Jess", avatar: "J", text: title,
-              cat: "tip", likes: 0, is_jess: true, pinned: true, audio_url: audioUrl
-            }]).select().single();
-            if (data) setCommunityPosts(p => [{ id:data.id, author:"Jess", avatar:"J", time:"Just now", text:title, likes:0, isJess:true, cat:"tip", pinned:true, audioUrl }, ...p]);
+            const { data, error } = await supabase.functions.invoke('community-post', {
+              body: { action:'insert', author:"Jess", avatar:"J", text:title, cat:"tip", is_jess:true, pinned:true, audio_url:audioUrl }
+            });
+            if (!error && data?.post) setCommunityPosts(p => [{ id:data.post.id, author:"Jess", avatar:"J", time:"Just now", text:title, likes:0, isJess:true, cat:"tip", pinned:true, audioUrl }, ...p]);
           }} />
 
           <div style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"18px 20px", marginBottom:16, borderTop:`3px solid ${B.blush}` }}>
