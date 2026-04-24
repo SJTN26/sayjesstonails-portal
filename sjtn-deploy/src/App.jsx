@@ -1993,7 +1993,7 @@ const MenteePortal = ({ user, onLogout }) => {
                           <Ic n="mic" size={11} color={B.blush} />
                           <span style={{ fontSize:9, color:B.blush, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Voice Note from Jess</span>
                         </div>
-                        <audio controls src={m.audioUrl} style={{ width:"100%", minWidth:160, height:36 }} controlsList="nodownload">Your browser does not support audio playback.</audio>
+                        <audio controls src={m.audioUrl} style={{ width:"100%", minWidth:160, height:36 }} controlsList="nodownload" />
                       </div>
                     ) : (
                       <p style={{ margin: 0, fontSize: 12, color: isJ ? B.charcoal : B.ivory, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
@@ -2614,7 +2614,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
               {post.audioUrl && (
                 <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"12px 14px", marginBottom:14, display:"flex", alignItems:"center", gap:10 }}>
                   <Ic n="mic" size={14} color={B.blush} />
-                  <audio controls src={post.audioUrl} style={{ flex:1, height:32, outline:"none" }} controlsList="nodownload">Your browser does not support audio.</audio>
+                  <audio controls src={post.audioUrl} style={{ flex:1, height:32, outline:"none" }} controlsList="nodownload" />
                 </div>
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: `1px solid ${B.cloud}`, paddingTop: 12 }}>
@@ -4203,7 +4203,7 @@ const AdminDashboard = ({ onLogout }) => {
                             <Ic n="mic" size={12} color={isJ ? B.blushLight : B.blush} />
                             <span style={{ fontSize:10, color: isJ ? B.blushLight : B.blush, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Voice Note</span>
                           </div>
-                          <audio controls src={m.audioUrl} style={{ width:"100%", minWidth:160, height:36 }} controlsList="nodownload">Your browser does not support audio playback.</audio>
+                          <audio controls src={m.audioUrl} style={{ width:"100%", minWidth:160, height:36 }} controlsList="nodownload" />
                         </div>
                       ) : (
                         <p style={{ margin: 0, fontSize: 12, color: isJ ? B.ivory : B.charcoal, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
