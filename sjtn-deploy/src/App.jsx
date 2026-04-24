@@ -1820,30 +1820,37 @@ const MenteePortal = ({ user, onLogout }) => {
           <StatTile value={`${pct}%`} label="Progress" accent />
         </div>
 
-        {/* ── Next session + prep card ── */}
-        {profile.nextSession?.date ? (
+        {/* ── Next Live Session card ── */}
+        {profile.roomUrl ? (
+          // LIVE — Jess is in the room
+          <div style={{ background: B.black, padding: isMobile ? "20px" : "24px 28px", marginBottom: 16, borderLeft: `3px solid #22c55e`, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", right: -20, top: -20, width: 100, height: 100, borderRadius: "50%", background: `#22c55e0A` }} />
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <div style={{ width:10, height:10, borderRadius:"50%", background:"#22c55e", animation:"pulse 1.5s ease-in-out infinite" }} />
+              <Section style={{ color:"#22c55e", marginBottom:0 }}>Jess is Live — Join Now</Section>
+            </div>
+            <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{profile.nextSession?.type || "Live Session"}</div>
+            <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>Your session room is ready</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session Now</Btn>
+            </div>
+            <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
+          </div>
+        ) : profile.nextSession?.date ? (
+          // SCHEDULED — session booked
           <div style={{ background: B.black, padding: isMobile ? "20px" : "24px 28px", marginBottom: 16, borderLeft: `3px solid ${B.blush}`, position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", right: -20, top: -20, width: 100, height: 100, borderRadius: "50%", background: `${B.blush}0A` }} />
             <Section style={{ color: B.blushLight, marginBottom: 10 }}>Next Live Session</Section>
             <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{profile.nextSession?.type}</div>
             <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{profile.nextSession?.date} · {profile.nextSession?.time}</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {profile.roomUrl ? (
-                <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>
-                  <span style={{ display:"flex", alignItems:"center", gap:8 }}>
-                    <span style={{ width:8, height:8, borderRadius:"50%", background:"#22c55e", display:"inline-block", animation:"pulse 1.5s ease-in-out infinite" }} />
-                    Jess is Live — Join Now
-                  </span>
-                </Btn>
-              ) : (
-                <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
-              )}
+              <Btn variant="blush" icon="video" onClick={() => setCallActive(true)} style={{ opacity: 0.5, pointerEvents:"none" }}>Waiting for Jess</Btn>
               {!sessionPrep.submitted && <Btn variant="ghostDark" icon="clipBoard" onClick={() => setView("sessionprep")}>Prepare for Session</Btn>}
               {sessionPrep.submitted && <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: B.success }}><Ic n="check" size={12} color={B.success} />Prep submitted</div>}
             </div>
-            <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
           </div>
         ) : (
+          // NO SESSION
           <div style={{ background: "#111", padding: isMobile ? "20px" : "24px 28px", marginBottom: 16, borderLeft: `3px solid #333` }}>
             <Section style={{ color: "#555", marginBottom: 8 }}>Next Live Session</Section>
             <div style={{ color: "#555", fontSize: 13, fontWeight: 300 }}>No session scheduled yet. Jess will be in touch soon.</div>
@@ -4595,13 +4602,38 @@ const AdminDashboard = ({ onLogout }) => {
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
       {adminCall && <VideoCallModal
         onClose={async () => {
-          // Clear room URL so mentee knows call ended
           if (adminCall.menteeEmail) {
+            // Clear room URL
             await supabase.from("mentee_profiles").upsert({ email: adminCall.menteeEmail, room_url: null }, { onConflict: "email" });
+            // If this was a real session, archive it and increment counter
+            if (adminCall.isSession) {
+              await supabase.from("sessions_history").insert([{
+                mentee_email: adminCall.menteeEmail,
+                session_type: adminCall.sessionType,
+              }]);
+              // Increment sessions_completed
+              const mentee = menteeList.find(m => m.email === adminCall.menteeEmail);
+              const newCount = (mentee?.sessionsCompleted || 0) + 1;
+              await supabase.from("mentee_profiles").upsert({
+                email: adminCall.menteeEmail,
+                sessions_completed: newCount,
+                next_session_date: null,
+                next_session_time: null,
+                next_session_type: null,
+              }, { onConflict: "email" });
+              // Update local state
+              setMenteeList(p => p.map(m => m.email === adminCall.menteeEmail ? {
+                ...m, sessionsCompleted: newCount, nextSession: null
+              } : m));
+              // Send completion message
+              await supabase.functions.invoke('send-message', {
+                body: { mentee_email: adminCall.menteeEmail, sender: "jess", text: `Great session today! "${adminCall.sessionType}" is now complete. Keep that momentum going! 🔥` }
+              });
+            }
           }
           setAdminCall(null);
         }}
-        sessionName={`Session with ${adminCall.name}`}
+        sessionName={adminCall.isSession ? adminCall.sessionType : `Quick Call with ${adminCall.name}`}
         participantName={adminCall.name}
         isHost={true}
         presetRoomUrl={adminCall.roomUrl}
@@ -4849,18 +4881,38 @@ const AdminDashboard = ({ onLogout }) => {
 
                        {/* Action row */}
                        <div style={{ padding:"12px 16px", display:"flex", gap:6, flexWrap:"wrap", alignItems:"center", background:B.off }}>
+                         {/* Impromptu call button */}
                          <button onClick={async () => {
-                           // Create Daily.co room and save URL to mentee_profiles
                            const { data, error } = await supabase.functions.invoke('create-video-room', {
-                             body: { sessionName: m.nextSession?.type || "Live Session", participantName: m.name }
+                             body: { sessionName: "Impromptu Call", participantName: m.name }
                            });
-                           if (error || data?.error) { alert("Could not create video room. Please try again."); return; }
-                           // Save room URL to mentee profile so mentee can join
+                           if (error || data?.error) { alert("Could not create video room."); return; }
                            await supabase.from("mentee_profiles").upsert({ email: m.email, room_url: data.url }, { onConflict: "email" });
-                           setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email });
+                           await supabase.functions.invoke('send-message', {
+                             body: { mentee_email: m.email, sender: "jess", text: `Hi ${m.firstName || m.name.split(" ")[0]}! I'm jumping on a quick call — join when you're ready! 📹` }
+                           });
+                           setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email, isSession: false });
                          }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.black, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                           <Ic n="video" size={12} color={B.white} />Start Call
+                           <Ic n="video" size={12} color={B.white} />Quick Call
                          </button>
+
+                         {/* Start Session button — only shows when session is scheduled */}
+                         {m.nextSession && (
+                           <button onClick={async () => {
+                             const { data, error } = await supabase.functions.invoke('create-video-room', {
+                               body: { sessionName: m.nextSession.type, participantName: m.name }
+                             });
+                             if (error || data?.error) { alert("Could not create video room."); return; }
+                             await supabase.from("mentee_profiles").upsert({ email: m.email, room_url: data.url }, { onConflict: "email" });
+                             await supabase.functions.invoke('send-message', {
+                               body: { mentee_email: m.email, sender: "jess", text: `Hi ${m.firstName || m.name.split(" ")[0]}! Your session is live — "${m.nextSession.type}". Join whenever you're ready! 🎯` }
+                             });
+                             setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email, isSession: true, sessionType: m.nextSession.type });
+                           }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <div style={{ width:6, height:6, borderRadius:"50%", background:B.white }} />
+                             Start Session
+                           </button>
+                         )}
                          <button onClick={() => { setSelChat(i); setView("messages"); }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
                            <Ic n="message" size={12} color={B.steel} />Message
                          </button>
