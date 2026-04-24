@@ -2461,7 +2461,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
           setPosts(data.map(p => ({
             id: p.id, author: p.author, avatar: p.avatar,
             time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
-            text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat
+            text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, audioUrl: p.audio_url || null
           })));
         } else {
           setPosts([
@@ -2611,6 +2611,12 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
                 </div>
               </div>
               <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.75, margin: "0 0 14px", fontWeight: 300 }}>{post.text}</p>
+              {post.audioUrl && (
+                <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"12px 14px", marginBottom:14, display:"flex", alignItems:"center", gap:10 }}>
+                  <Ic n="mic" size={14} color={B.blush} />
+                  <audio controls src={post.audioUrl} style={{ flex:1, height:32, outline:"none" }} controlsList="nodownload">Your browser does not support audio.</audio>
+                </div>
+              )}
               <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: `1px solid ${B.cloud}`, paddingTop: 12 }}>
                 <button onClick={() => setLikedPosts(p => p.includes(post.id) ? p.filter(x => x !== post.id) : [...p, post.id])} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: likedPosts.includes(post.id) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: likedPosts.includes(post.id) ? 700 : 300, padding: 0, transition: "color .15s" }}>
                   <Ic n="heart" size={14} color={likedPosts.includes(post.id) ? B.blush : B.mid} sw={likedPosts.includes(post.id) ? 0 : 1.8} />
@@ -3398,8 +3404,13 @@ const AdminDashboard = ({ onLogout }) => {
   const sendCommunityVoiceNote = async () => {
     const audioUrl = await stopRecording();
     if (!audioUrl) return;
-    await supabase.from("community_posts").update({ audio_url: audioUrl }).eq("is_jess", true).order("created_at", { ascending: false }).limit(1);
-    alert("Voice note posted to community feed!");
+    const title = communityVoiceTitle.trim() || "This week's voice note from Jess";
+    const { data } = await supabase.from("community_posts").insert([{
+      author: "Jess", avatar: "J", text: title,
+      cat: "tip", likes: 0, is_jess: true, pinned: true, audio_url: audioUrl
+    }]).select().single();
+    if (data) setCommunityPosts(p => [{ id:data.id, author:"Jess", avatar:"J", time:"Just now", text:title, likes:0, isJess:true, cat:"tip", pinned:true, audioUrl }, ...p]);
+    setCommunityVoiceTitle("");
   };
 
   const fmtTime = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
@@ -4244,6 +4255,7 @@ const AdminDashboard = ({ onLogout }) => {
   const [communityPostInput, setCommunityPostInput] = useState("");
   const [communityPostCat, setCommunityPostCat] = useState("tip");
   const [communityTab, setCommunityTab] = useState("feed");
+  const [communityVoiceTitle, setCommunityVoiceTitle] = useState("");
 
   useEffect(() => {
     if (view !== "community") return;
@@ -4295,27 +4307,34 @@ const AdminDashboard = ({ onLogout }) => {
       {/* FEED TAB */}
       {communityTab === "feed" && (
         <div>
-          {/* Jess's Voice teaser — same dark card as mentee side */}
-          <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"16px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:14 }}>
-            <div style={{ width:40, height:40, background: recording && recordingFor === "community" ? B.blush : "#333", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, borderRadius:"50%", cursor:"pointer", transition:"all .2s" }}
-              onClick={async () => {
-                if (!recording) {
-                  startRecording("community");
-                } else if (recordingFor === "community") {
-                  await sendCommunityVoiceNote();
-                }
-              }}>
-              <Ic n="mic" size={18} color={B.white} />
-            </div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <p style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:3, textTransform:"uppercase", margin:"0 0 3px" }}>Jess's Voice — This Week</p>
-              {recording && recordingFor === "community" ? (
-                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  <div style={{ width:6, height:6, borderRadius:"50%", background:B.blush }} />
-                  <span style={{ color:B.ivory, fontSize:13, fontWeight:500 }}>Recording {fmtTime(recordingTime)} — Tap mic to send</span>
+          {/* Jess's Voice — click to record with custom title */}
+          <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"18px 20px", marginBottom:16 }}>
+            <p style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:3, textTransform:"uppercase", margin:"0 0 12px" }}>Jess's Voice — This Week</p>
+            <input
+              type="text"
+              value={communityVoiceTitle}
+              onChange={e => setCommunityVoiceTitle(e.target.value)}
+              placeholder='Give this week\'s note a title...'
+              style={{ width:"100%", padding:"10px 12px", background:"#1a1a1a", border:`1px solid ${recording && recordingFor==="community" ? B.blush : "#333"}`, color:B.ivory, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", marginBottom:12 }}
+            />
+            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+              <button
+                onClick={async () => {
+                  if (!recording) {
+                    startRecording("community");
+                  } else if (recordingFor === "community") {
+                    await sendCommunityVoiceNote();
+                  }
+                }}
+                style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 20px", background: recording && recordingFor==="community" ? B.blush : "#333", border:"none", color:B.white, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", transition:"all .2s" }}>
+                <Ic n="mic" size={14} color={B.white} />
+                {recording && recordingFor==="community" ? `Stop & Post — ${fmtTime(recordingTime)}` : "Start Recording"}
+              </button>
+              {recording && recordingFor==="community" && (
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <div style={{ width:8, height:8, borderRadius:"50%", background:B.blush }} />
+                  <span style={{ fontSize:11, color:B.blushLight, fontWeight:300 }}>Recording...</span>
                 </div>
-              ) : (
-                <div style={{ color:"#9a8880", fontSize:13, fontWeight:300 }}>Hold mic button to record a new voice note for the community</div>
               )}
             </div>
           </div>
