@@ -1562,6 +1562,24 @@ const MenteePortal = ({ user, onLogout }) => {
     setShowWelcome(false);
   };
 
+  // Graduation modal — shows when Jess marks program complete
+  const gradKey = `sjtn_graduated_${user.email}`;
+  const [showGraduation, setShowGraduation] = useState(false);
+  // Check messages for graduation trigger
+  useEffect(() => {
+    if (!user.email || !!user.password) return;
+    supabase.from("messages").select("text").eq("mentee_email", user.email).like("text", "__GRADUATION__%").limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          try { if (!localStorage.getItem(gradKey)) setShowGraduation(true); } catch { setShowGraduation(true); }
+        }
+      });
+  }, [user.email]);
+  const dismissGraduation = () => {
+    try { localStorage.setItem(gradKey, "1"); } catch {}
+    setShowGraduation(false);
+  };
+
   const TIER_WELCOME = {
     "3-Month Elite": {
       headline: "Your 90-Day Transformation Starts Now",
@@ -1712,7 +1730,70 @@ const MenteePortal = ({ user, onLogout }) => {
     </div>
   );
 
-  const tierWelcome = TIER_WELCOME[profile.tier] || TIER_WELCOME["Hourly Session"];
+  const GraduationModal = showGraduation ? (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1001, overflowY: "auto", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: isMobile ? "0" : "40px 16px" }}>
+      <div style={{ background: B.white, width: "100%", maxWidth: 600, minHeight: isMobile ? "100dvh" : "auto", display: "flex", flexDirection: "column" }}>
+
+        {/* Header */}
+        <div style={{ background: B.success, padding: "32px 32px 24px", textAlign: "center" }}>
+          <Logo height={56} white />
+        </div>
+
+        {/* Black bar */}
+        <div style={{ background: B.black, padding: "24px 32px", borderLeft: `4px solid ${B.success}` }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#22c55e", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Program Complete 🎓</div>
+          <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 40, textTransform: "uppercase", color: B.ivory, margin: 0, letterSpacing: "-0.5px", lineHeight: 1.05 }}>
+            You did it,<br/>
+            <span style={{ color: "#22c55e", fontStyle: "italic", fontWeight: 300 }}>{profile.firstName}.</span>
+          </h2>
+        </div>
+
+        {/* Letter body */}
+        <div style={{ padding: "28px 32px", flex: 1 }}>
+          <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.85, marginBottom: 16, fontWeight: 300 }}>
+            I am so incredibly proud of everything you've accomplished. You showed up, you did the work, and you proved what I already knew — that you are capable of building something real.
+          </p>
+          <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.85, marginBottom: 16, fontWeight: 300 }}>
+            Your mentorship program is officially complete. But this isn't goodbye — it's a new chapter.
+          </p>
+          <p style={{ fontSize: 14, color: B.black, lineHeight: 1.85, marginBottom: 24, fontWeight: 700, fontStyle: "italic" }}>
+            As a program graduate, you keep your community access forever. No monthly fee. Ever. That's my gift to you for doing the work. 💚
+          </p>
+
+          {/* What they keep */}
+          <div style={{ background: "#f0faf4", border: `1px solid #22c55e40`, borderLeft: `3px solid #22c55e`, padding: "20px 24px", marginBottom: 24 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: "#2D7D4E", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>What You Keep — Forever</div>
+            {[
+              "Full community access — no expiration",
+              "🎓 Graduate badge on your community posts",
+              "Access to all community resources",
+              "Connection with Jess and the Inner Circle",
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <div style={{ width: 18, height: 18, background: "#2D7D4E", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Ic n="check" size={9} color={B.white} sw={2.5} />
+                </div>
+                <span style={{ fontSize: 12, color: B.charcoal, fontWeight: 300 }}>{item}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Sign off */}
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28, paddingTop: 8, borderTop: `1px solid ${B.cloud}` }}>
+            <div style={{ width: 44, height: 44, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: B.white, flexShrink: 0 }}>JR</div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: B.black, fontFamily: FONTS.script, fontStyle: "italic" }}>With so much pride, Jessica Ramos</div>
+              <div style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>info@sayjesstonails.com · 954.544.2888</div>
+            </div>
+          </div>
+
+          <Btn full variant="blush" onClick={dismissGraduation} style={{ padding: "16px", background: "#2D7D4E" }}>
+            Take Me to the Community 🎓
+          </Btn>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   const WelcomeModal = showWelcome ? (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, overflowY: "auto", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: isMobile ? "0" : "40px 16px" }}>
@@ -1789,8 +1870,7 @@ const MenteePortal = ({ user, onLogout }) => {
     </div>
   ) : null;
 
-  const views = {
-    dashboard: (
+  const tierWelcome = TIER_WELCOME[profile.tier] || TIER_WELCOME["Hourly Session"];
       <Pg title={`Hi, ${user.firstName}.`} sub="Welcome Back">
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 18px", fontWeight: 300 }}>{profile.daysRemaining} days remaining in your {profile.tier}.</p>
 
@@ -2433,6 +2513,7 @@ const MenteePortal = ({ user, onLogout }) => {
         presetRoomUrl={profile.roomUrl || null}
       />}
       {WelcomeModal}
+      {GraduationModal}
 
       {/* Mentee stat drawer */}
       {menteeStatDrawer && (
@@ -5148,28 +5229,18 @@ const AdminDashboard = ({ onLogout }) => {
                            <Ic n="send" size={12} color={B.white} />Welcome Letter
                          </button>
                          <button onClick={async () => {
-                           if (!window.confirm(`Mark ${m.firstName || m.name}'s program as complete? They will keep their community access permanently.`)) return;
-                           // Update their role to community-only in mentee_profiles
-                           await supabase.from("mentee_profiles").upsert({ email: m.email, graduated: true }, { onConflict: "email" });
+                           if (!window.confirm(`Mark ${m.firstName || m.name}'s program as complete? They will keep their community access permanently and lose mentee portal access.`)) return;
+                           // Change auth role to community
+                           const { error } = await supabase.functions.invoke('invite-mentee', {
+                             body: { email: m.email, action: 'graduate' }
+                           });
+                           if (error) { alert(`Error: ${error.message}`); return; }
                            // Send congratulations portal message
                            await supabase.functions.invoke('send-message', {
-                             body: { mentee_email: m.email, sender: "jess", text: `Congratulations ${m.firstName || m.name.split(" ")[0]}! 🎉 You've officially completed your mentorship program. I am so incredibly proud of everything you've accomplished. As a graduate, you keep your community access permanently — no monthly fee, ever. That's my gift to you for doing the work. Keep showing up. 💪` }
-                           });
-                           // Send branded completion email
-                           await supabase.functions.invoke('send-message', {
-                             body: {
-                               send_email: true,
-                               email_data: {
-                                 email: m.email,
-                                 firstName: m.firstName || m.name.split(" ")[0],
-                                 sessionType: `${m.tier} — Program Complete`,
-                                 sessionDate: new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }),
-                                 sessionTime: "Your community access never expires",
-                                 isReschedule: false
-                               }
-                             }
+                             body: { mentee_email: m.email, sender: "jess", text: `__GRADUATION__${m.firstName || m.name.split(" ")[0]}` }
                            });
                            setMenteeList(p => p.filter(x => x.email !== m.email));
+                           alert(`${m.firstName || m.name}'s program is complete. They now have community-only access.`);
                          }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.success, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
                            <Ic n="check" size={12} color={B.white} />Complete Program
                          </button>
