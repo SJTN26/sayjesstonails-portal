@@ -4631,7 +4631,20 @@ const AdminDashboard = ({ onLogout }) => {
                   ? `Hi ${firstName}, your session has been rescheduled to ${dateFormatted} at ${timeFormatted} EST — ${sessionForm.type}. See you then!`
                   : `Hi ${firstName}, your live session has been scheduled for ${dateFormatted} at ${timeFormatted} EST — ${sessionForm.type}. Looking forward to it!`;
                 await supabase.functions.invoke('send-message', {
-                  body: { mentee_email: scheduleSession.email, sender: "jess", text: msgText }
+                  body: {
+                    mentee_email: scheduleSession.email,
+                    sender: "jess",
+                    text: msgText,
+                    send_email: true,
+                    email_data: {
+                      email: scheduleSession.email,
+                      firstName,
+                      sessionType: sessionForm.type,
+                      sessionDate: dateFormatted,
+                      sessionTime: `${timeFormatted} EST`,
+                      isReschedule: hasExistingSession
+                    }
+                  }
                 });
                 setMenteeList(p => p.map(m => m.email === scheduleSession.email ? { ...m, nextSession: { date: dateFormatted, time: `${timeFormatted} EST`, type: sessionForm.type } } : m));
                 setScheduleSession(null);
