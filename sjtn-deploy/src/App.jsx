@@ -2455,25 +2455,30 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   useEffect(() => {
-    supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setPosts(data.map(p => ({
-            id: p.id, author: p.author, avatar: p.avatar,
-            time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
-            text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, audioUrl: p.audio_url || null
-          })));
-        } else {
-          setPosts([
-            { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Share below — let's build a script together.", likes:14, isJess:true, cat:"tip" },
-            { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you. Don't be afraid.", likes:31, isJess:false, cat:"win" },
-            { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. If you're on the fence about mentorship — just do it. Best investment I've made in myself.", likes:44, isJess:false, cat:"win" },
-            { id:4, author:"Savannah R.", avatar:"SR", time:"3 days ago", text:"Question: how do you handle clients who push back on price increases? Struggling with this right now.", likes:8, isJess:false, cat:"question" },
-            { id:5, author:"Jess", avatar:"J", time:"4 days ago", text:"Resource drop — the exact script I use to introduce a price increase without losing the relationship. Grab it in the Resources section.", likes:52, isJess:true, cat:"resource" },
-            { id:6, author:"Maya J.", avatar:"MJ", time:"5 days ago", text:"Just joined the community. So excited to be here with other nail techs who are serious about growth. Already feeling inspired.", likes:19, isJess:false, cat:"intro" },
-          ]);
-        }
-      });
+    const fetchPosts = () => {
+      supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            setPosts(data.map(p => ({
+              id: p.id, author: p.author, avatar: p.avatar,
+              time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+              text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, audioUrl: p.audio_url || null
+            })));
+          } else {
+            setPosts([
+              { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Share below — let's build a script together.", likes:14, isJess:true, cat:"tip" },
+              { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you. Don't be afraid.", likes:31, isJess:false, cat:"win" },
+              { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. If you're on the fence about mentorship — just do it. Best investment I've made in myself.", likes:44, isJess:false, cat:"win" },
+              { id:4, author:"Savannah R.", avatar:"SR", time:"3 days ago", text:"Question: how do you handle clients who push back on price increases? Struggling with this right now.", likes:8, isJess:false, cat:"question" },
+              { id:5, author:"Jess", avatar:"J", time:"4 days ago", text:"Resource drop — the exact script I use to introduce a price increase without losing the relationship. Grab it in the Resources section.", likes:52, isJess:true, cat:"resource" },
+              { id:6, author:"Maya J.", avatar:"MJ", time:"5 days ago", text:"Just joined the community. So excited to be here with other nail techs who are serious about growth. Already feeling inspired.", likes:19, isJess:false, cat:"intro" },
+            ]);
+          }
+        });
+    };
+    fetchPosts();
+    const interval = setInterval(fetchPosts, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   // Trial detection — community users without paid status are on trial
