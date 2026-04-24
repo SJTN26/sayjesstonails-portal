@@ -4382,7 +4382,7 @@ const AdminDashboard = ({ onLogout }) => {
   const admCatLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
   const admCatIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
 
-  const AdminCommunityView = (
+  const AdminCommunityView = () => (
     <Pg title="Community" sub="Inner Circle">
 
       {/* Sub tabs — same style as category pills */}
@@ -4523,7 +4523,7 @@ const AdminDashboard = ({ onLogout }) => {
     </Pg>
   );
 
-  const viewMap = { overview: Overview, leads: LeadsView, messages: MessagesView, community: AdminCommunityView, settings: SettingsView };
+  const viewMap = { overview: Overview, leads: LeadsView, messages: MessagesView, settings: SettingsView };
 
   return (
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
@@ -4568,6 +4568,7 @@ const AdminDashboard = ({ onLogout }) => {
         <div style={{ flex: 1, overflowY: "auto" }}>
           {view === "invoices" ? <InvoicesView /> :
            view === "applications" ? <ApplicationsView /> :
+           view === "community" ? <AdminCommunityView /> :
            view === "mentees" ? (
              <div>
                {menteeDrawer && (
