@@ -3960,7 +3960,14 @@ const AdminDashboard = ({ onLogout }) => {
                 <span style={{ fontSize: 9, color: B.blush, fontWeight: 700, letterSpacing: 1 }}>{pct}%</span>
               </div>
               <div style={{ display: "flex", gap: 2 }}>
-                <Btn size="sm" variant="primary" icon="video" onClick={() => setAdminCall(m.name)}>Start Call</Btn>
+                <Btn size="sm" variant="primary" icon="video" onClick={async () => {
+                  const { data, error } = await supabase.functions.invoke('create-video-room', {
+                    body: { sessionName: "Quick Call", participantName: m.name }
+                  });
+                  if (error || data?.error) { alert("Could not create video room."); return; }
+                  await supabase.from("mentee_profiles").upsert({ email: m.email, room_url: data.url }, { onConflict: "email" });
+                  setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email, isSession: false });
+                }}>Start Call</Btn>
                 <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
               </div>
             </Card>
