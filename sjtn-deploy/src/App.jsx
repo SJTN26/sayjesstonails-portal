@@ -3435,6 +3435,58 @@ const CommunityVoiceRecorder = ({ onPost }) => {
   );
 };
 
+/* ── Invite Graduate Form — invite past mentees directly to community with grad badge ── */
+const InviteGraduateForm = () => {
+  const nameRef = useRef(null);
+  const emailRef = useRef(null);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const submit = async () => {
+    const name = nameRef.current?.value?.trim();
+    const email = emailRef.current?.value?.trim();
+    if (!name || !email) { alert("Name and email are required."); return; }
+    setBusy(true);
+    try {
+      // Invite as community user
+      const { error } = await supabase.functions.invoke('invite-mentee', {
+        body: { email, first_name: name, tier: "Community Graduate", role: "community" }
+      });
+      if (error) throw new Error(error.message);
+      // Mark as graduated in mentee_profiles
+      await supabase.from("mentee_profiles").upsert({
+        email: email.toLowerCase(),
+        first_name: name,
+        tier: "Community Graduate",
+        graduated: true,
+        start_date: new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }),
+        sessions_completed: 0, sessions_total: 0, days_remaining: 0, total_days: 0
+      }, { onConflict: "email" });
+      if (nameRef.current) nameRef.current.value = "";
+      if (emailRef.current) emailRef.current.value = "";
+      setDone(true);
+      setTimeout(() => setDone(false), 4000);
+    } catch (e) {
+      alert(`Error: ${e.message}`);
+    }
+    setBusy(false);
+  };
+
+  return (
+    <div style={{ background:"#f0faf4", border:`1px solid #2D7D4E40`, borderLeft:`3px solid #2D7D4E`, padding:"18px 20px", marginBottom:20 }}>
+      <div style={{ fontSize:9, fontWeight:700, color:"#2D7D4E", letterSpacing:2, textTransform:"uppercase", marginBottom:12 }}>Invite Past Mentee as Graduate</div>
+      <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"flex-end" }}>
+        <input ref={nameRef} type="text" placeholder="First name" style={{ flex:1, minWidth:120, padding:"9px 12px", border:`1px solid #2D7D4E60`, fontSize:13, fontFamily:"'DM Sans', sans-serif", outline:"none" }} />
+        <input ref={emailRef} type="email" placeholder="Email address" style={{ flex:2, minWidth:180, padding:"9px 12px", border:`1px solid #2D7D4E60`, fontSize:13, fontFamily:"'DM Sans', sans-serif", outline:"none" }} />
+        <button onClick={submit} disabled={busy} style={{ padding:"9px 18px", background: done ? "#2D7D4E" : "#2D7D4E", border:"none", color:"#fff", fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans', sans-serif", letterSpacing:1, textTransform:"uppercase", opacity: busy ? 0.6 : 1 }}>
+          {done ? "✓ Invited!" : busy ? "Sending…" : "🎓 Invite as Graduate"}
+        </button>
+      </div>
+      <div style={{ fontSize:10, color:"#2D7D4E", marginTop:8, fontWeight:300 }}>They'll receive a community invite email and get the 🎓 Graduate badge on their posts.</div>
+    </div>
+  );
+};
+
 /* ── Invite Mentee Form — standalone component to prevent remount on state change ── */
 const InviteForm = ({ isMobile }) => {
   const nameRef = useRef(null);
@@ -3703,10 +3755,10 @@ const AdminDashboard = ({ onLogout }) => {
   const [taskForm, setTaskForm] = useState({ title:"", due_date:"", jess_notes:"" });
   const [taskBusy, setTaskBusy] = useState(false);
   const [adminTasks, setAdminTasks] = useState({});
-  const [menteesTab, setMenteesTab] = useState("active"); // "active" | "graduates"
+  const [menteesTab, setMenteesTab] = useState("active");
   const [graduates, setGraduates] = useState([]);
 
-  useEffect(() => {
+  const fetchGraduates = () => {
     supabase.from("mentee_profiles").select("*").eq("graduated", true).order("start_date", { ascending: false })
       .then(({ data }) => {
         if (data) setGraduates(data.map(g => ({
@@ -3720,7 +3772,9 @@ const AdminDashboard = ({ onLogout }) => {
           sessionsTotal: g.sessions_total || 0,
         })));
       });
-  }, [menteeList]);
+  };
+
+  useEffect(() => { fetchGraduates(); }, []);
 
   useEffect(() => {
     const fetchTasks = () => {
@@ -5167,6 +5221,7 @@ const AdminDashboard = ({ onLogout }) => {
                  {/* GRADUATES VIEW */}
                  {menteesTab === "graduates" && (
                    <div>
+                     <InviteGraduateForm />
                      {graduates.length === 0 && (
                        <div style={{ padding:"40px 0", textAlign:"center", color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No graduates yet — completed mentees will appear here.</div>
                      )}
@@ -5330,6 +5385,7 @@ const AdminDashboard = ({ onLogout }) => {
                              }
                            });
                            setMenteeList(p => p.filter(x => x.email !== m.email));
+                           fetchGraduates();
                            alert(`${firstName}'s program is complete. They now have 1 year of community access.`);
                          }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.success, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
                            <Ic n="check" size={12} color={B.white} />Complete Program
