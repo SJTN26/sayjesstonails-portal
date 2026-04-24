@@ -4781,34 +4781,70 @@ const AdminDashboard = ({ onLogout }) => {
                      { value:`${pct}%`, label:"Progress", tab:"Progress", accent:true },
                    ];
                    return (
-                     <div key={i} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"18px 20px", marginBottom:2 }}>
-                       <div style={{ display:"flex", alignItems:"flex-start", gap:14, marginBottom:14 }}>
-                         <div style={{ width:42, height:42, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:B.white, flexShrink:0 }}>{m.avatar}</div>
-                         <div style={{ flex:1, minWidth:0 }}>
-                           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, flexWrap:"wrap" }}>
-                             <div><div style={{ fontSize:16, fontWeight:700, color:B.black, letterSpacing:"0.02em" }}>{m.name}</div><div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>{m.email} · Started {m.startDate}</div></div>
-                             <Tag>{m.tier}</Tag>
+                     <div key={i} style={{ background:B.white, marginBottom:16, boxShadow:"0 2px 12px rgba(0,0,0,0.06)", border:`1px solid ${B.cloud}` }}>
+
+                       {/* Card header — black bar with mentee identity */}
+                       <div style={{ background:B.black, padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+                           <div style={{ width:46, height:46, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, fontWeight:800, color:B.white, flexShrink:0, letterSpacing:"0.05em" }}>{m.avatar}</div>
+                           <div>
+                             <div style={{ fontSize:16, fontWeight:700, color:B.ivory, letterSpacing:"0.02em" }}>{m.name}</div>
+                             <div style={{ fontSize:10, color:"#666", fontWeight:300, marginTop:2 }}>{m.email}</div>
                            </div>
                          </div>
+                         <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+                           <div style={{ fontSize:8, fontWeight:700, color:B.blush, border:`1px solid ${B.blush}`, padding:"3px 10px", letterSpacing:1.5, textTransform:"uppercase" }}>{m.tier}</div>
+                           <div style={{ fontSize:8, color:"#555", fontWeight:300 }}>Since {m.startDate}</div>
+                         </div>
                        </div>
-                       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:2, marginBottom:12 }}>
-                         {statTiles.map(({ value, label, tab, accent }) => (
-                           <button key={label} onClick={() => setMenteeDrawer({ mentee: m, tab })} style={{ padding:"10px 14px", background:B.off, borderTop: accent ? `2px solid ${B.blush}` : `2px solid ${B.cloud}`, border:`1px solid ${B.cloud}`, borderTopWidth:2, cursor:"pointer", textAlign:"left", fontFamily:FONTS.body }}>
-                             <div style={{ fontFamily:FONTS.display, fontWeight:800, fontSize:20, color: accent ? B.blush : B.black }}>{value}</div>
-                             <div style={{ fontSize:8, color:B.mid, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginTop:3 }}>{label}</div>
-                             <div style={{ fontSize:7, color:B.blush, fontWeight:700, letterSpacing:1, marginTop:2, textTransform:"uppercase" }}>View →</div>
+
+                       {/* Progress bar — full width */}
+                       <div style={{ height:3, background:"#f0f0f0" }}>
+                         <div style={{ height:"100%", width:`${pct}%`, background: pct >= 75 ? B.success : pct >= 40 ? B.amber : B.blush, transition:"width .5s ease" }} />
+                       </div>
+
+                       {/* Stat tiles — clean grid */}
+                       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", gap:0, borderBottom:`1px solid ${B.cloud}` }}>
+                         {statTiles.map(({ value, label, tab, accent }, idx) => (
+                           <button key={label} onClick={() => setMenteeDrawer({ mentee: m, tab })}
+                             style={{ padding:"14px 16px", background:"transparent", border:"none", borderRight: idx < statTiles.length-1 ? `1px solid ${B.cloud}` : "none", cursor:"pointer", textAlign:"center", fontFamily:FONTS.body, transition:"background .15s" }}
+                             onMouseEnter={e => e.currentTarget.style.background = B.off}
+                             onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                             <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:22, color: accent ? B.blush : B.black, lineHeight:1 }}>{value}</div>
+                             <div style={{ fontSize:8, color:B.mid, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginTop:4 }}>{label}</div>
+                             <div style={{ fontSize:7, color:B.blush, fontWeight:700, letterSpacing:0.5, marginTop:2, textTransform:"uppercase" }}>tap →</div>
                            </button>
                          ))}
                        </div>
-                       <PBar value={pct} />
-                       <div style={{ display:"flex", gap:2, marginTop:12, flexWrap:"wrap" }}>
-                         <Btn size="sm" icon="video" onClick={() => setAdminCall(m.name)}>Start Call</Btn>
-                         <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
-                         <Btn size="sm" variant="ghost" icon="calendar" onClick={() => setScheduleSession(m)}>Schedule Session</Btn>
-                         <Btn size="sm" variant="ghost" icon="check" onClick={() => setAssignTask(m)}>Assign Task</Btn>
-                         <Btn size="sm" variant="ghost" icon="file">View Files</Btn>
-                         <Btn size="sm" variant="blush" icon="send" onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })}>Send Welcome Letter</Btn>
+
+                       {/* Action row */}
+                       <div style={{ padding:"12px 16px", display:"flex", gap:6, flexWrap:"wrap", alignItems:"center", background:B.off }}>
+                         <button onClick={() => setAdminCall(m.name)} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.black, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                           <Ic n="video" size={12} color={B.white} />Start Call
+                         </button>
+                         <button onClick={() => { setSelChat(i); setView("messages"); }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                           <Ic n="message" size={12} color={B.steel} />Message
+                         </button>
+                         <button onClick={() => setScheduleSession(m)} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                           <Ic n="calendar" size={12} color={B.steel} />
+                           {m.nextSession ? "Reschedule" : "Schedule Session"}
+                         </button>
+                         <button onClick={() => setAssignTask(m)} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                           <Ic n="check" size={12} color={B.steel} />Assign Task
+                         </button>
+                         <button onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase", marginLeft:"auto" }}>
+                           <Ic n="send" size={12} color={B.white} />Welcome Letter
+                         </button>
                        </div>
+
+                       {/* Next session indicator if scheduled */}
+                       {m.nextSession && (
+                         <div style={{ padding:"10px 16px", background:`${B.blush}08`, borderTop:`1px solid ${B.blush}20`, display:"flex", alignItems:"center", gap:10 }}>
+                           <Ic n="calendar" size={12} color={B.blush} />
+                           <span style={{ fontSize:11, color:B.blush, fontWeight:600 }}>Next Session:</span>
+                           <span style={{ fontSize:11, color:B.charcoal, fontWeight:300 }}>{m.nextSession.type} · {m.nextSession.date} at {m.nextSession.time}</span>
+                         </div>
+                       )}
                      </div>
                    );
                  })}
