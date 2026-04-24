@@ -3404,13 +3404,14 @@ const AdminDashboard = ({ onLogout }) => {
   const sendCommunityVoiceNote = async () => {
     const audioUrl = await stopRecording();
     if (!audioUrl) return;
-    const title = communityVoiceTitle.trim() || "This week's voice note from Jess";
+    const title = (communityVoiceTitleRef.current?.value || communityVoiceTitle).trim() || "This week's voice note from Jess";
     const { data } = await supabase.from("community_posts").insert([{
       author: "Jess", avatar: "J", text: title,
       cat: "tip", likes: 0, is_jess: true, pinned: true, audio_url: audioUrl
     }]).select().single();
     if (data) setCommunityPosts(p => [{ id:data.id, author:"Jess", avatar:"J", time:"Just now", text:title, likes:0, isJess:true, cat:"tip", pinned:true, audioUrl }, ...p]);
     setCommunityVoiceTitle("");
+    if (communityVoiceTitleRef.current) communityVoiceTitleRef.current.value = "";
   };
 
   const fmtTime = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
@@ -4256,6 +4257,7 @@ const AdminDashboard = ({ onLogout }) => {
   const [communityPostCat, setCommunityPostCat] = useState("tip");
   const [communityTab, setCommunityTab] = useState("feed");
   const [communityVoiceTitle, setCommunityVoiceTitle] = useState("");
+  const communityVoiceTitleRef = useRef(null);
 
   useEffect(() => {
     if (view !== "community") return;
@@ -4312,8 +4314,8 @@ const AdminDashboard = ({ onLogout }) => {
             <p style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:3, textTransform:"uppercase", margin:"0 0 12px" }}>Jess's Voice — This Week</p>
             <input
               type="text"
-              value={communityVoiceTitle}
-              onChange={e => setCommunityVoiceTitle(e.target.value)}
+              ref={communityVoiceTitleRef}
+              defaultValue=""
               placeholder="Give this week's note a title..."
               style={{ width:"100%", padding:"10px 12px", background:"#1a1a1a", border:`1px solid ${recording && recordingFor==="community" ? B.blush : "#333"}`, color:B.ivory, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", marginBottom:12 }}
             />
