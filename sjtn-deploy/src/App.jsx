@@ -1784,10 +1784,11 @@ const MenteePortal = ({ user, onLogout }) => {
           <div style={{ fontSize: 9, color: "#9a8880", fontWeight: 300, flexShrink: 0 }}>{audioPlaying ? "Playing…" : "Tap to play"}</div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 2, marginBottom: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap: 2, marginBottom: 16 }}>
           <StatTile value={`${profile.sessionsCompleted}/${profile.sessionsTotal}`} label="Live Sessions" />
           <StatTile value={profile.daysRemaining} label="Days Left" />
           <StatTile value={`${done}/${milestones.length}`} label="Milestones" />
+          <StatTile value={`${tasks.filter(t=>t.completed).length}/${tasks.length}`} label="Assignments" />
           <StatTile value={`${pct}%`} label="Progress" accent />
         </div>
 
