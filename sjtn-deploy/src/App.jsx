@@ -4314,7 +4314,7 @@ const AdminDashboard = ({ onLogout }) => {
               type="text"
               value={communityVoiceTitle}
               onChange={e => setCommunityVoiceTitle(e.target.value)}
-              placeholder='Give this week\'s note a title...'
+              placeholder="Give this week's note a title..."
               style={{ width:"100%", padding:"10px 12px", background:"#1a1a1a", border:`1px solid ${recording && recordingFor==="community" ? B.blush : "#333"}`, color:B.ivory, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", marginBottom:12 }}
             />
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
