@@ -1455,28 +1455,37 @@ const MenteePortal = ({ user, onLogout }) => {
   const [commPostInput, setCommPostInput] = useState("");
   const [commPostCat, setCommPostCat] = useState("win");
   const [commLiked, setCommLiked] = useState([]);
+  const [jessVoice, setJessVoice] = useState(null); // { text, audioUrl }
   const commCatColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
   const commCatLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
   const commCatIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
 
   useEffect(() => {
-    supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setCommunityPosts(data.map(p => ({
-            id: p.id, author: p.author, avatar: p.avatar,
-            time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
-            text: p.text, likes: p.likes || 0, comments: [], isJess: p.is_jess, cat: p.cat
-          })));
-        } else {
-          // Seed with default posts if empty
-          setCommunityPosts([
-            { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Drop it below.", likes:12, comments:["Sarah T.", "Maya R.", "Bria M."], isJess:true, cat:"tip" },
-            { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you.", likes:24, comments:[], isJess:false, cat:"win" },
-            { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. Thank you Jess and this whole community.", likes:31, comments:[], isJess:false, cat:"win" },
-          ]);
-        }
-      });
+    const fetchPosts = () => {
+      supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            // Find Jess's pinned voice note for the top card
+            const voicePost = data.find(p => p.is_jess && p.audio_url && p.pinned);
+            if (voicePost) setJessVoice({ text: voicePost.text, audioUrl: voicePost.audio_url });
+            setCommunityPosts(data.map(p => ({
+              id: p.id, author: p.author, avatar: p.avatar,
+              time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+              text: p.text, likes: p.likes || 0, comments: [], isJess: p.is_jess, cat: p.cat,
+              audioUrl: p.audio_url || null, pinned: p.pinned
+            })));
+          } else {
+            setCommunityPosts([
+              { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Drop it below.", likes:12, comments:["Sarah T.", "Maya R.", "Bria M."], isJess:true, cat:"tip" },
+              { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you.", likes:24, comments:[], isJess:false, cat:"win" },
+              { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. Thank you Jess and this whole community.", likes:31, comments:[], isJess:false, cat:"win" },
+            ]);
+          }
+        });
+    };
+    fetchPosts();
+    const interval = setInterval(fetchPosts, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const submitCommPost = async () => {
@@ -1496,6 +1505,15 @@ const MenteePortal = ({ user, onLogout }) => {
   const [tasks, setTasks] = useState([]);
   const [editingTaskNote, setEditingTaskNote] = useState(null); // task id
   const [taskNoteInput, setTaskNoteInput] = useState("");
+  const [jessVoice, setJessVoice] = useState(null);
+
+  // Fetch Jess's latest pinned voice note for dashboard
+  useEffect(() => {
+    supabase.from("community_posts").select("text, audio_url").eq("is_jess", true).eq("pinned", true).not("audio_url", "is", null).order("created_at", { ascending: false }).limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) setJessVoice({ text: data[0].text, audioUrl: data[0].audio_url });
+      });
+  }, []);
 
   // Fetch tasks from Supabase via edge function
   useEffect(() => {
@@ -1771,19 +1789,27 @@ const MenteePortal = ({ user, onLogout }) => {
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 18px", fontWeight: 300 }}>{profile.daysRemaining} days remaining in your {profile.tier}.</p>
 
         {/* ── Jess's Voice — weekly audio message ── */}
-        <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 16, cursor: "pointer" }} onClick={() => setAudioPlaying(p => !p)}>
-          <div style={{ width: 44, height: 44, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
-            <Ic n={audioPlaying ? "zap" : "mic"} size={20} color={B.white} />
+        {jessVoice ? (
+          <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "18px 20px", marginBottom: 16 }}>
+            <Section style={{ color: B.blushLight, marginBottom: 8 }}>Jess's Voice — This Week</Section>
+            <div style={{ color: B.ivory, fontSize: 13, fontWeight: 300, marginBottom: 10, lineHeight: 1.5 }}>"{jessVoice.text}"</div>
+            <audio controls src={jessVoice.audioUrl} style={{ width:"100%", height:36, outline:"none" }} controlsList="nodownload" />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Section style={{ color: B.blushLight, marginBottom: 4 }}>Jess's Voice — This Week</Section>
-            <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>"Your pricing confidence starts with your language."</div>
-            <div style={{ marginTop: 8, height: 3, background: "#2a2a2a", borderRadius: 2 }}>
-              <div style={{ height: "100%", width: audioPlaying ? "45%" : "0%", background: B.blush, borderRadius: 2, transition: audioPlaying ? "width 60s linear" : "none" }} />
+        ) : (
+          <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 16, cursor: "pointer" }} onClick={() => setAudioPlaying(p => !p)}>
+            <div style={{ width: 44, height: 44, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
+              <Ic n={audioPlaying ? "zap" : "mic"} size={20} color={B.white} />
             </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Section style={{ color: B.blushLight, marginBottom: 4 }}>Jess's Voice — This Week</Section>
+              <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>"Your pricing confidence starts with your language."</div>
+              <div style={{ marginTop: 8, height: 3, background: "#2a2a2a", borderRadius: 2 }}>
+                <div style={{ height: "100%", width: audioPlaying ? "45%" : "0%", background: B.blush, borderRadius: 2, transition: audioPlaying ? "width 60s linear" : "none" }} />
+              </div>
+            </div>
+            <div style={{ fontSize: 9, color: "#9a8880", fontWeight: 300, flexShrink: 0 }}>{audioPlaying ? "Playing…" : "Tap to play"}</div>
           </div>
-          <div style={{ fontSize: 9, color: "#9a8880", fontWeight: 300, flexShrink: 0 }}>{audioPlaying ? "Playing…" : "Tap to play"}</div>
-        </div>
+        )}
 
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap: 2, marginBottom: 16 }}>
           <StatTile value={`${profile.sessionsCompleted}/${profile.sessionsTotal}`} label="Live Sessions" />
@@ -2129,20 +2155,29 @@ const MenteePortal = ({ user, onLogout }) => {
       <Pg title="Community Feed" sub="The Inner Circle">
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Your people. Real nail techs doing the work alongside you.</p>
 
-        {/* Jess's Voice audio teaser */}
-        <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setAudioPlaying(p => !p)}>
-          <div style={{ width: 40, height: 40, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
-            <Ic n={audioPlaying ? "zap" : "mic"} size={18} color={B.white} />
+        {/* Jess's Voice audio — real from database */}
+        {jessVoice && (
+          <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 8px" }}>Jess's Voice — This Week</p>
+            <p style={{ color: B.ivory, fontSize: 13, fontWeight: 300, margin: "0 0 10px", lineHeight: 1.4 }}>"{jessVoice.text}"</p>
+            <audio controls src={jessVoice.audioUrl} style={{ width:"100%", height:36, outline:"none" }} controlsList="nodownload" />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 3px" }}>Jess's Voice — This Week</p>
-            <p style={{ color: B.ivory, fontSize: 13, fontWeight: 300, margin: "0 0 8px", lineHeight: 1.4 }}>"Your pricing confidence starts with your language."</p>
-            <div style={{ height: 3, background: "#333", borderRadius: 2 }}>
-              <div style={{ height: "100%", width: audioPlaying ? "45%" : "0%", background: B.blush, borderRadius: 2, transition: audioPlaying ? "width 60s linear" : "none" }} />
+        )}
+        {!jessVoice && (
+          <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setAudioPlaying(p => !p)}>
+            <div style={{ width: 40, height: 40, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
+              <Ic n={audioPlaying ? "zap" : "mic"} size={18} color={B.white} />
             </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 3px" }}>Jess's Voice — This Week</p>
+              <p style={{ color: B.ivory, fontSize: 13, fontWeight: 300, margin: "0 0 8px", lineHeight: 1.4 }}>"Your pricing confidence starts with your language."</p>
+              <div style={{ height: 3, background: "#333", borderRadius: 2 }}>
+                <div style={{ height: "100%", width: audioPlaying ? "45%" : "0%", background: B.blush, borderRadius: 2, transition: audioPlaying ? "width 60s linear" : "none" }} />
+              </div>
+            </div>
+            <div style={{ fontSize: 9, color: "#9a8880", fontWeight: 300, flexShrink: 0 }}>{audioPlaying ? "Playing…" : "Tap to play"}</div>
           </div>
-          <div style={{ fontSize: 9, color: "#9a8880", fontWeight: 300, flexShrink: 0 }}>{audioPlaying ? "Playing…" : "Tap to play"}</div>
-        </div>
+        )}
 
         {/* Post composer */}
         <div style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "18px 20px", marginBottom: 16, borderTop: `3px solid ${B.blush}` }}>
@@ -2167,7 +2202,7 @@ const MenteePortal = ({ user, onLogout }) => {
 
         {/* Feed */}
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {communityPosts.map((post) => (
+          {communityPosts.filter(post => !(post.pinned && post.audioUrl)).map((post) => (
             <div key={post.id} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "20px 22px", borderTop: post.isJess ? `3px solid ${B.blush}` : `1px solid ${B.cloud}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                 <div style={{ width: 36, height: 36, background: post.isJess ? B.blush : B.off, border: post.isJess ? "none" : `1px solid ${B.cloud}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: post.isJess ? B.white : B.steel, flexShrink: 0, borderRadius: "50%" }}>{post.avatar}</div>
@@ -2183,12 +2218,18 @@ const MenteePortal = ({ user, onLogout }) => {
                 </div>
               </div>
               <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.75, margin: "0 0 14px", fontWeight: 300 }}>{post.text}</p>
+              {post.audioUrl && (
+                <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"10px 14px", marginBottom:14, display:"flex", alignItems:"center", gap:10 }}>
+                  <Ic n="mic" size={13} color={B.blush} />
+                  <audio controls src={post.audioUrl} style={{ flex:1, height:32, outline:"none" }} controlsList="nodownload" />
+                </div>
+              )}
               <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: `1px solid ${B.cloud}`, paddingTop: 12 }}>
                 <button onClick={() => setCommLiked(p => p.includes(post.id) ? p.filter(x => x !== post.id) : [...p, post.id])} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: commLiked.includes(post.id) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: commLiked.includes(post.id) ? 700 : 300, padding: 0 }}>
                   <Ic n="heart" size={14} color={commLiked.includes(post.id) ? B.blush : B.mid} sw={commLiked.includes(post.id) ? 0 : 1.8} />
                   {post.likes + (commLiked.includes(post.id) ? 1 : 0)}
                 </button>
-                {post.comments.length > 0 && <span style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>{post.comments.length} comments</span>}
+                {post.comments?.length > 0 && <span style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>{post.comments.length} comments</span>}
               </div>
             </div>
           ))}
