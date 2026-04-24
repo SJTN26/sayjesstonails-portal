@@ -3650,7 +3650,7 @@ const AdminDashboard = ({ onLogout }) => {
           setSessionsHistory(grouped);
         }
       });
-  }, [menteeList]);
+  }, []);
   const [leads, setLeads] = useState(DB.leads);
   const [selLead, setSelLead] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -4778,6 +4778,18 @@ const AdminDashboard = ({ onLogout }) => {
                 mentee_email: adminCall.menteeEmail,
                 session_type: adminCall.sessionType,
               }]);
+              // Refresh sessions history
+              supabase.from("sessions_history").select("*").order("occurred_at", { ascending: false })
+                .then(({ data }) => {
+                  if (data) {
+                    const grouped = {};
+                    data.forEach(s => {
+                      if (!grouped[s.mentee_email]) grouped[s.mentee_email] = [];
+                      grouped[s.mentee_email].push(s);
+                    });
+                    setSessionsHistory(grouped);
+                  }
+                });
               // Increment sessions_completed
               const mentee = menteeList.find(m => m.email === adminCall.menteeEmail);
               const newCount = (mentee?.sessionsCompleted || 0) + 1;
