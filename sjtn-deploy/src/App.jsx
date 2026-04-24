@@ -3205,6 +3205,161 @@ const InviteForm = ({ isMobile }) => {
   );
 };
 
+/* ── Admin Community — fully standalone to prevent remounting ── */
+const AdminCommunity = ({ menteeList, communityList }) => {
+  const { isMobile } = useLayout();
+  const [posts, setCommunityPosts] = useState([]);
+  const [postInput, setCommunityPostInput] = useState("");
+  const [postCat, setCommunityPostCat] = useState("tip");
+  const [tab, setTab] = useState("feed");
+
+  useEffect(() => {
+    supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
+      .then(({ data }) => {
+        if (data) setCommunityPosts(data.map(p => ({
+          id: p.id, author: p.author, avatar: p.avatar,
+          time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+          text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, pinned: p.pinned, audioUrl: p.audio_url || null
+        })));
+      });
+  }, []);
+
+  const submitPost = async () => {
+    if (!postInput.trim()) return;
+    const { data } = await supabase.from("community_posts").insert([{
+      author: "Jess", avatar: "J", text: postInput,
+      cat: postCat, likes: 0, is_jess: true, pinned: false
+    }]).select().single();
+    if (data) setCommunityPosts(p => [{ id:data.id, author:"Jess", avatar:"J", time:"Just now", text:postInput, likes:0, isJess:true, cat:postCat, pinned:false }, ...p]);
+    setCommunityPostInput("");
+  };
+
+  // ── Admin Community state moved to standalone AdminCommunity component ──
+
+  return (
+    <div style={{ padding: isMobile ? "20px 18px 100px" : "28px 28px" }}>
+      <div style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", marginBottom:4 }}>Community</div>
+      <h1 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize: isMobile ? 32 : 44, textTransform:"uppercase", color:B.black, margin:"0 0 20px", letterSpacing:"-0.5px" }}>Inner Circle</h1>
+
+      {/* Sub tabs */}
+      <div style={{ display:"flex", gap:2, marginBottom:20 }}>
+        {[["feed","Community Feed"], ["members","Members"], ["wins","Mentee Wins"]].map(([id, label]) => (
+          <button key={id} onClick={() => setTab(id)} style={{ padding:"8px 18px", border:`1px solid ${tab===id ? B.blush : B.cloud}`, background: tab===id ? B.blush : B.white, color: tab===id ? B.white : B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>{label}</button>
+        ))}
+      </div>
+
+      {tab === "feed" && (
+        <div>
+          <CommunityVoiceRecorder onPost={async (title, audioUrl) => {
+            const { data } = await supabase.from("community_posts").insert([{
+              author: "Jess", avatar: "J", text: title,
+              cat: "tip", likes: 0, is_jess: true, pinned: true, audio_url: audioUrl
+            }]).select().single();
+            if (data) setCommunityPosts(p => [{ id:data.id, author:"Jess", avatar:"J", time:"Just now", text:title, likes:0, isJess:true, cat:"tip", pinned:true, audioUrl }, ...p]);
+          }} />
+
+          <div style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"18px 20px", marginBottom:16, borderTop:`3px solid ${B.blush}` }}>
+            <div style={{ display:"flex", gap:2, marginBottom:12, flexWrap:"nowrap", overflowX:"auto" }}>
+              {Object.entries(catLabels).map(([k, v]) => (
+                <button key={k} onClick={() => setCommunityPostCat(k)} style={{ display:"flex", alignItems:"center", gap:4, padding:"5px 9px", border:`1px solid ${postCat===k ? catColors[k] : B.cloud}`, background: postCat===k ? `${catColors[k]}12` : "transparent", color: postCat===k ? catColors[k] : B.mid, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, whiteSpace:"nowrap", flexShrink:0 }}>
+                  <Ic n={catIcons[k]} size={10} color={postCat===k ? catColors[k] : B.mid} sw={1.5} />{v}
+                </button>
+              ))}
+            </div>
+            <textarea value={postInput} onChange={e => setCommunityPostInput(e.target.value)} placeholder="Share a tip, drop a resource, post a challenge — post as Jess..." rows={4} style={{ width:"100%", padding:"12px 14px", border:`1px solid ${B.cloud}`, fontSize:13, color:B.black, fontFamily:FONTS.body, outline:"none", resize:"vertical", boxSizing:"border-box", fontWeight:300 }} />
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <div style={{ width:26, height:26, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:B.white, borderRadius:"50%" }}>J</div>
+                <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>Posting as Jess</span>
+              </div>
+              <button onClick={submitPost} disabled={!postInput.trim()} style={{ display:"flex", alignItems:"center", gap:7, padding:"9px 18px", background: postInput.trim() ? B.blush : B.cloud, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor: postInput.trim() ? "pointer" : "default", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}>
+                <Ic n="send" size={12} color={B.white} />Post
+              </button>
+            </div>
+          </div>
+
+          {posts.map(post => (
+            <div key={post.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"16px 20px", marginBottom:2, borderLeft:`3px solid ${post.pinned ? B.amber : post.isJess ? B.blush : B.cloud}` }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:10 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ width:32, height:32, background: post.isJess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:B.white, borderRadius:"50%", flexShrink:0 }}>{post.avatar}</div>
+                  <div>
+                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                      <span style={{ fontSize:12, fontWeight:700, color: post.isJess ? B.blush : B.black }}>{post.author}</span>
+                      {post.isJess && <span style={{ fontSize:7, background:B.blush, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>JESS</span>}
+                      {post.pinned && <span style={{ fontSize:7, background:B.amber, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>PINNED</span>}
+                    </div>
+                    <div style={{ fontSize:9, color:B.mid, marginTop:1 }}>{post.time} · <span style={{ color: catColors[post.cat], fontWeight:700, fontSize:8, textTransform:"uppercase", letterSpacing:1 }}>{catLabels[post.cat]}</span></div>
+                  </div>
+                </div>
+                <div style={{ display:"flex", gap:4, flexShrink:0 }}>
+                  <button onClick={() => pinPost(post)} style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${post.pinned ? B.amber : B.cloud}`, background: post.pinned ? `${B.amber}15` : "none", color: post.pinned ? B.amber : B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>{post.pinned ? "Unpin" : "Pin"}</button>
+                  <button onClick={() => removePost(post.id)} style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
+                </div>
+              </div>
+              <p style={{ fontSize:13, color:B.charcoal, lineHeight:1.7, margin:0, fontWeight:300 }}>{post.text}</p>
+              {post.audioUrl && (
+                <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"12px 14px", marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
+                  <Ic n="mic" size={14} color={B.blush} />
+                  <audio controls src={post.audioUrl} style={{ flex:1, height:32, outline:"none" }} controlsList="nodownload" />
+                </div>
+              )}
+              <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:10 }}>
+                <Ic n="heart" size={12} color={B.mid} />
+                <span style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{post.likes} likes</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === "members" && (
+        <div>
+          <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{communityList.length} community members</div>
+          {communityList.map((m, i) => (
+            <div key={i} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"14px 18px", marginBottom:2, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                <div style={{ width:36, height:36, background:B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:B.white }}>{m.avatar}</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{m.name}</div>
+                  <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{m.email}</div>
+                </div>
+              </div>
+              <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                <span style={{ fontSize:8, fontWeight:700, color:B.steel, border:`1px solid ${B.cloud}`, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>{m.paid ? "Member" : "Trial"}</span>
+                <button style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === "wins" && (
+        <div>
+          <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>Wins posted by your mentees</div>
+          {menteeList.map((m, i) => {
+            const mWins = posts.filter(p => p.cat === "win" && !p.isJess && p.author === (m.firstName || m.name));
+            return mWins.length > 0 ? (
+              <div key={i} style={{ marginBottom:16 }}>
+                <div style={{ fontSize:10, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase", marginBottom:6, paddingBottom:6, borderBottom:`1px solid ${B.cloud}` }}>{m.firstName || m.name} — {m.tier}</div>
+                {mWins.map(win => (
+                  <div key={win.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"12px 16px", marginBottom:2 }}>
+                    <p style={{ fontSize:13, color:B.charcoal, margin:"0 0 6px", fontWeight:300, lineHeight:1.6 }}>{win.text}</p>
+                    <div style={{ fontSize:9, color:B.mid, fontWeight:300 }}>{win.time} · {win.likes} likes</div>
+                  </div>
+                ))}
+              </div>
+            ) : null;
+          })}
+          {menteeList.every(m => !posts.some(p => p.cat === "win" && !p.isJess && p.author === (m.firstName || m.name))) && (
+            <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No mentee wins posted yet.</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AdminDashboard = ({ onLogout }) => {
   const { isMobile, useSidebar } = useLayout();
   const [view, setView] = useState("overview");
@@ -4337,171 +4492,7 @@ const AdminDashboard = ({ onLogout }) => {
     </div>
   );
 
-  // ── Admin Community State ────────────────────────────────────────────────
-  const [communityPosts, setCommunityPosts] = useState([]);
-  const [communityPostInput, setCommunityPostInput] = useState("");
-  const [communityPostCat, setCommunityPostCat] = useState("tip");
-  const [communityTab, setCommunityTab] = useState("feed");
-  const [communityVoiceTitle, setCommunityVoiceTitle] = useState("");
-  const communityVoiceTitleRef = useRef(null);
-
-  useEffect(() => {
-    if (view !== "community") return;
-    supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
-      .then(({ data }) => {
-        if (data) setCommunityPosts(data.map(p => ({
-          id: p.id, author: p.author, avatar: p.avatar,
-          time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
-          text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, pinned: p.pinned
-        })));
-      });
-  }, [view]);
-
-  const submitCommunityPost = async () => {
-    if (!communityPostInput.trim()) return;
-    const { data } = await supabase.from("community_posts").insert([{
-      author: "Jess", avatar: "J", text: communityPostInput,
-      cat: communityPostCat, likes: 0, is_jess: true, pinned: false
-    }]).select().single();
-    if (data) setCommunityPosts(p => [{ id:data.id, author:"Jess", avatar:"J", time:"Just now", text:communityPostInput, likes:0, isJess:true, cat:communityPostCat, pinned:false }, ...p]);
-    setCommunityPostInput("");
-  };
-
-  const removePost = async (postId) => {
-    if (!window.confirm("Remove this post?")) return;
-    await supabase.from("community_posts").delete().eq("id", postId);
-    setCommunityPosts(p => p.filter(x => x.id !== postId));
-  };
-
-  const pinPost = async (post) => {
-    await supabase.from("community_posts").update({ pinned: !post.pinned }).eq("id", post.id);
-    setCommunityPosts(p => p.map(x => x.id === post.id ? { ...x, pinned: !x.pinned } : x));
-  };
-
-  const admCatColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
-  const admCatLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
-  const admCatIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
-
-  const AdminCommunityView = () => (
-    <Pg title="Community" sub="Inner Circle">
-
-      {/* Sub tabs — same style as category pills */}
-      <div style={{ display:"flex", gap:2, marginBottom:20 }}>
-        {[["feed","Community Feed"], ["members","Members"], ["wins","Mentee Wins"]].map(([id, label]) => (
-          <button key={id} onClick={() => setCommunityTab(id)} style={{ padding:"8px 18px", border:`1px solid ${communityTab===id ? B.blush : B.cloud}`, background: communityTab===id ? B.blush : B.white, color: communityTab===id ? B.white : B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", transition:"all .15s" }}>{label}</button>
-        ))}
-      </div>
-
-      {/* FEED TAB */}
-      {communityTab === "feed" && (
-        <div>
-          {/* Jess's Voice — standalone component prevents input remount */}
-          <CommunityVoiceRecorder onPost={async (title, audioUrl) => {
-            const { data } = await supabase.from("community_posts").insert([{
-              author: "Jess", avatar: "J", text: title,
-              cat: "tip", likes: 0, is_jess: true, pinned: true, audio_url: audioUrl
-            }]).select().single();
-            if (data) setCommunityPosts(p => [{ id:data.id, author:"Jess", avatar:"J", time:"Just now", text:title, likes:0, isJess:true, cat:"tip", pinned:true, audioUrl }, ...p]);
-          }} />
-
-          {/* Post composer — same style as mentee side */}
-          <div style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"18px 20px", marginBottom:16, borderTop:`3px solid ${B.blush}` }}>
-            <div style={{ display:"flex", gap:2, marginBottom:12, flexWrap:"nowrap", overflowX:"auto" }}>
-              {Object.entries(admCatLabels).map(([k, v]) => (
-                <button key={k} onClick={() => setCommunityPostCat(k)} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:4, padding:"5px 9px", border:`1px solid ${communityPostCat===k ? admCatColors[k] : B.cloud}`, background: communityPostCat===k ? `${admCatColors[k]}12` : "transparent", color: communityPostCat===k ? admCatColors[k] : B.mid, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, whiteSpace:"nowrap", flexShrink:0 }}>
-                  <Ic n={admCatIcons[k]} size={10} color={communityPostCat===k ? admCatColors[k] : B.mid} sw={1.5} />{v}
-                </button>
-              ))}
-            </div>
-            <textarea value={communityPostInput} onChange={e => setCommunityPostInput(e.target.value)} placeholder="Share a tip, drop a resource, post a challenge — post as Jess..." rows={4} style={{ width:"100%", padding:"12px 14px", border:`1px solid ${B.cloud}`, fontSize:13, color:B.black, fontFamily:FONTS.body, outline:"none", resize:"vertical", boxSizing:"border-box", fontWeight:300, minHeight:100 }} />
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                <div style={{ width:26, height:26, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:B.white, borderRadius:"50%" }}>J</div>
-                <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>Posting as Jess</span>
-              </div>
-              <button onClick={submitCommunityPost} disabled={!communityPostInput.trim()} style={{ display:"flex", alignItems:"center", gap:7, padding:"9px 18px", background: communityPostInput.trim() ? B.blush : B.cloud, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor: communityPostInput.trim() ? "pointer" : "default", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                <Ic n="send" size={12} color={B.white} />Post
-              </button>
-            </div>
-          </div>
-
-          {/* Posts — same card style as mentee side + admin controls */}
-          {communityPosts.map(post => (
-            <div key={post.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"16px 20px", marginBottom:2, borderLeft:`3px solid ${post.pinned ? B.amber : post.isJess ? B.blush : B.cloud}` }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:10 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ width:32, height:32, background: post.isJess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:B.white, borderRadius:"50%", flexShrink:0 }}>{post.avatar}</div>
-                  <div>
-                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                      <span style={{ fontSize:12, fontWeight:700, color: post.isJess ? B.blush : B.black, letterSpacing:"0.03em" }}>{post.author}</span>
-                      {post.isJess && <span style={{ fontSize:7, background:B.blush, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>JESS</span>}
-                      {post.pinned && <span style={{ fontSize:7, background:B.amber, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>PINNED</span>}
-                    </div>
-                    <div style={{ fontSize:9, color:B.mid, marginTop:1 }}>{post.time} · <span style={{ color: admCatColors[post.cat], fontWeight:700, fontSize:8, textTransform:"uppercase", letterSpacing:1 }}>{admCatLabels[post.cat]}</span></div>
-                  </div>
-                </div>
-                {/* Admin controls */}
-                <div style={{ display:"flex", gap:4, flexShrink:0 }}>
-                  <button onClick={() => pinPost(post)} style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${post.pinned ? B.amber : B.cloud}`, background: post.pinned ? `${B.amber}15` : "none", color: post.pinned ? B.amber : B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>{post.pinned ? "Unpin" : "Pin"}</button>
-                  <button onClick={() => removePost(post.id)} style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
-                </div>
-              </div>
-              <p style={{ fontSize:13, color:B.charcoal, lineHeight:1.7, margin:0, fontWeight:300 }}>{post.text}</p>
-              <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:10 }}>
-                <Ic n="heart" size={12} color={B.mid} />
-                <span style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{post.likes} likes</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* MEMBERS TAB */}
-      {communityTab === "members" && (
-        <div>
-          <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{communityList.length} community members</div>
-          {communityList.map((m, i) => (
-            <div key={i} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"14px 18px", marginBottom:2, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-                <div style={{ width:36, height:36, background:B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:B.white }}>{m.avatar}</div>
-                <div>
-                  <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{m.name}</div>
-                  <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{m.email}</div>
-                </div>
-              </div>
-              <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-                <Tag>{m.paid ? "Member" : "Trial"}</Tag>
-                <button style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* WINS TAB */}
-      {communityTab === "wins" && (
-        <div>
-          <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>Wins posted by your mentees</div>
-          {menteeList.map((m, i) => {
-            const mWins = communityPosts.filter(p => p.cat === "win" && !p.isJess && p.author === (m.firstName || m.name));
-            return mWins.length > 0 ? (
-              <div key={i} style={{ marginBottom:16 }}>
-                <div style={{ fontSize:10, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase", marginBottom:6, paddingBottom:6, borderBottom:`1px solid ${B.cloud}` }}>{m.firstName || m.name} — {m.tier}</div>
-                {mWins.map(win => (
-                  <div key={win.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"12px 16px", marginBottom:2 }}>
-                    <p style={{ fontSize:13, color:B.charcoal, margin:"0 0 6px", fontWeight:300, lineHeight:1.6 }}>{win.text}</p>
-                    <div style={{ fontSize:9, color:B.mid, fontWeight:300 }}>{win.time} · {win.likes} likes</div>
-                  </div>
-                ))}
-              </div>
-            ) : null;
-          })}
-          {menteeList.every(m => !communityPosts.some(p => p.cat === "win" && !p.isJess && p.author === (m.firstName || m.name))) && (
-            <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No mentee wins posted yet.</div>
-          )}
-        </div>
-      )}
-    </Pg>
+  // ── Admin Community state moved to standalone AdminCommunity component ──
   );
 
   const SettingsView = (
@@ -4568,7 +4559,7 @@ const AdminDashboard = ({ onLogout }) => {
         <div style={{ flex: 1, overflowY: "auto" }}>
           {view === "invoices" ? <InvoicesView /> :
            view === "applications" ? <ApplicationsView /> :
-           view === "community" ? <AdminCommunityView /> :
+           view === "community" ? <AdminCommunity menteeList={menteeList} communityList={communityList} /> :
            view === "mentees" ? (
              <div>
                {menteeDrawer && (
