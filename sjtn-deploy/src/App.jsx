@@ -1492,7 +1492,6 @@ const MenteePortal = ({ user, onLogout }) => {
         if (data?.voice) setJessVoice({ text: data.voice.title, audioUrl: data.voice.audio_url });
       });
   }, []);
-  }, []);
 
   const submitCommPost = async () => {
     if (!commPostInput.trim()) return;
@@ -1511,15 +1510,6 @@ const MenteePortal = ({ user, onLogout }) => {
   const [tasks, setTasks] = useState([]);
   const [editingTaskNote, setEditingTaskNote] = useState(null); // task id
   const [taskNoteInput, setTaskNoteInput] = useState("");
-  const [jessVoice, setJessVoice] = useState(null);
-
-  // Fetch Jess's latest voice note for dashboard
-  useEffect(() => {
-    supabase.functions.invoke('jess-voice', { body: { action:'get' } })
-      .then(({ data }) => {
-        if (data?.voice) setJessVoice({ text: data.voice.title, audioUrl: data.voice.audio_url });
-      });
-  }, []);
 
   // Fetch tasks from Supabase via edge function
   useEffect(() => {
