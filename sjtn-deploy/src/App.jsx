@@ -1296,9 +1296,9 @@ const MenteePg = ({ title, sub, children }) => {
 /* ════════════════════════════════════════════════════════════════════════
    VIDEO CALL MODAL — shared across all portals
 ════════════════════════════════════════════════════════════════════════ */
-const VideoCallModal = ({ onClose, sessionName = "Session", participantName = "Jess", isHost = false }) => {
-  const [roomUrl, setRoomUrl] = useState(null);
-  const [loading, setLoading] = useState(true);
+const VideoCallModal = ({ onClose, sessionName = "Session", participantName = "Jess", isHost = false, presetRoomUrl = null }) => {
+  const [roomUrl, setRoomUrl] = useState(presetRoomUrl);
+  const [loading, setLoading] = useState(!presetRoomUrl);
   const [error, setError] = useState(null);
   const [elapsed, setElapsed] = useState(0);
 
@@ -1308,6 +1308,7 @@ const VideoCallModal = ({ onClose, sessionName = "Session", participantName = "J
   }, []);
 
   useEffect(() => {
+    if (presetRoomUrl) { setRoomUrl(presetRoomUrl); setLoading(false); return; }
     const createRoom = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('create-video-room', {
@@ -1405,6 +1406,7 @@ const MenteePortal = ({ user, onLogout }) => {
                   time: data.next_session_time || "",
                   type: data.next_session_type || "Session"
                 } : null,
+                roomUrl: data.room_url || null,
               }));
             }
           });
@@ -1826,10 +1828,20 @@ const MenteePortal = ({ user, onLogout }) => {
             <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 22, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.03em" }}>{profile.nextSession?.type}</div>
             <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{profile.nextSession?.date} · {profile.nextSession?.time}</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
+              {profile.roomUrl ? (
+                <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>
+                  <span style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <span style={{ width:8, height:8, borderRadius:"50%", background:"#22c55e", display:"inline-block", animation:"pulse 1.5s ease-in-out infinite" }} />
+                    Jess is Live — Join Now
+                  </span>
+                </Btn>
+              ) : (
+                <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
+              )}
               {!sessionPrep.submitted && <Btn variant="ghostDark" icon="clipBoard" onClick={() => setView("sessionprep")}>Prepare for Session</Btn>}
               {sessionPrep.submitted && <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: B.success }}><Ic n="check" size={12} color={B.success} />Prep submitted</div>}
             </div>
+            <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
           </div>
         ) : (
           <div style={{ background: "#111", padding: isMobile ? "20px" : "24px 28px", marginBottom: 16, borderLeft: `3px solid #333` }}>
@@ -2394,7 +2406,13 @@ const MenteePortal = ({ user, onLogout }) => {
 
   return (
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off, position: "relative" }}>
-      {callActive && <VideoCallModal onClose={() => setCallActive(false)} sessionName={profile.nextSession?.type || "Session"} participantName="Jess" isHost={false} />}
+      {callActive && <VideoCallModal
+        onClose={() => setCallActive(false)}
+        sessionName={profile.nextSession?.type || "Live Session"}
+        participantName="Jess"
+        isHost={false}
+        presetRoomUrl={profile.roomUrl || null}
+      />}
       {WelcomeModal}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:all .18s} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}} @keyframes celebPop{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.08) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}} @keyframes celebFade{0%{opacity:1}70%{opacity:1}100%{opacity:0}} @keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(80px) rotate(360deg);opacity:0}}`}</style>
 
@@ -4575,7 +4593,19 @@ const AdminDashboard = ({ onLogout }) => {
 
   return (
     <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
-      {adminCall && <VideoCallModal onClose={() => setAdminCall(null)} sessionName={`Session with ${adminCall}`} participantName={adminCall} isHost={true} />}
+      {adminCall && <VideoCallModal
+        onClose={async () => {
+          // Clear room URL so mentee knows call ended
+          if (adminCall.menteeEmail) {
+            await supabase.from("mentee_profiles").upsert({ email: adminCall.menteeEmail, room_url: null }, { onConflict: "email" });
+          }
+          setAdminCall(null);
+        }}
+        sessionName={`Session with ${adminCall.name}`}
+        participantName={adminCall.name}
+        isHost={true}
+        presetRoomUrl={adminCall.roomUrl}
+      />}
       {WelcomeLetterModal}
       {SessionScheduleModal}
       {AssignTaskModal}
@@ -4819,7 +4849,16 @@ const AdminDashboard = ({ onLogout }) => {
 
                        {/* Action row */}
                        <div style={{ padding:"12px 16px", display:"flex", gap:6, flexWrap:"wrap", alignItems:"center", background:B.off }}>
-                         <button onClick={() => setAdminCall(m.name)} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.black, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                         <button onClick={async () => {
+                           // Create Daily.co room and save URL to mentee_profiles
+                           const { data, error } = await supabase.functions.invoke('create-video-room', {
+                             body: { sessionName: m.nextSession?.type || "Live Session", participantName: m.name }
+                           });
+                           if (error || data?.error) { alert("Could not create video room. Please try again."); return; }
+                           // Save room URL to mentee profile so mentee can join
+                           await supabase.from("mentee_profiles").upsert({ email: m.email, room_url: data.url }, { onConflict: "email" });
+                           setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email });
+                         }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.black, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
                            <Ic n="video" size={12} color={B.white} />Start Call
                          </button>
                          <button onClick={() => { setSelChat(i); setView("messages"); }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
