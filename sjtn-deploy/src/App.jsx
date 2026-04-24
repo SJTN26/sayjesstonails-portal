@@ -3703,7 +3703,24 @@ const AdminDashboard = ({ onLogout }) => {
   const [taskForm, setTaskForm] = useState({ title:"", due_date:"", jess_notes:"" });
   const [taskBusy, setTaskBusy] = useState(false);
   const [adminTasks, setAdminTasks] = useState({});
-  const [sessionsHistory, setSessionsHistory] = useState({});
+  const [menteesTab, setMenteesTab] = useState("active"); // "active" | "graduates"
+  const [graduates, setGraduates] = useState([]);
+
+  useEffect(() => {
+    supabase.from("mentee_profiles").select("*").eq("graduated", true).order("start_date", { ascending: false })
+      .then(({ data }) => {
+        if (data) setGraduates(data.map(g => ({
+          email: g.email,
+          firstName: g.first_name || g.email.split("@")[0],
+          name: g.first_name || g.email.split("@")[0],
+          avatar: (g.first_name || g.email.split("@")[0]).slice(0,2).toUpperCase(),
+          tier: g.tier || "Mentorship",
+          startDate: g.start_date || "",
+          sessionsCompleted: g.sessions_completed || 0,
+          sessionsTotal: g.sessions_total || 0,
+        })));
+      });
+  }, [menteeList]);
 
   useEffect(() => {
     const fetchTasks = () => {
@@ -5134,9 +5151,62 @@ const AdminDashboard = ({ onLogout }) => {
                )}
                <div style={{ padding: isMobile ? "20px 18px 100px" : "28px 28px" }}>
                  <Section style={{ marginBottom: 4 }}>Mentees</Section>
-                 <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: "0 0 20px", letterSpacing: "-0.5px" }}>All Enrolled</h1>
-                 <InviteForm isMobile={isMobile} />
-                 {menteeList.map((m, i) => {
+                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:20, flexWrap:"wrap", gap:10 }}>
+                   <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: 0, letterSpacing: "-0.5px" }}>
+                     {menteesTab === "active" ? "All Enrolled" : "Graduates"}
+                   </h1>
+                   <div style={{ display:"flex", gap:2 }}>
+                     {[["active", `Active (${menteeList.length})`], ["graduates", `Graduates (${graduates.length})`]].map(([id, label]) => (
+                       <button key={id} onClick={() => setMenteesTab(id)} style={{ padding:"8px 16px", border:`1px solid ${menteesTab===id ? B.blush : B.cloud}`, background: menteesTab===id ? B.blush : B.white, color: menteesTab===id ? B.white : B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>{label}</button>
+                     ))}
+                   </div>
+                 </div>
+
+                 {menteesTab === "active" && <InviteForm isMobile={isMobile} />}
+
+                 {/* GRADUATES VIEW */}
+                 {menteesTab === "graduates" && (
+                   <div>
+                     {graduates.length === 0 && (
+                       <div style={{ padding:"40px 0", textAlign:"center", color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No graduates yet — completed mentees will appear here.</div>
+                     )}
+                     {graduates.map((g, i) => (
+                       <div key={i} style={{ background:B.white, marginBottom:12, boxShadow:"0 2px 8px rgba(0,0,0,0.05)", border:`1px solid ${B.cloud}` }}>
+                         <div style={{ background:B.black, padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, borderLeft:`4px solid #2D7D4E` }}>
+                           <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+                             <div style={{ width:42, height:42, background:"#2D7D4E", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color:B.white, flexShrink:0 }}>{g.avatar}</div>
+                             <div>
+                               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                                 <div style={{ fontSize:16, fontWeight:700, color:B.ivory }}>{g.firstName}</div>
+                                 <span style={{ fontSize:7, background:"#2D7D4E", color:B.white, padding:"2px 6px", fontWeight:700, letterSpacing:1 }}>🎓 GRAD</span>
+                               </div>
+                               <div style={{ fontSize:10, color:"#666", fontWeight:300, marginTop:2 }}>{g.email}</div>
+                             </div>
+                           </div>
+                           <div style={{ textAlign:"right", flexShrink:0 }}>
+                             <div style={{ fontSize:8, fontWeight:700, color:"#2D7D4E", border:`1px solid #2D7D4E`, padding:"3px 10px", letterSpacing:1.5, textTransform:"uppercase", marginBottom:4 }}>{g.tier}</div>
+                             <div style={{ fontSize:9, color:"#555", fontWeight:300 }}>Started {g.startDate}</div>
+                           </div>
+                         </div>
+                         <div style={{ padding:"14px 20px", display:"flex", gap:24, alignItems:"center", background:B.off }}>
+                           <div style={{ textAlign:"center" }}>
+                             <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:22, color:"#2D7D4E" }}>{g.sessionsCompleted}/{g.sessionsTotal}</div>
+                             <div style={{ fontSize:8, color:B.mid, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginTop:2 }}>Sessions</div>
+                           </div>
+                           <div style={{ width:1, height:32, background:B.cloud }} />
+                           <div style={{ fontSize:11, color:B.mid, fontWeight:300, flex:1 }}>
+                             Community access active — 1 year complimentary
+                           </div>
+                           <button onClick={() => { setSelChat(menteeList.findIndex(x => x.email === g.email)); setView("messages"); }} style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 12px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="message" size={11} color={B.steel} />Message
+                           </button>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+
+                 {menteesTab === "active" && menteeList.map((m, i) => {
                    const pct = Math.round((m.sessionsCompleted / m.sessionsTotal) * 100);
                    const done = m.milestones?.filter(x => x.done).length || 0;
                    const mTasks = adminTasks[m.email] || [];
@@ -5232,18 +5302,35 @@ const AdminDashboard = ({ onLogout }) => {
                            <Ic n="send" size={12} color={B.white} />Welcome Letter
                          </button>
                          <button onClick={async () => {
-                           if (!window.confirm(`Mark ${m.firstName || m.name}'s program as complete? They will keep their community access permanently and lose mentee portal access.`)) return;
+                           if (!window.confirm(`Mark ${m.firstName || m.name}'s program as complete? They will have 1 year of community access and lose mentee portal access.`)) return;
+                           const firstName = m.firstName || m.name.split(" ")[0];
                            // Change auth role to community
                            const { error } = await supabase.functions.invoke('invite-mentee', {
                              body: { email: m.email, action: 'graduate' }
                            });
                            if (error) { alert(`Error: ${error.message}`); return; }
-                           // Send congratulations portal message
+                           // Send graduation portal message trigger
                            await supabase.functions.invoke('send-message', {
-                             body: { mentee_email: m.email, sender: "jess", text: `__GRADUATION__${m.firstName || m.name.split(" ")[0]}` }
+                             body: { mentee_email: m.email, sender: "jess", text: `__GRADUATION__${firstName}` }
+                           });
+                           // Send branded graduation email
+                           await supabase.functions.invoke('send-message', {
+                             body: {
+                               send_email: true,
+                               graduation_email: true,
+                               email_data: {
+                                 email: m.email,
+                                 firstName,
+                                 tier: m.tier,
+                                 sessionsCompleted: m.sessionsCompleted,
+                                 sessionsTotal: m.sessionsTotal,
+                                 startDate: m.startDate,
+                                 completionDate: new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" })
+                               }
+                             }
                            });
                            setMenteeList(p => p.filter(x => x.email !== m.email));
-                           alert(`${m.firstName || m.name}'s program is complete. They now have community-only access.`);
+                           alert(`${firstName}'s program is complete. They now have 1 year of community access.`);
                          }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.success, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
                            <Ic n="check" size={12} color={B.white} />Complete Program
                          </button>
