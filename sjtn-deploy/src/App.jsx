@@ -3642,19 +3642,6 @@ const AdminDashboard = ({ onLogout }) => {
     });
   };
 
-  const sendCommunityVoiceNote = async () => {
-    const audioUrl = await stopRecording();
-    if (!audioUrl) return;
-    const title = (communityVoiceTitleRef.current?.value || communityVoiceTitle).trim() || "This week's voice note from Jess";
-    const { data } = await supabase.from("community_posts").insert([{
-      author: "Jess", avatar: "J", text: title,
-      cat: "tip", likes: 0, is_jess: true, pinned: true, audio_url: audioUrl
-    }]).select().single();
-    if (data) setCommunityPosts(p => [{ id:data.id, author:"Jess", avatar:"J", time:"Just now", text:title, likes:0, isJess:true, cat:"tip", pinned:true, audioUrl }, ...p]);
-    setCommunityVoiceTitle("");
-    if (communityVoiceTitleRef.current) communityVoiceTitleRef.current.value = "";
-  };
-
   const fmtTime = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
 
   const scMap = { pending: [B.amber, B.amberPale], accepted: [B.success, B.successPale], happened: ["#7B5EA7", "#F3EEF9"], enrolled: [B.blush, B.blushPale], declined: [B.mid, B.off], followup: ["#B8860B", B.amberPale] };
