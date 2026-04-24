@@ -1458,6 +1458,7 @@ const MenteePortal = ({ user, onLogout }) => {
   const [commPostCat, setCommPostCat] = useState("win");
   const [commLiked, setCommLiked] = useState([]);
   const [jessVoice, setJessVoice] = useState(null); // { text, audioUrl }
+  const [menteeStatDrawer, setMenteeStatDrawer] = useState(null);
   const commCatColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
   const commCatLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
   const commCatIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
@@ -1812,7 +1813,7 @@ const MenteePortal = ({ user, onLogout }) => {
           </div>
         </div>
 
-  const [menteeStatDrawer, setMenteeStatDrawer] = useState(null); // "sessions" | "days" | "milestones" | "assignments" | "progress"
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap: 2, marginBottom: 16 }}>
           {[
             { value:`${profile.sessionsCompleted}/${profile.sessionsTotal}`, label:"Live Sessions", key:"sessions" },
             { value:profile.daysRemaining, label:"Days Left", key:"days" },
