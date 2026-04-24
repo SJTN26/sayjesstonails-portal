@@ -1993,7 +1993,7 @@ const MenteePortal = ({ user, onLogout }) => {
                           <Ic n="mic" size={11} color={B.blush} />
                           <span style={{ fontSize:9, color:B.blush, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Voice Note from Jess</span>
                         </div>
-                        <audio controls src={m.audioUrl} style={{ width:"100%", height:32, outline:"none" }} />
+                        <audio controls src={m.audioUrl} style={{ width:"100%", minWidth:160, height:36 }} controlsList="nodownload">Your browser does not support audio playback.</audio>
                       </div>
                     ) : (
                       <p style={{ margin: 0, fontSize: 12, color: isJ ? B.charcoal : B.ivory, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
@@ -3345,7 +3345,11 @@ const AdminDashboard = ({ onLogout }) => {
   const startRecording = async (target) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      // Safari supports mp4, Chrome/Firefox support webm
+      const mimeType = MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" :
+                       MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
+                       MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       audioChunksRef.current = [];
       mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mediaRecorder.start();
@@ -3366,10 +3370,12 @@ const AdminDashboard = ({ onLogout }) => {
       mediaRecorder.onstop = async () => {
         clearInterval(recordingTimerRef.current);
         setRecording(false);
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        const fileName = `voice-${Date.now()}.webm`;
-        const { data, error } = await supabase.storage.from("voice-notes").upload(fileName, blob, { contentType: "audio/webm" });
-        if (error) { alert("Failed to upload voice note."); resolve(null); return; }
+        const mimeType = mediaRecorder.mimeType || "audio/webm";
+        const ext = mimeType.includes("mp4") ? "mp4" : mimeType.includes("ogg") ? "ogg" : "webm";
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        const fileName = `voice-${Date.now()}.${ext}`;
+        const { data, error } = await supabase.storage.from("voice-notes").upload(fileName, blob, { contentType: mimeType });
+        if (error) { alert("Failed to upload voice note. Please try again."); resolve(null); return; }
         const { data: urlData } = supabase.storage.from("voice-notes").getPublicUrl(fileName);
         resolve(urlData.publicUrl);
         mediaRecorder.stream.getTracks().forEach(t => t.stop());
@@ -4186,7 +4192,7 @@ const AdminDashboard = ({ onLogout }) => {
                             <Ic n="mic" size={12} color={isJ ? B.blushLight : B.blush} />
                             <span style={{ fontSize:10, color: isJ ? B.blushLight : B.blush, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Voice Note</span>
                           </div>
-                          <audio controls src={m.audioUrl} style={{ width:"100%", height:32, outline:"none" }} />
+                          <audio controls src={m.audioUrl} style={{ width:"100%", minWidth:160, height:36 }} controlsList="nodownload">Your browser does not support audio playback.</audio>
                         </div>
                       ) : (
                         <p style={{ margin: 0, fontSize: 12, color: isJ ? B.ivory : B.charcoal, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
@@ -4202,20 +4208,25 @@ const AdminDashboard = ({ onLogout }) => {
           <Divider />
           {/* Recording indicator */}
           {recording && recordingFor === "message" && (
-            <div style={{ padding:"8px 18px", background:`${B.blush}12`, borderTop:`1px solid ${B.blush}`, display:"flex", alignItems:"center", gap:10 }}>
-              <div style={{ width:8, height:8, borderRadius:"50%", background:B.blush, animation:"pulse 1s infinite" }} />
-              <span style={{ fontSize:11, color:B.blush, fontWeight:700 }}>Recording {fmtTime(recordingTime)}</span>
-              <span style={{ fontSize:10, color:B.mid, fontWeight:300 }}>— Release mic button to send</span>
+            <div style={{ padding:"8px 18px", background:`${B.blush}12`, borderTop:`1px solid ${B.blush}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <div style={{ width:8, height:8, borderRadius:"50%", background:B.blush }} />
+                <span style={{ fontSize:11, color:B.blush, fontWeight:700 }}>Recording {fmtTime(recordingTime)}</span>
+              </div>
+              <span style={{ fontSize:10, color:B.mid, fontWeight:300 }}>Tap mic again to send</span>
             </div>
           )}
           <div style={{ padding: "10px 18px", background: B.white, display: "flex", gap: 2, flexShrink: 0 }}>
             <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder={recording ? "Recording voice note..." : `Reply to ${contacts[selChat]?.name}…`} disabled={recording} style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, fontWeight: 300, opacity: recording ? 0.5 : 1 }} />
-            {/* Voice note button */}
+            {/* Voice note button — tap to start, tap to stop & send */}
             <button
-              onMouseDown={() => !recording && startRecording("message")}
-              onMouseUp={() => recording && recordingFor === "message" && sendVoiceNote()}
-              onTouchStart={e => { e.preventDefault(); !recording && startRecording("message"); }}
-              onTouchEnd={e => { e.preventDefault(); recording && recordingFor === "message" && sendVoiceNote(); }}
+              onClick={async () => {
+                if (!recording) {
+                  startRecording("message");
+                } else if (recordingFor === "message") {
+                  await sendVoiceNote();
+                }
+              }}
               style={{ width:44, height:44, background: recording && recordingFor === "message" ? B.blush : B.off, border:`1px solid ${recording && recordingFor === "message" ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0, transition:"all .15s" }}>
               <Ic n="mic" size={16} color={recording && recordingFor === "message" ? B.white : B.mid} />
             </button>
@@ -4287,10 +4298,13 @@ const AdminDashboard = ({ onLogout }) => {
           {/* Jess's Voice teaser — same dark card as mentee side */}
           <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"16px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:14 }}>
             <div style={{ width:40, height:40, background: recording && recordingFor === "community" ? B.blush : "#333", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, borderRadius:"50%", cursor:"pointer", transition:"all .2s" }}
-              onMouseDown={() => !recording && startRecording("community")}
-              onMouseUp={() => recording && recordingFor === "community" && sendCommunityVoiceNote()}
-              onTouchStart={e => { e.preventDefault(); !recording && startRecording("community"); }}
-              onTouchEnd={e => { e.preventDefault(); recording && recordingFor === "community" && sendCommunityVoiceNote(); }}>
+              onClick={async () => {
+                if (!recording) {
+                  startRecording("community");
+                } else if (recordingFor === "community") {
+                  await sendCommunityVoiceNote();
+                }
+              }}>
               <Ic n="mic" size={18} color={B.white} />
             </div>
             <div style={{ flex:1, minWidth:0 }}>
@@ -4298,7 +4312,7 @@ const AdminDashboard = ({ onLogout }) => {
               {recording && recordingFor === "community" ? (
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                   <div style={{ width:6, height:6, borderRadius:"50%", background:B.blush }} />
-                  <span style={{ color:B.ivory, fontSize:13, fontWeight:500 }}>Recording {fmtTime(recordingTime)} — Release to post</span>
+                  <span style={{ color:B.ivory, fontSize:13, fontWeight:500 }}>Recording {fmtTime(recordingTime)} — Tap mic to send</span>
                 </div>
               ) : (
                 <div style={{ color:"#9a8880", fontSize:13, fontWeight:300 }}>Hold mic button to record a new voice note for the community</div>
