@@ -1844,7 +1844,7 @@ const MenteePortal = ({ user, onLogout }) => {
           ))}
         </Card>
 
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 2 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2 }}>
           <Card style={{ padding: "18px 20px" }}>
             <Section style={{ marginBottom: 12 }}>Milestones</Section>
             {milestones.map((m, i) => (
@@ -1858,28 +1858,6 @@ const MenteePortal = ({ user, onLogout }) => {
             ))}
             {milestones.length === 0 && <p style={{ fontSize: 11, color: B.mid, fontWeight: 300, fontStyle: "italic" }}>No milestones yet.</p>}
           </Card>
-
-          {/* Tasks card */}
-          <Card style={{ padding: "18px 20px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <Section>Assignments</Section>
-              <span style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>{tasks.filter(t=>t.completed).length}/{tasks.length}</span>
-            </div>
-            {tasks.length === 0 && <p style={{ fontSize: 11, color: B.mid, fontWeight: 300, fontStyle: "italic" }}>No assignments yet.</p>}
-            {tasks.slice(0, 4).map(task => (
-              <div key={task.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 0", borderBottom: `1px solid ${B.cloud}` }}>
-                <button onClick={() => completeTask(task)} style={{ width: 18, height: 18, background: task.completed ? B.blush : "transparent", border: `2px solid ${task.completed ? B.blush : B.cloud}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", marginTop: 2, padding: 0 }}>
-                  {task.completed && <Ic n="check" size={8} color={B.white} />}
-                </button>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, color: task.completed ? B.mid : B.charcoal, textDecoration: task.completed ? "line-through" : "none", fontWeight: 300, lineHeight: 1.4 }}>{task.title}</div>
-                  {task.due_date && <div style={{ fontSize: 9, color: B.blush, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>Due {task.due_date}</div>}
-                </div>
-              </div>
-            ))}
-            {tasks.length > 4 && <div style={{ fontSize: 9, color: B.blush, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginTop: 8, cursor: "pointer" }}>+{tasks.length - 4} more</div>}
-          </Card>
-
           <Card style={{ padding: "18px 20px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <Section>Messages</Section>
