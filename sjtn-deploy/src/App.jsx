@@ -3242,7 +3242,9 @@ const AdminDashboard = ({ onLogout }) => {
             const currentContactEmail = selChatRef.current !== null && contacts[selChatRef.current]?.email;
             const isCurrentlyViewed = viewRef.current === "messages" && currentContactEmail === email;
             const mentee = menteeList.find(m => m.email?.toLowerCase() === email?.toLowerCase());
-            const name = mentee ? (mentee.firstName || mentee.name || email.split("@")[0]) : email.split("@")[0];
+            const name = mentee
+              ? (mentee.firstName && mentee.firstName !== email.split("@")[0] ? mentee.firstName : mentee.name || mentee.firstName || email.split("@")[0])
+              : email.split("@")[0];
             return {
               email, name,
               preview: msgs[msgs.length - 1]?.text || "",
@@ -3266,10 +3268,9 @@ const AdminDashboard = ({ onLogout }) => {
     };
 
     fetchAllMessages();
-    // Poll every 5 seconds
     const interval = setInterval(fetchAllMessages, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [menteeList]);
 
   // Separate polling just for unread count — independent of contacts state
   useEffect(() => {
