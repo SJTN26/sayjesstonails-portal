@@ -1871,6 +1871,9 @@ const MenteePortal = ({ user, onLogout }) => {
   ) : null;
 
   const tierWelcome = TIER_WELCOME[profile.tier] || TIER_WELCOME["Hourly Session"];
+
+  const views = {
+    dashboard: (
       <Pg title={`Hi, ${user.firstName}.`} sub="Welcome Back">
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 18px", fontWeight: 300 }}>{profile.daysRemaining} days remaining in your {profile.tier}.</p>
 
