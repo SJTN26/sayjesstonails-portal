@@ -1485,12 +1485,17 @@ const MenteePortal = ({ user, onLogout }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch Jess's Voice separately
+  // Fetch Jess's Voice separately — polls every 30s
   useEffect(() => {
-    supabase.functions.invoke('jess-voice', { body: { action:'get' } })
-      .then(({ data }) => {
-        if (data?.voice) setJessVoice({ text: data.voice.title, audioUrl: data.voice.audio_url });
-      });
+    const fetchVoice = () => {
+      supabase.functions.invoke('jess-voice', { body: { action:'get' } })
+        .then(({ data }) => {
+          if (data?.voice) setJessVoice({ text: data.voice.title, audioUrl: data.voice.audio_url });
+        });
+    };
+    fetchVoice();
+    const interval = setInterval(fetchVoice, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const submitCommPost = async () => {
