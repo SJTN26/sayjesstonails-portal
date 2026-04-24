@@ -1407,6 +1407,7 @@ const MenteePortal = ({ user, onLogout }) => {
                   type: data.next_session_type || "Session"
                 } : null,
                 roomUrl: data.room_url || null,
+                graduated: data.graduated || false,
               }));
             }
           });
@@ -1472,7 +1473,7 @@ const MenteePortal = ({ user, onLogout }) => {
               id: p.id, author: p.author, avatar: p.avatar,
               time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
               text: p.text, likes: p.likes || 0, comments: [], isJess: p.is_jess, cat: p.cat,
-              audioUrl: p.audio_url || null, pinned: p.pinned
+              audioUrl: p.audio_url || null, pinned: p.pinned, isGraduate: p.is_graduate || false
             })));
           } else {
             setCommunityPosts([
@@ -1503,12 +1504,13 @@ const MenteePortal = ({ user, onLogout }) => {
 
   const submitCommPost = async () => {
     if (!commPostInput.trim()) return;
-    const newPost = { author: user.firstName, avatar: user.avatar, text: commPostInput, likes: 0, comments: [], isJess: false, cat: commPostCat, time: "Just now", id: Date.now() };
+    const isGrad = profile.graduated || false;
+    const newPost = { author: user.firstName, avatar: user.avatar, text: commPostInput, likes: 0, comments: [], isJess: false, cat: commPostCat, time: "Just now", id: Date.now(), isGraduate: isGrad };
     setCommunityPosts(p => [newPost, ...p]);
     setCommPostInput("");
     await supabase.from("community_posts").insert([{
       author: user.firstName, avatar: user.avatar, text: commPostInput,
-      cat: commPostCat, likes: 0, is_jess: false
+      cat: commPostCat, likes: 0, is_jess: false, is_graduate: isGrad
     }]);
   };
 
@@ -2237,9 +2239,7 @@ const MenteePortal = ({ user, onLogout }) => {
                   <div style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 7 }}>
                     {post.author}
                     {post.isJess && <span style={{ fontSize: 8, background: B.blush, color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>JESS</span>}
-                    {post.cat && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 8, background: `${commCatColors[post.cat]}15`, color: commCatColors[post.cat], padding: "2px 8px", fontWeight: 700, letterSpacing: 1 }}>
-                      <Ic n={commCatIcons[post.cat]} size={9} color={commCatColors[post.cat]} sw={1.5} />{commCatLabels[post.cat]}
-                    </span>}
+                    {post.isGraduate && !post.isJess && <span style={{ fontSize: 7, background: "#2D7D4E", color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>🎓 GRAD</span>}
                   </div>
                   <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginTop: 1 }}>{post.time}</div>
                 </div>
@@ -2814,6 +2814,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
                   <div style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 7 }}>
                     {post.author}
                     {post.isJess && <span style={{ fontSize: 8, background: B.blush, color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>JESS</span>}
+                    {post.isGraduate && !post.isJess && <span style={{ fontSize: 7, background: "#2D7D4E", color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>🎓 GRAD</span>}
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 8, background: `${catColors[post.cat]}15`, color: catColors[post.cat], padding: "2px 8px", fontWeight: 700, letterSpacing: 1 }}>
                       <Ic n={catIcons[post.cat]} size={9} color={catColors[post.cat]} sw={1.5} />{catLabels[post.cat]}
                     </span>
@@ -3436,7 +3437,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
         if (data) setCommunityPosts(data.map(p => ({
           id: p.id, author: p.author, avatar: p.avatar,
           time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
-          text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, pinned: p.pinned, audioUrl: p.audio_url || null
+          text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, pinned: p.pinned, audioUrl: p.audio_url || null, isGraduate: p.is_graduate || false
         })));
       });
   }, []);
@@ -3529,6 +3530,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
                     <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                       <span style={{ fontSize:12, fontWeight:700, color: post.isJess ? B.blush : B.black }}>{post.author}</span>
                       {post.isJess && <span style={{ fontSize:7, background:B.blush, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>JESS</span>}
+                      {post.isGraduate && !post.isJess && <span style={{ fontSize:7, background:"#2D7D4E", color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>🎓 GRAD</span>}
                       {post.pinned && <span style={{ fontSize:7, background:B.amber, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>PINNED</span>}
                     </div>
                     <div style={{ fontSize:9, color:B.mid, marginTop:1 }}>{post.time} · <span style={{ color: catColors[post.cat], fontWeight:700, fontSize:8, textTransform:"uppercase", letterSpacing:1 }}>{catLabels[post.cat]}</span></div>
@@ -3569,6 +3571,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
               </div>
               <div style={{ display:"flex", gap:6, alignItems:"center" }}>
                 <span style={{ fontSize:8, fontWeight:700, color:B.steel, border:`1px solid ${B.cloud}`, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>{m.paid ? "Member" : "Trial"}</span>
+                {m.graduated && <span style={{ fontSize:7, background:"#2D7D4E", color:B.white, padding:"2px 8px", fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>🎓 Grad</span>}
                 <button style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
               </div>
             </div>
@@ -5143,6 +5146,32 @@ const AdminDashboard = ({ onLogout }) => {
                          </button>
                          <button onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase", marginLeft:"auto" }}>
                            <Ic n="send" size={12} color={B.white} />Welcome Letter
+                         </button>
+                         <button onClick={async () => {
+                           if (!window.confirm(`Mark ${m.firstName || m.name}'s program as complete? They will keep their community access permanently.`)) return;
+                           // Update their role to community-only in mentee_profiles
+                           await supabase.from("mentee_profiles").upsert({ email: m.email, graduated: true }, { onConflict: "email" });
+                           // Send congratulations portal message
+                           await supabase.functions.invoke('send-message', {
+                             body: { mentee_email: m.email, sender: "jess", text: `Congratulations ${m.firstName || m.name.split(" ")[0]}! 🎉 You've officially completed your mentorship program. I am so incredibly proud of everything you've accomplished. As a graduate, you keep your community access permanently — no monthly fee, ever. That's my gift to you for doing the work. Keep showing up. 💪` }
+                           });
+                           // Send branded completion email
+                           await supabase.functions.invoke('send-message', {
+                             body: {
+                               send_email: true,
+                               email_data: {
+                                 email: m.email,
+                                 firstName: m.firstName || m.name.split(" ")[0],
+                                 sessionType: `${m.tier} — Program Complete`,
+                                 sessionDate: new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }),
+                                 sessionTime: "Your community access never expires",
+                                 isReschedule: false
+                               }
+                             }
+                           });
+                           setMenteeList(p => p.filter(x => x.email !== m.email));
+                         }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.success, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                           <Ic n="check" size={12} color={B.white} />Complete Program
                          </button>
                        </div>
 
