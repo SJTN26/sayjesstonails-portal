@@ -1586,6 +1586,7 @@ const MenteePortal = ({ user, onLogout }) => {
               from: m.sender === "mentee" ? "You" : "Jess",
               time: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }),
               text: m.text,
+              audioUrl: m.audio_url || null,
               unread: !m.read && m.sender === "jess"
             })));
           } else if (user.messages) {
@@ -1986,7 +1987,17 @@ const MenteePortal = ({ user, onLogout }) => {
                 {isJ && <div style={{ width: 24, height: 24, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 8, flexShrink: 0, alignSelf: "flex-end" }}><LogoMark size={16} white /></div>}
                 <div style={{ maxWidth: "72%" }}>
                   <div style={{ background: isJ ? B.white : B.black, border: isJ ? `1px solid ${B.cloud}` : "none", padding: "10px 14px" }}>
-                    <p style={{ margin: 0, fontSize: 12, color: isJ ? B.charcoal : B.ivory, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
+                    {m.audioUrl ? (
+                      <div>
+                        <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
+                          <Ic n="mic" size={11} color={B.blush} />
+                          <span style={{ fontSize:9, color:B.blush, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Voice Note from Jess</span>
+                        </div>
+                        <audio controls src={m.audioUrl} style={{ width:"100%", height:32, outline:"none" }} />
+                      </div>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: 12, color: isJ ? B.charcoal : B.ivory, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
+                    )}
                   </div>
                   <div style={{ fontSize: 9, color: B.mid, marginTop: 3, textAlign: isJ ? "left" : "right", fontWeight: 300, letterSpacing: "0.05em" }}>{m.time}</div>
                 </div>
@@ -3229,7 +3240,7 @@ const AdminDashboard = ({ onLogout }) => {
 
   useEffect(() => {
     const fetchAllMessages = () => {
-      supabase.from("messages").select("mentee_email, text, sender, created_at, read")
+      supabase.from("messages").select("mentee_email, text, sender, created_at, read, audio_url")
         .order("created_at", { ascending: true })
         .then(({ data }) => {
           if (!data || data.length === 0) return;
@@ -3260,6 +3271,7 @@ const AdminDashboard = ({ onLogout }) => {
               from: m.sender === "mentee" ? c.name : "Jess",
               sender: m.sender,
               text: m.text,
+              audioUrl: m.audio_url || null,
               t: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" })
             }));
           });
@@ -3317,10 +3329,74 @@ const AdminDashboard = ({ onLogout }) => {
     const text = chatInput;
     setChatMsgs(p => ({ ...p, [selChat]: [...(p[selChat] || []), { from: "Jess", text, t: "now" }] }));
     setChatInput("");
-    await supabase.from("messages").insert([{
-      mentee_email: contact.email, sender: "jess", text, read: false
-    }]);
+    await supabase.functions.invoke('send-message', {
+      body: { mentee_email: contact.email, sender: "jess", text }
+    });
   };
+
+  // ── Voice Note Recording ─────────────────────────────────────────────────
+  const [recording, setRecording] = useState(false);
+  const [recordingFor, setRecordingFor] = useState(null); // "message" | "community"
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingTimerRef = useRef(null);
+
+  const startRecording = async (target) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
+      setRecording(true);
+      setRecordingFor(target);
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+    } catch (e) {
+      alert("Microphone access is required to send voice notes. Please allow microphone access and try again.");
+    }
+  };
+
+  const stopRecording = async () => {
+    return new Promise(resolve => {
+      const mediaRecorder = mediaRecorderRef.current;
+      if (!mediaRecorder) { resolve(null); return; }
+      mediaRecorder.onstop = async () => {
+        clearInterval(recordingTimerRef.current);
+        setRecording(false);
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const fileName = `voice-${Date.now()}.webm`;
+        const { data, error } = await supabase.storage.from("voice-notes").upload(fileName, blob, { contentType: "audio/webm" });
+        if (error) { alert("Failed to upload voice note."); resolve(null); return; }
+        const { data: urlData } = supabase.storage.from("voice-notes").getPublicUrl(fileName);
+        resolve(urlData.publicUrl);
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecorder.stop();
+    });
+  };
+
+  const sendVoiceNote = async () => {
+    if (!contacts[selChat]) return;
+    const audioUrl = await stopRecording();
+    if (!audioUrl) return;
+    const contact = contacts[selChat];
+    setChatMsgs(p => ({ ...p, [selChat]: [...(p[selChat] || []), { from: "Jess", text: "🎤 Voice note", audioUrl, t: "now" }] }));
+    await supabase.functions.invoke('send-message', {
+      body: { mentee_email: contact.email, sender: "jess", text: "🎤 Voice note", audio_url: audioUrl }
+    });
+  };
+
+  const sendCommunityVoiceNote = async () => {
+    const audioUrl = await stopRecording();
+    if (!audioUrl) return;
+    await supabase.from("community_posts").update({ audio_url: audioUrl }).eq("is_jess", true).order("created_at", { ascending: false }).limit(1);
+    alert("Voice note posted to community feed!");
+  };
+
+  const fmtTime = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
 
   const scMap = { pending: [B.amber, B.amberPale], accepted: [B.success, B.successPale], happened: ["#7B5EA7", "#F3EEF9"], enrolled: [B.blush, B.blushPale], declined: [B.mid, B.off], followup: ["#B8860B", B.amberPale] };
   const stageLabel = { pending: "Waiting on Me", accepted: "Call Confirmed", happened: "Call Happened", enrolled: "Enrolled", declined: "Not a Fit", followup: "Follow Up Later" };
@@ -4104,7 +4180,17 @@ const AdminDashboard = ({ onLogout }) => {
                 <div key={i} style={{ display: "flex", justifyContent: isJ ? "flex-end" : "flex-start", marginBottom: 12 }}>
                   <div style={{ maxWidth: "70%" }}>
                     <div style={{ background: isJ ? B.black : B.white, border: isJ ? "none" : `1px solid ${B.cloud}`, padding: "10px 14px" }}>
-                      <p style={{ margin: 0, fontSize: 12, color: isJ ? B.ivory : B.charcoal, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
+                      {m.audioUrl ? (
+                        <div>
+                          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+                            <Ic n="mic" size={12} color={isJ ? B.blushLight : B.blush} />
+                            <span style={{ fontSize:10, color: isJ ? B.blushLight : B.blush, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Voice Note</span>
+                          </div>
+                          <audio controls src={m.audioUrl} style={{ width:"100%", height:32, outline:"none" }} />
+                        </div>
+                      ) : (
+                        <p style={{ margin: 0, fontSize: 12, color: isJ ? B.ivory : B.charcoal, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
+                      )}
                     </div>
                     <div style={{ fontSize: 9, color: B.mid, marginTop: 3, textAlign: isJ ? "right" : "left", fontWeight: 300, letterSpacing: "0.05em" }}>{m.t}</div>
                   </div>
@@ -4114,9 +4200,26 @@ const AdminDashboard = ({ onLogout }) => {
             <div ref={chatEnd} />
           </div>
           <Divider />
+          {/* Recording indicator */}
+          {recording && recordingFor === "message" && (
+            <div style={{ padding:"8px 18px", background:`${B.blush}12`, borderTop:`1px solid ${B.blush}`, display:"flex", alignItems:"center", gap:10 }}>
+              <div style={{ width:8, height:8, borderRadius:"50%", background:B.blush, animation:"pulse 1s infinite" }} />
+              <span style={{ fontSize:11, color:B.blush, fontWeight:700 }}>Recording {fmtTime(recordingTime)}</span>
+              <span style={{ fontSize:10, color:B.mid, fontWeight:300 }}>— Release mic button to send</span>
+            </div>
+          )}
           <div style={{ padding: "10px 18px", background: B.white, display: "flex", gap: 2, flexShrink: 0 }}>
-            <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder={`Reply to ${contacts[selChat]?.name}…`} style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, fontWeight: 300 }} />
-            <button onClick={sendChat} style={{ width: 44, height: 44, background: B.black, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><Ic n="send" size={15} color={B.white} /></button>
+            <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder={recording ? "Recording voice note..." : `Reply to ${contacts[selChat]?.name}…`} disabled={recording} style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, fontWeight: 300, opacity: recording ? 0.5 : 1 }} />
+            {/* Voice note button */}
+            <button
+              onMouseDown={() => !recording && startRecording("message")}
+              onMouseUp={() => recording && recordingFor === "message" && sendVoiceNote()}
+              onTouchStart={e => { e.preventDefault(); !recording && startRecording("message"); }}
+              onTouchEnd={e => { e.preventDefault(); recording && recordingFor === "message" && sendVoiceNote(); }}
+              style={{ width:44, height:44, background: recording && recordingFor === "message" ? B.blush : B.off, border:`1px solid ${recording && recordingFor === "message" ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0, transition:"all .15s" }}>
+              <Ic n="mic" size={16} color={recording && recordingFor === "message" ? B.white : B.mid} />
+            </button>
+            <button onClick={sendChat} disabled={recording} style={{ width: 44, height: 44, background: B.black, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, opacity: recording ? 0.4 : 1 }}><Ic n="send" size={15} color={B.white} /></button>
           </div>
             </>
           )}
@@ -4183,14 +4286,24 @@ const AdminDashboard = ({ onLogout }) => {
         <div>
           {/* Jess's Voice teaser — same dark card as mentee side */}
           <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"16px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:14 }}>
-            <div style={{ width:40, height:40, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, borderRadius:"50%" }}>
+            <div style={{ width:40, height:40, background: recording && recordingFor === "community" ? B.blush : "#333", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, borderRadius:"50%", cursor:"pointer", transition:"all .2s" }}
+              onMouseDown={() => !recording && startRecording("community")}
+              onMouseUp={() => recording && recordingFor === "community" && sendCommunityVoiceNote()}
+              onTouchStart={e => { e.preventDefault(); !recording && startRecording("community"); }}
+              onTouchEnd={e => { e.preventDefault(); recording && recordingFor === "community" && sendCommunityVoiceNote(); }}>
               <Ic n="mic" size={18} color={B.white} />
             </div>
             <div style={{ flex:1, minWidth:0 }}>
               <p style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:3, textTransform:"uppercase", margin:"0 0 3px" }}>Jess's Voice — This Week</p>
-              <div style={{ color:B.ivory, fontSize:13, fontWeight:500 }}>"Your pricing confidence starts with your language."</div>
+              {recording && recordingFor === "community" ? (
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <div style={{ width:6, height:6, borderRadius:"50%", background:B.blush }} />
+                  <span style={{ color:B.ivory, fontSize:13, fontWeight:500 }}>Recording {fmtTime(recordingTime)} — Release to post</span>
+                </div>
+              ) : (
+                <div style={{ color:"#9a8880", fontSize:13, fontWeight:300 }}>Hold mic button to record a new voice note for the community</div>
+              )}
             </div>
-            <div style={{ fontSize:9, color:"#9a8880", flexShrink:0 }}>Manage →</div>
           </div>
 
           {/* Post composer — same style as mentee side */}
