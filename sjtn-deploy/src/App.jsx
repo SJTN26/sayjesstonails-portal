@@ -4129,7 +4129,7 @@ const AdminDashboard = ({ onLogout }) => {
   const [communityPosts, setCommunityPosts] = useState([]);
   const [communityPostInput, setCommunityPostInput] = useState("");
   const [communityPostCat, setCommunityPostCat] = useState("tip");
-  const [communityTab, setCommunityTab] = useState("feed"); // feed | members | wins
+  const [communityTab, setCommunityTab] = useState("feed");
 
   useEffect(() => {
     if (view !== "community") return;
@@ -4164,44 +4164,69 @@ const AdminDashboard = ({ onLogout }) => {
     setCommunityPosts(p => p.map(x => x.id === post.id ? { ...x, pinned: !x.pinned } : x));
   };
 
-  const catColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
-  const catLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
+  const admCatColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
+  const admCatLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
+  const admCatIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
 
   const AdminCommunityView = (
     <Pg title="Community" sub="Inner Circle">
-      {/* Sub tabs */}
+
+      {/* Sub tabs — same style as category pills */}
       <div style={{ display:"flex", gap:2, marginBottom:20 }}>
-        {[["feed","Feed"], ["members","Members"], ["wins","Mentee Wins"]].map(([id, label]) => (
-          <button key={id} onClick={() => setCommunityTab(id)} style={{ padding:"8px 16px", border:`1px solid ${communityTab===id ? B.blush : B.cloud}`, background: communityTab===id ? B.blush : "transparent", color: communityTab===id ? B.white : B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>{label}</button>
+        {[["feed","Community Feed"], ["members","Members"], ["wins","Mentee Wins"]].map(([id, label]) => (
+          <button key={id} onClick={() => setCommunityTab(id)} style={{ padding:"8px 18px", border:`1px solid ${communityTab===id ? B.blush : B.cloud}`, background: communityTab===id ? B.blush : B.white, color: communityTab===id ? B.white : B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", transition:"all .15s" }}>{label}</button>
         ))}
       </div>
 
       {/* FEED TAB */}
       {communityTab === "feed" && (
         <div>
-          {/* Post composer */}
-          <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderTop:`3px solid ${B.blush}`, padding:"18px 20px", marginBottom:16 }}>
-            <div style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:2, textTransform:"uppercase", marginBottom:10 }}>Post to Community as Jess</div>
-            <div style={{ display:"flex", gap:2, marginBottom:10, flexWrap:"wrap" }}>
-              {Object.entries(catLabels).map(([k, v]) => (
-                <button key={k} onClick={() => setCommunityPostCat(k)} style={{ padding:"5px 10px", border:`1px solid ${communityPostCat===k ? catColors[k] : B.cloud}`, background: communityPostCat===k ? `${catColors[k]}15` : "transparent", color: communityPostCat===k ? catColors[k] : B.mid, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5 }}>{v}</button>
+          {/* Jess's Voice teaser — same dark card as mentee side */}
+          <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"16px 20px", marginBottom:16, display:"flex", alignItems:"center", gap:14 }}>
+            <div style={{ width:40, height:40, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, borderRadius:"50%" }}>
+              <Ic n="mic" size={18} color={B.white} />
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <p style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:3, textTransform:"uppercase", margin:"0 0 3px" }}>Jess's Voice — This Week</p>
+              <div style={{ color:B.ivory, fontSize:13, fontWeight:500 }}>"Your pricing confidence starts with your language."</div>
+            </div>
+            <div style={{ fontSize:9, color:"#9a8880", flexShrink:0 }}>Manage →</div>
+          </div>
+
+          {/* Post composer — same style as mentee side */}
+          <div style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"18px 20px", marginBottom:16, borderTop:`3px solid ${B.blush}` }}>
+            <div style={{ display:"flex", gap:2, marginBottom:12, flexWrap:"nowrap", overflowX:"auto" }}>
+              {Object.entries(admCatLabels).map(([k, v]) => (
+                <button key={k} onClick={() => setCommunityPostCat(k)} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:4, padding:"5px 9px", border:`1px solid ${communityPostCat===k ? admCatColors[k] : B.cloud}`, background: communityPostCat===k ? `${admCatColors[k]}12` : "transparent", color: communityPostCat===k ? admCatColors[k] : B.mid, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, whiteSpace:"nowrap", flexShrink:0 }}>
+                  <Ic n={admCatIcons[k]} size={10} color={communityPostCat===k ? admCatColors[k] : B.mid} sw={1.5} />{v}
+                </button>
               ))}
             </div>
-            <textarea value={communityPostInput} onChange={e => setCommunityPostInput(e.target.value)} placeholder="Share a tip, drop a resource, post a challenge..." rows={3} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box", resize:"vertical" }} />
-            <div style={{ display:"flex", justifyContent:"flex-end", marginTop:10 }}>
-              <Btn variant="blush" icon="send" onClick={submitCommunityPost} disabled={!communityPostInput.trim()}>Post to Feed</Btn>
+            <textarea value={communityPostInput} onChange={e => setCommunityPostInput(e.target.value)} placeholder="Share a tip, drop a resource, post a challenge — post as Jess..." rows={4} style={{ width:"100%", padding:"12px 14px", border:`1px solid ${B.cloud}`, fontSize:13, color:B.black, fontFamily:FONTS.body, outline:"none", resize:"vertical", boxSizing:"border-box", fontWeight:300, minHeight:100 }} />
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <div style={{ width:26, height:26, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:B.white, borderRadius:"50%" }}>J</div>
+                <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>Posting as Jess</span>
+              </div>
+              <button onClick={submitCommunityPost} disabled={!communityPostInput.trim()} style={{ display:"flex", alignItems:"center", gap:7, padding:"9px 18px", background: communityPostInput.trim() ? B.blush : B.cloud, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor: communityPostInput.trim() ? "pointer" : "default", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}>
+                <Ic n="send" size={12} color={B.white} />Post
+              </button>
             </div>
           </div>
 
-          {/* Posts */}
+          {/* Posts — same card style as mentee side + admin controls */}
           {communityPosts.map(post => (
-            <div key={post.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${post.pinned ? B.amber : post.isJess ? B.blush : B.cloud}`, padding:"16px 20px", marginBottom:2 }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, flex:1 }}>
-                  <div style={{ width:32, height:32, background: post.isJess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:B.white, flexShrink:0 }}>{post.avatar}</div>
+            <div key={post.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"16px 20px", marginBottom:2, borderLeft:`3px solid ${post.pinned ? B.amber : post.isJess ? B.blush : B.cloud}` }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:10 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ width:32, height:32, background: post.isJess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:B.white, borderRadius:"50%", flexShrink:0 }}>{post.avatar}</div>
                   <div>
-                    <div style={{ fontSize:12, fontWeight:700, color: post.isJess ? B.blush : B.black }}>{post.author} {post.isJess && <span style={{ fontSize:8, background:B.blush, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>JESS</span>}</div>
-                    <div style={{ fontSize:9, color:B.mid, fontWeight:300 }}>{post.time} · <span style={{ color: catColors[post.cat], fontWeight:700, textTransform:"uppercase" }}>{catLabels[post.cat]}</span></div>
+                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                      <span style={{ fontSize:12, fontWeight:700, color: post.isJess ? B.blush : B.black, letterSpacing:"0.03em" }}>{post.author}</span>
+                      {post.isJess && <span style={{ fontSize:7, background:B.blush, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>JESS</span>}
+                      {post.pinned && <span style={{ fontSize:7, background:B.amber, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>PINNED</span>}
+                    </div>
+                    <div style={{ fontSize:9, color:B.mid, marginTop:1 }}>{post.time} · <span style={{ color: admCatColors[post.cat], fontWeight:700, fontSize:8, textTransform:"uppercase", letterSpacing:1 }}>{admCatLabels[post.cat]}</span></div>
                   </div>
                 </div>
                 {/* Admin controls */}
@@ -4210,7 +4235,7 @@ const AdminDashboard = ({ onLogout }) => {
                   <button onClick={() => removePost(post.id)} style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
                 </div>
               </div>
-              <p style={{ fontSize:13, color:B.charcoal, lineHeight:1.7, margin:"12px 0 0", fontWeight:300 }}>{post.text}</p>
+              <p style={{ fontSize:13, color:B.charcoal, lineHeight:1.7, margin:0, fontWeight:300 }}>{post.text}</p>
               <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:10 }}>
                 <Ic n="heart" size={12} color={B.mid} />
                 <span style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{post.likes} likes</span>
@@ -4233,7 +4258,7 @@ const AdminDashboard = ({ onLogout }) => {
                   <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{m.email}</div>
                 </div>
               </div>
-              <div style={{ display:"flex", gap:4 }}>
+              <div style={{ display:"flex", gap:6, alignItems:"center" }}>
                 <Tag>{m.paid ? "Member" : "Trial"}</Tag>
                 <button style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
               </div>
