@@ -2755,19 +2755,10 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isGraduate, setIsGraduate] = useState(false);
 
-  // Check if this is a program graduate and show welcome modal
-  const gradWelcomeKey = `sjtn_grad_welcome_${user.email}`;
-  const [showGradWelcome, setShowGradWelcome] = useState(false);
-
   useEffect(() => {
     if (!user.email || user.password) return;
     supabase.from("mentee_profiles").select("graduated").eq("email", user.email.toLowerCase()).single()
-      .then(({ data }) => {
-        if (data?.graduated) {
-          setIsGraduate(true);
-          try { if (!localStorage.getItem(gradWelcomeKey)) setShowGradWelcome(true); } catch { setShowGradWelcome(true); }
-        }
-      });
+      .then(({ data }) => { if (data?.graduated) setIsGraduate(true); });
   }, [user.email]);
 
   useEffect(() => {
@@ -3218,58 +3209,6 @@ const InvoicesView = () => {
       </div>
     </div>
 
-    {/* Graduate Welcome Modal */}
-    {showGradWelcome && (
-      <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", zIndex:1001, overflowY:"auto", display:"flex", alignItems:"flex-start", justifyContent:"center", padding: isMobile ? "0" : "40px 16px" }}>
-        <div style={{ background:B.white, width:"100%", maxWidth:580, minHeight: isMobile ? "100dvh" : "auto", display:"flex", flexDirection:"column" }}>
-          <div style={{ background:B.blush, padding:"32px 32px 24px", textAlign:"center" }}>
-            <Logo height={56} />
-          </div>
-          <div style={{ background:B.black, padding:"24px 32px", borderLeft:`4px solid ${B.blush}` }}>
-            <div style={{ fontSize:10, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>Welcome Back, Graduate 🎓</div>
-            <h2 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize: isMobile ? 30 : 38, textTransform:"uppercase", color:B.ivory, margin:0, letterSpacing:"-0.5px", lineHeight:1.05 }}>
-              This is your<br/>
-              <span style={{ color:B.blushLight, fontStyle:"italic", fontWeight:300 }}>Inner Circle.</span>
-            </h2>
-          </div>
-          <div style={{ padding:"28px 32px", flex:1 }}>
-            <p style={{ fontSize:14, color:B.charcoal, lineHeight:1.85, marginBottom:16, fontWeight:300 }}>
-              Welcome to your new home in the community. You've earned your place here — not just as a member, but as someone who went all in, did the work, and came out the other side.
-            </p>
-            <p style={{ fontSize:14, color:B.charcoal, lineHeight:1.85, marginBottom:24, fontWeight:300 }}>
-              The nail techs in this community look up to people like you. Your journey, your wins, your lessons — they matter here. You're not just a member. <strong>You're an ambassador.</strong>
-            </p>
-            <div style={{ background:B.blushPale, border:`1px solid ${B.blushMid}`, borderLeft:`3px solid ${B.blush}`, padding:"20px 24px", marginBottom:24 }}>
-              <div style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:2, textTransform:"uppercase", marginBottom:14 }}>Your Graduate Privileges</div>
-              {[
-                { icon:"🎓", text:"Graduate badge next to your name on every post — the community knows you went through the full program" },
-                { icon:"💬", text:"Your voice carries weight here — share what worked, what didn't, and how you grew" },
-                { icon:"🌟", text:"1 full year of complimentary community access — no monthly fee, ever" },
-                { icon:"🤝", text:"Direct line to Jess and the Inner Circle — you're part of the family now" },
-              ].map((item, i) => (
-                <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:12, marginBottom:12 }}>
-                  <span style={{ fontSize:16, flexShrink:0 }}>{item.icon}</span>
-                  <span style={{ fontSize:12, color:B.charcoal, fontWeight:300, lineHeight:1.6 }}>{item.text}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:28, paddingTop:8, borderTop:`1px solid ${B.cloud}` }}>
-              <div style={{ width:44, height:44, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700, color:B.white, flexShrink:0 }}>JR</div>
-              <div>
-                <div style={{ fontSize:13, fontWeight:700, color:B.black, fontStyle:"italic" }}>So proud of you, Jessica Ramos</div>
-                <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>info@sayjesstonails.com · 954.544.2888</div>
-              </div>
-            </div>
-            <button onClick={() => {
-              try { localStorage.setItem(gradWelcomeKey, "1"); } catch {}
-              setShowGradWelcome(false);
-            }} style={{ width:"100%", padding:"16px", background:B.blush, border:"none", color:B.white, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>
-              Let's Go — Take Me to the Community →
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
     </div>
   );
 };
