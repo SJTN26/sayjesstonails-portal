@@ -2836,7 +2836,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
             setPosts(data.map(p => ({
               id: p.id, author: p.author, avatar: p.avatar,
               time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
-              text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, audioUrl: p.audio_url || null
+              text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, audioUrl: p.audio_url || null, isGraduate: p.is_graduate || false
             })));
           } else {
             setPosts([
@@ -2895,12 +2895,12 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
 
   const submitPost = async () => {
     if (!postInput.trim()) return;
-    const newPost = { id: Date.now(), author: user.firstName, avatar: user.avatar, time: "Just now", text: postInput, likes: 0, isJess: false, cat: postCat };
+    const newPost = { id: Date.now(), author: user.firstName, avatar: user.avatar, time: "Just now", text: postInput, likes: 0, isJess: false, cat: postCat, isGraduate: isGraduate };
     setPosts(p => [newPost, ...p]);
     setPostInput("");
     await supabase.from("community_posts").insert([{
       author: user.firstName, avatar: user.avatar, text: postInput,
-      cat: postCat, likes: 0, is_jess: false
+      cat: postCat, likes: 0, is_jess: false, is_graduate: isGraduate
     }]);
   };
 
@@ -2982,6 +2982,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
                   <div style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 7 }}>
                     {post.author}
                     {post.isJess && <span style={{ fontSize: 8, background: B.blush, color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>JESS</span>}
+                    {post.isGraduate && !post.isJess && <span style={{ fontSize: 7, background: "#2D7D4E", color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>🎓 GRAD</span>}
                     {post.isGraduate && !post.isJess && <span style={{ fontSize: 7, background: "#2D7D4E", color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>🎓 GRAD</span>}
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 8, background: `${catColors[post.cat]}15`, color: catColors[post.cat], padding: "2px 8px", fontWeight: 700, letterSpacing: 1 }}>
                       <Ic n={catIcons[post.cat]} size={9} color={catColors[post.cat]} sw={1.5} />{catLabels[post.cat]}
