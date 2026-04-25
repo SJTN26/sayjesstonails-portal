@@ -1565,15 +1565,20 @@ const MenteePortal = ({ user, onLogout }) => {
   // Graduation modal — shows when Jess marks program complete
   const gradKey = `sjtn_graduated_${user.email}`;
   const [showGraduation, setShowGraduation] = useState(false);
-  // Check messages for graduation trigger
+  // Check messages for graduation trigger — polls every 10s
   useEffect(() => {
     if (!user.email || !!user.password) return;
-    supabase.from("messages").select("text").eq("mentee_email", user.email).like("text", "__GRADUATION__%").limit(1)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          try { if (!localStorage.getItem(gradKey)) setShowGraduation(true); } catch { setShowGraduation(true); }
-        }
-      });
+    const checkGrad = () => {
+      supabase.from("messages").select("text").eq("mentee_email", user.email).like("text", "__GRADUATION__%").limit(1)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            try { if (!localStorage.getItem(gradKey)) setShowGraduation(true); } catch { setShowGraduation(true); }
+          }
+        });
+    };
+    checkGrad();
+    const interval = setInterval(checkGrad, 10000);
+    return () => clearInterval(interval);
   }, [user.email]);
   const dismissGraduation = () => {
     try { localStorage.setItem(gradKey, "1"); } catch {}
