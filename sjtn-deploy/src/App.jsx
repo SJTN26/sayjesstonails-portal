@@ -3054,8 +3054,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   };
 
   return (
-    <>
-    <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off }}>
+    <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off, position: "relative" }}>
 
       {useSidebar && (
         <div style={{ width: 220, background: B.white, borderRight: `1px solid ${B.cloud}`, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
@@ -3271,7 +3270,7 @@ const InvoicesView = () => {
         </div>
       </div>
     )}
-    </>
+    </div>
   );
 };
 
