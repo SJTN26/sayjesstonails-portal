@@ -3209,7 +3209,6 @@ const InvoicesView = () => {
       </div>
     </div>
 
-    </div>
   );
 };
 
