@@ -707,8 +707,16 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
     }
     if (user) {
       const tier = user.user_metadata?.tier || "Hourly Session";
-      const role = user.user_metadata?.role || "mentee";
+      let role = user.user_metadata?.role || "mentee";
       const firstName = user.user_metadata?.first_name || email.split("@")[0];
+
+      // Check if mentee has graduated — override role to community
+      if (role === "mentee") {
+        const { data: profile } = await supabase.from("mentee_profiles")
+          .select("graduated").eq("email", email.toLowerCase()).single();
+        if (profile?.graduated) role = "community";
+      }
+
       const userData = {
         role,
         firstName,
