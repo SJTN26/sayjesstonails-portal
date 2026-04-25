@@ -1624,7 +1624,7 @@ const MenteePortal = ({ user, onLogout }) => {
         .order("created_at", { ascending: true })
         .then(({ data }) => {
           if (data && data.length > 0) {
-            setMsgs(data.map(m => ({
+            setMsgs(data.filter(m => !m.text?.startsWith("__GRADUATION__")).map(m => ({
               from: m.sender === "mentee" ? "You" : "Jess",
               time: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }),
               text: m.text,
@@ -1735,16 +1735,16 @@ const MenteePortal = ({ user, onLogout }) => {
       <div style={{ background: B.white, width: "100%", maxWidth: 600, minHeight: isMobile ? "100dvh" : "auto", display: "flex", flexDirection: "column" }}>
 
         {/* Header */}
-        <div style={{ background: B.success, padding: "32px 32px 24px", textAlign: "center" }}>
-          <Logo height={56} white />
+        <div style={{ background: B.blush, padding: "32px 32px 24px", textAlign: "center" }}>
+          <Logo height={56} />
         </div>
 
         {/* Black bar */}
-        <div style={{ background: B.black, padding: "24px 32px", borderLeft: `4px solid ${B.success}` }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#22c55e", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Program Complete 🎓</div>
+        <div style={{ background: B.black, padding: "24px 32px", borderLeft: `4px solid ${B.blush}` }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Program Complete 🎓</div>
           <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 40, textTransform: "uppercase", color: B.ivory, margin: 0, letterSpacing: "-0.5px", lineHeight: 1.05 }}>
             You did it,<br/>
-            <span style={{ color: "#22c55e", fontStyle: "italic", fontWeight: 300 }}>{profile.firstName}.</span>
+            <span style={{ color: B.blushLight, fontStyle: "italic", fontWeight: 300 }}>{profile.firstName}.</span>
           </h2>
         </div>
 
@@ -1757,12 +1757,12 @@ const MenteePortal = ({ user, onLogout }) => {
             Your mentorship program is officially complete. But this isn't goodbye — it's a new chapter.
           </p>
           <p style={{ fontSize: 14, color: B.black, lineHeight: 1.85, marginBottom: 24, fontWeight: 700, fontStyle: "italic" }}>
-            As a program graduate, you keep your community access forever. No monthly fee. Ever. That's my gift to you for doing the work. 💚
+            As a program graduate, you keep your community access for 1 full year — no monthly fee. That's my gift to you for doing the work. 🎓
           </p>
 
           {/* What they keep */}
-          <div style={{ background: "#f0faf4", border: `1px solid #22c55e40`, borderLeft: `3px solid #22c55e`, padding: "20px 24px", marginBottom: 24 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: "#2D7D4E", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>What You Keep — Forever</div>
+          <div style={{ background: B.blushPale, border: `1px solid ${B.blushMid}`, borderLeft: `3px solid ${B.blush}`, padding: "20px 24px", marginBottom: 24 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: B.blush, letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>What You Keep — 1 Full Year</div>
             {[
               "Full community access — no expiration",
               "🎓 Graduate badge on your community posts",
@@ -1770,7 +1770,7 @@ const MenteePortal = ({ user, onLogout }) => {
               "Connection with Jess and the Inner Circle",
             ].map((item, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                <div style={{ width: 18, height: 18, background: "#2D7D4E", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ width: 18, height: 18, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Ic n="check" size={9} color={B.white} sw={2.5} />
                 </div>
                 <span style={{ fontSize: 12, color: B.charcoal, fontWeight: 300 }}>{item}</span>
@@ -1782,13 +1782,13 @@ const MenteePortal = ({ user, onLogout }) => {
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28, paddingTop: 8, borderTop: `1px solid ${B.cloud}` }}>
             <div style={{ width: 44, height: 44, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: B.white, flexShrink: 0 }}>JR</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: B.black, fontFamily: FONTS.script, fontStyle: "italic" }}>With so much pride, Jessica Ramos</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: B.black, fontStyle: "italic" }}>With so much pride, Jessica Ramos</div>
               <div style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>info@sayjesstonails.com · 954.544.2888</div>
             </div>
           </div>
 
-          <Btn full variant="blush" onClick={dismissGraduation} style={{ padding: "16px", background: "#2D7D4E" }}>
-            Take Me to the Community 🎓
+          <Btn full variant="blush" onClick={async () => { dismissGraduation(); await supabase.auth.signOut(); window.location.reload(); }} style={{ padding: "16px" }}>
+            Take Me to the Community →
           </Btn>
         </div>
       </div>
