@@ -1735,7 +1735,7 @@ const MenteePortal = ({ user, onLogout }) => {
     </div>
   );
 
-  const GraduationModal = showGraduation ? (
+  const GraduationModal = showGraduation && profile.firstName ? (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1001, overflowY: "auto", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: isMobile ? "0" : "40px 16px" }}>
       <div style={{ background: B.white, width: "100%", maxWidth: 600, minHeight: isMobile ? "100dvh" : "auto", display: "flex", flexDirection: "column" }}>
 
@@ -1799,6 +1799,8 @@ const MenteePortal = ({ user, onLogout }) => {
       </div>
     </div>
   ) : null;
+
+  const tierWelcome = TIER_WELCOME[profile.tier] || TIER_WELCOME["Hourly Session"];
 
   const WelcomeModal = showWelcome ? (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, overflowY: "auto", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: isMobile ? "0" : "40px 16px" }}>
@@ -1874,8 +1876,6 @@ const MenteePortal = ({ user, onLogout }) => {
       </div>
     </div>
   ) : null;
-
-  const tierWelcome = TIER_WELCOME[profile.tier] || TIER_WELCOME["Hourly Session"];
 
   const views = {
     dashboard: (
