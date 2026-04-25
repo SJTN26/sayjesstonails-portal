@@ -1794,7 +1794,9 @@ const MenteePortal = ({ user, onLogout }) => {
 
           <Btn full variant="blush" onClick={async () => {
             dismissGraduation();
-            // Sign out completely so role is re-read fresh on next login
+            // Clear all local session data
+            sessionStorage.removeItem("sjtn_session");
+            sessionStorage.removeItem("sjtn_user");
             await supabase.auth.signOut();
             window.location.href = window.location.origin;
           }} style={{ padding: "16px" }}>
