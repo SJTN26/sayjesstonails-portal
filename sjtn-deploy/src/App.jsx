@@ -2246,9 +2246,9 @@ const MenteePortal = ({ user, onLogout }) => {
           )}
           <div style={{ display:"flex", gap:2 }}>
             <input ref={msgImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setMsgImage(e.target.files[0])} />
-            <button onClick={() => msgImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
-              📷
-            </button>
+              <button onClick={() => msgImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.off, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0, transition:"all .15s" }}>
+                <Ic n="file" size={16} color={B.mid} />
+              </button>
             <input value={msgInput} onChange={e => setMsgInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg()} placeholder="Message Jess…" style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, background: B.white, fontWeight: 300 }} />
             <button onClick={sendMsg} style={{ width: 44, height: 44, background: B.blush, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><Ic n="send" size={14} color={B.white} /></button>
           </div>
@@ -2413,14 +2413,16 @@ const MenteePortal = ({ user, onLogout }) => {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, borderRadius: "50%" }}>{user.avatar}</div>
               <span style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>Posting as {user.firstName}</span>
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap:6 }}>
               <input ref={commPostImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setCommPostImage(e.target.files[0])} />
-              <button onClick={() => commPostImageRef.current?.click()} style={{ display:"flex", alignItems:"center", gap:4, padding:"4px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, fontSize:9, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>
-                📷Photo
+              <button onClick={() => commPostImageRef.current?.click()} style={{ display:"flex", alignItems:"center", gap:6, padding:"9px 14px", border:`1px solid ${B.cloud}`, background:B.white, color:B.mid, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}>
+                <Ic n="file" size={12} color={B.mid} />Add Photo
+              </button>
+              <button onClick={submitCommPost} disabled={!commPostInput.trim() && !commPostImage} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: (commPostInput.trim() || commPostImage) ? B.blush : B.cloud, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: (commPostInput.trim() || commPostImage) ? "pointer" : "default", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                <Ic n="send" size={12} color={B.white} />Post
               </button>
             </div>
-            <button onClick={submitCommPost} disabled={!commPostInput.trim() && !commPostImage} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: (commPostInput.trim() || commPostImage) ? B.blush : B.cloud, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: (commPostInput.trim() || commPostImage) ? "pointer" : "default", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              <Ic n="send" size={12} color={B.white} />Post
-            </button>
           </div>
         </div>
 
@@ -3907,6 +3909,8 @@ const AdminCommunity = ({ menteeList, communityList }) => {
   const [postCat, setCommunityPostCat] = useState("tip");
   const [tab, setTab] = useState("feed");
   const [jessVoiceAdmin, setJessVoiceAdmin] = useState(null);
+  const [postImage, setPostImage] = useState(null);
+  const postImageRef = useRef(null);
 
   useEffect(() => {
     supabase.functions.invoke('jess-voice', { body: { action:'get' } })
@@ -3928,13 +3932,25 @@ const AdminCommunity = ({ menteeList, communityList }) => {
   }, []);
 
   const submitPost = async () => {
-    if (!postInput.trim()) return;
+    if (!postInput.trim() && !postImage) return;
+    let imageUrl = null;
+    if (postImage) {
+      const ext = postImage.name.split('.').pop();
+      const fileName = `post-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("images").upload(fileName, postImage, { contentType: postImage.type });
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from("images").getPublicUrl(fileName);
+        imageUrl = urlData.publicUrl;
+      }
+      setPostImage(null);
+      if (postImageRef.current) postImageRef.current.value = "";
+    }
     const { data, error } = await supabase.functions.invoke('community-post', {
-      body: { action:'insert', author:"Jess", avatar:"J", text:postInput, cat:postCat, is_jess:true, pinned:false }
+      body: { action:'insert', author:"Jess", avatar:"J", text:postInput || "📷", cat:postCat, is_jess:true, pinned:false, audio_url: imageUrl ? `__POSTIMAGE__${imageUrl}` : null }
     });
     if (error) { alert(`Post error: ${error.message}`); return; }
     if (data?.error) { alert(`Post error: ${data.error}`); return; }
-    if (data?.post) setCommunityPosts(p => [{ id:data.post.id, author:"Jess", avatar:"J", time:"Just now", text:postInput, likes:0, isJess:true, cat:postCat, pinned:false, audioUrl:null }, ...p]);
+    if (data?.post) setCommunityPosts(p => [{ id:data.post.id, author:"Jess", avatar:"J", time:"Just now", text:postInput || "", likes:0, isJess:true, cat:postCat, pinned:false, audioUrl:null, imageUrl }, ...p]);
     setCommunityPostInput("");
   };
 
@@ -3995,14 +4011,27 @@ const AdminCommunity = ({ menteeList, communityList }) => {
               ))}
             </div>
             <textarea value={postInput} onChange={e => setCommunityPostInput(e.target.value)} placeholder="Share a tip, drop a resource, post a challenge — post as Jess..." rows={4} style={{ width:"100%", padding:"12px 14px", border:`1px solid ${B.cloud}`, fontSize:13, color:B.black, fontFamily:FONTS.body, outline:"none", resize:"vertical", boxSizing:"border-box", fontWeight:300 }} />
+            {postImage && (
+              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 10px", background:B.off, border:`1px solid ${B.cloud}`, marginTop:6 }}>
+                <Ic n="file" size={12} color={B.blush} />
+                <span style={{ fontSize:11, color:B.charcoal, flex:1, fontWeight:300 }}>{postImage.name}</span>
+                <button onClick={() => { setPostImage(null); if(postImageRef.current) postImageRef.current.value=""; }} style={{ background:"none", border:"none", cursor:"pointer", color:B.mid, fontSize:14, padding:0 }}>×</button>
+              </div>
+            )}
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10 }}>
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                 <div style={{ width:26, height:26, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:B.white, borderRadius:"50%" }}>J</div>
                 <span style={{ fontSize:11, color:B.mid, fontWeight:300 }}>Posting as Jess</span>
               </div>
-              <button onClick={submitPost} disabled={!postInput.trim()} style={{ display:"flex", alignItems:"center", gap:7, padding:"9px 18px", background: postInput.trim() ? B.blush : B.cloud, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor: postInput.trim() ? "pointer" : "default", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                <Ic n="send" size={12} color={B.white} />Post
-              </button>
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <input ref={postImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setPostImage(e.target.files[0])} />
+                <button onClick={() => postImageRef.current?.click()} style={{ display:"flex", alignItems:"center", gap:6, padding:"9px 14px", border:`1px solid ${B.cloud}`, background:B.white, color:B.mid, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}>
+                  <Ic n="file" size={12} color={B.mid} />Add Photo
+                </button>
+                <button onClick={submitPost} disabled={!postInput.trim() && !postImage} style={{ display:"flex", alignItems:"center", gap:7, padding:"9px 18px", background: (postInput.trim() || postImage) ? B.blush : B.cloud, border:"none", color:B.white, fontSize:11, fontWeight:700, cursor: (postInput.trim() || postImage) ? "pointer" : "default", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase" }}>
+                  <Ic n="send" size={12} color={B.white} />Post
+                </button>
+              </div>
             </div>
           </div>
 
@@ -5361,8 +5390,8 @@ const AdminDashboard = ({ onLogout }) => {
             )}
             <div style={{ display:"flex", gap:2 }}>
               <input ref={chatImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setChatImage(e.target.files[0])} />
-              <button onClick={() => chatImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
-                📷
+              <button onClick={() => chatImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.off, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0, transition:"all .15s" }}>
+                <Ic n="file" size={16} color={B.mid} />
               </button>
               <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder={recording ? "Recording voice note..." : `Reply to ${contacts[selChat]?.name}…`} disabled={recording} style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, fontWeight: 300, opacity: recording ? 0.5 : 1 }} />
               {/* Voice note button */}
