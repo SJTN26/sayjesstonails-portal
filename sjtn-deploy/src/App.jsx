@@ -1387,6 +1387,8 @@ const MenteePortal = ({ user, onLogout }) => {
   const [callActive, setCallActive] = useState(false);
   const [msgs, setMsgs] = useState([]);
   const [msgInput, setMsgInput] = useState("");
+  const [msgImage, setMsgImage] = useState(null);
+  const msgImageRef = useRef(null);
   const [docFilter, setDocFilter] = useState("All");
   const msgEnd = useRef(null);
 
@@ -1465,6 +1467,8 @@ const MenteePortal = ({ user, onLogout }) => {
   const [communityPosts, setCommunityPosts] = useState([]);
   const [commPostInput, setCommPostInput] = useState("");
   const [commPostCat, setCommPostCat] = useState("win");
+  const [commPostImage, setCommPostImage] = useState(null);
+  const commPostImageRef = useRef(null);
   const [commLiked, setCommLiked] = useState([]);
   const [jessVoice, setJessVoice] = useState(null); // { text, audioUrl }
   const [menteeStatDrawer, setMenteeStatDrawer] = useState(null);
@@ -1496,7 +1500,9 @@ const MenteePortal = ({ user, onLogout }) => {
               id: p.id, author: p.author, avatar: p.avatar,
               time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
               text: p.text, likes: p.likes || 0, comments: [], isJess: p.is_jess, cat: p.cat,
-              audioUrl: p.audio_url || null, pinned: p.pinned, isGraduate: p.is_graduate || false
+              audioUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? null : (p.audio_url || null),
+              imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
+              pinned: p.pinned, isGraduate: p.is_graduate || false
             })));
           } else {
             setCommunityPosts([
@@ -1526,14 +1532,26 @@ const MenteePortal = ({ user, onLogout }) => {
   }, []);
 
   const submitCommPost = async () => {
-    if (!commPostInput.trim()) return;
+    if (!commPostInput.trim() && !commPostImage) return;
     const isGrad = profile.graduated || false;
-    const newPost = { author: user.firstName, avatar: user.avatar, text: commPostInput, likes: 0, comments: [], isJess: false, cat: commPostCat, time: "Just now", id: Date.now(), isGraduate: isGrad };
+    let imageUrl = null;
+    if (commPostImage) {
+      const ext = commPostImage.name.split('.').pop();
+      const fileName = `post-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("images").upload(fileName, commPostImage, { contentType: commPostImage.type });
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from("images").getPublicUrl(fileName);
+        imageUrl = urlData.publicUrl;
+      }
+      setCommPostImage(null);
+      if (commPostImageRef.current) commPostImageRef.current.value = "";
+    }
+    const newPost = { author: user.firstName, avatar: user.avatar, text: commPostInput, likes: 0, comments: [], isJess: false, cat: commPostCat, time: "Just now", id: Date.now(), isGraduate: isGrad, imageUrl };
     setCommunityPosts(p => [newPost, ...p]);
     setCommPostInput("");
     await supabase.from("community_posts").insert([{
-      author: user.firstName, avatar: user.avatar, text: commPostInput,
-      cat: commPostCat, likes: 0, is_jess: false, is_graduate: isGrad
+      author: user.firstName, avatar: user.avatar, text: commPostInput || "📷",
+      cat: commPostCat, likes: 0, is_jess: false, is_graduate: isGrad, audio_url: imageUrl ? `__POSTIMAGE__${imageUrl}` : null
     }]);
   };
 
@@ -1652,13 +1670,17 @@ const MenteePortal = ({ user, onLogout }) => {
         .order("created_at", { ascending: true })
         .then(({ data }) => {
           if (data && data.length > 0) {
-            setMsgs(data.filter(m => !m.text?.startsWith("__GRADUATION__")).map(m => ({
-              from: m.sender === "mentee" ? "You" : "Jess",
-              time: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }),
-              text: m.text,
-              audioUrl: m.audio_url || null,
-              unread: !m.read && m.sender === "jess"
-            })));
+            setMsgs(data.filter(m => !m.text?.startsWith("__GRADUATION__")).map(m => {
+              const isImage = m.audio_url?.startsWith("__IMAGE__");
+              return {
+                from: m.sender === "mentee" ? "You" : "Jess",
+                time: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }),
+                text: m.text,
+                audioUrl: isImage ? null : (m.audio_url || null),
+                imageUrl: isImage ? m.audio_url.replace("__IMAGE__", "") : null,
+                unread: !m.read && m.sender === "jess"
+              };
+            }));
           } else if (user.messages) {
             setMsgs(user.messages);
           }
@@ -1687,19 +1709,33 @@ const MenteePortal = ({ user, onLogout }) => {
   }, [view, user.email, msgs.length]);
 
   const sendMsg = async () => {
-    if (!msgInput.trim()) return;
-    const text = msgInput;
+    if (!msgInput.trim() && !msgImage) return;
+    const text = msgInput || "📷 Image";
     const email = user.email || profile.email;
-    setMsgs(p => [...p, { from: "You", time: "Just now", text }]);
+    let imageUrl = null;
+
+    // Upload image if present
+    if (msgImage) {
+      const ext = msgImage.name.split('.').pop();
+      const fileName = `msg-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("images").upload(fileName, msgImage, { contentType: msgImage.type });
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from("images").getPublicUrl(fileName);
+        imageUrl = urlData.publicUrl;
+      }
+      setMsgImage(null);
+      if (msgImageRef.current) msgImageRef.current.value = "";
+    }
+
+    setMsgs(p => [...p, { from: "You", time: "Just now", text: msgInput || "", imageUrl }]);
     setMsgInput("");
-    if (!email) { console.error("No email found for user:", user); return; }
-    const { error } = await supabase.from("messages").insert([{
-      mentee_email: email,
-      sender: "mentee",
-      text,
+    if (!email) return;
+    await supabase.from("messages").insert([{
+      mentee_email: email, sender: "mentee",
+      text: msgInput || (imageUrl ? "📷 Image" : ""),
+      audio_url: imageUrl ? `__IMAGE__${imageUrl}` : null,
       read: false
     }]);
-    if (error) console.error("Message save failed:", error.message);
   };
   useEffect(() => { msgEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
@@ -2186,6 +2222,8 @@ const MenteePortal = ({ user, onLogout }) => {
                         </div>
                         <audio controls src={m.audioUrl} style={{ width:"100%", minWidth:160, height:36 }} controlsList="nodownload" />
                       </div>
+                    ) : m.imageUrl ? (
+                      <img src={m.imageUrl} alt="Shared image" style={{ maxWidth:"100%", maxHeight:260, display:"block", borderRadius:2 }} />
                     ) : (
                       <p style={{ margin: 0, fontSize: 12, color: isJ ? B.charcoal : B.ivory, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
                     )}
@@ -2198,9 +2236,22 @@ const MenteePortal = ({ user, onLogout }) => {
           <div ref={msgEnd} />
         </div>
         <Divider />
-        <div style={{ padding: "10px 18px", background: B.white, display: "flex", gap: 2, flexShrink: 0, paddingBottom: isMobile ? "calc(10px + env(safe-area-inset-bottom))" : "10px" }}>
-          <input value={msgInput} onChange={e => setMsgInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg()} placeholder="Message Jess…" style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, background: B.white, fontWeight: 300 }} />
-          <button onClick={sendMsg} style={{ width: 44, height: 44, background: B.blush, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><Ic n="send" size={14} color={B.white} /></button>
+        <div style={{ padding: "10px 18px", background: B.white, display: "flex", flexDirection:"column", gap:6, flexShrink: 0, paddingBottom: isMobile ? "calc(10px + env(safe-area-inset-bottom))" : "10px" }}>
+          {msgImage && (
+            <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 10px", background:B.off, border:`1px solid ${B.cloud}` }}>
+              <Ic n="file" size={12} color={B.blush} />
+              <span style={{ fontSize:11, color:B.charcoal, flex:1, fontWeight:300 }}>{msgImage.name}</span>
+              <button onClick={() => { setMsgImage(null); if(msgImageRef.current) msgImageRef.current.value=""; }} style={{ background:"none", border:"none", cursor:"pointer", color:B.mid, fontSize:14, padding:0, lineHeight:1 }}>×</button>
+            </div>
+          )}
+          <div style={{ display:"flex", gap:2 }}>
+            <input ref={msgImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setMsgImage(e.target.files[0])} />
+            <button onClick={() => msgImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
+              <Ic n="image" size={16} color={B.mid} />
+            </button>
+            <input value={msgInput} onChange={e => setMsgInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg()} placeholder="Message Jess…" style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, background: B.white, fontWeight: 300 }} />
+            <button onClick={sendMsg} style={{ width: 44, height: 44, background: B.blush, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><Ic n="send" size={14} color={B.white} /></button>
+          </div>
         </div>
       </div>
     ),
@@ -2351,12 +2402,23 @@ const MenteePortal = ({ user, onLogout }) => {
             ))}
           </div>
           <textarea value={commPostInput} onChange={e => setCommPostInput(e.target.value)} placeholder="Share a win, ask a question, drop a tip — this community grows because you show up." rows={4} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${B.cloud}`, fontSize: 14, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "vertical", boxSizing: "border-box", fontWeight: 300, minHeight: 100 }} />
+          {commPostImage && (
+            <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 10px", background:B.off, border:`1px solid ${B.cloud}`, marginTop:6 }}>
+              <Ic n="file" size={12} color={B.blush} />
+              <span style={{ fontSize:11, color:B.charcoal, flex:1, fontWeight:300 }}>{commPostImage.name}</span>
+              <button onClick={() => { setCommPostImage(null); if(commPostImageRef.current) commPostImageRef.current.value=""; }} style={{ background:"none", border:"none", cursor:"pointer", color:B.mid, fontSize:14, padding:0 }}>×</button>
+            </div>
+          )}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, borderRadius: "50%" }}>{user.avatar}</div>
               <span style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>Posting as {user.firstName}</span>
+              <input ref={commPostImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setCommPostImage(e.target.files[0])} />
+              <button onClick={() => commPostImageRef.current?.click()} style={{ display:"flex", alignItems:"center", gap:4, padding:"4px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, fontSize:9, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>
+                <Ic n="image" size={11} color={B.mid} />Photo
+              </button>
             </div>
-            <button onClick={submitCommPost} disabled={!commPostInput.trim()} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: commPostInput.trim() ? B.blush : B.cloud, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: commPostInput.trim() ? "pointer" : "default", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", transition: "background .2s" }}>
+            <button onClick={submitCommPost} disabled={!commPostInput.trim() && !commPostImage} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: (commPostInput.trim() || commPostImage) ? B.blush : B.cloud, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: (commPostInput.trim() || commPostImage) ? "pointer" : "default", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
               <Ic n="send" size={12} color={B.white} />Post
             </button>
           </div>
@@ -2383,6 +2445,9 @@ const MenteePortal = ({ user, onLogout }) => {
                   <Ic n="mic" size={13} color={B.blush} />
                   <audio controls src={post.audioUrl} style={{ flex:1, height:32, outline:"none" }} controlsList="nodownload" />
                 </div>
+              )}
+              {post.imageUrl && (
+                <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginBottom:14 }} />
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: `1px solid ${B.cloud}`, paddingTop: 12 }}>
                 <button onClick={() => setCommLiked(p => p.includes(post.id) ? p.filter(x => x !== post.id) : [...p, post.id])} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: commLiked.includes(post.id) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: commLiked.includes(post.id) ? 700 : 300, padding: 0 }}>
@@ -2904,7 +2969,10 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
             setPosts(data.map(p => ({
               id: p.id, author: p.author, avatar: p.avatar,
               time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
-              text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, audioUrl: p.audio_url || null, isGraduate: p.is_graduate || false
+              text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat,
+              audioUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? null : (p.audio_url || null),
+              imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
+              isGraduate: p.is_graduate || false
             })));
           } else {
             setPosts([
@@ -3065,6 +3133,9 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
                   <Ic n="mic" size={14} color={B.blush} />
                   <audio controls src={post.audioUrl} style={{ flex:1, height:32, outline:"none" }} controlsList="nodownload" />
                 </div>
+              )}
+              {post.imageUrl && (
+                <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginBottom:14 }} />
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: `1px solid ${B.cloud}`, paddingTop: 12 }}>
                 <button onClick={() => setLikedPosts(p => p.includes(post.id) ? p.filter(x => x !== post.id) : [...p, post.id])} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: likedPosts.includes(post.id) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: likedPosts.includes(post.id) ? 700 : 300, padding: 0, transition: "color .15s" }}>
@@ -3848,7 +3919,10 @@ const AdminCommunity = ({ menteeList, communityList }) => {
         if (data) setCommunityPosts(data.map(p => ({
           id: p.id, author: p.author, avatar: p.avatar,
           time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
-          text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, pinned: p.pinned, audioUrl: p.audio_url || null, isGraduate: p.is_graduate || false
+          text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, pinned: p.pinned,
+          audioUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? null : (p.audio_url || null),
+          imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
+          isGraduate: p.is_graduate || false
         })));
       });
   }, []);
@@ -3958,6 +4032,9 @@ const AdminCommunity = ({ menteeList, communityList }) => {
                   <Ic n="mic" size={14} color={B.blush} />
                   <audio controls src={post.audioUrl} style={{ flex:1, height:32, outline:"none" }} controlsList="nodownload" />
                 </div>
+              )}
+              {post.imageUrl && (
+                <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginBottom:14 }} />
               )}
               <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:10 }}>
                 <Ic n="heart" size={12} color={B.mid} />
@@ -4102,6 +4179,8 @@ const AdminDashboard = ({ onLogout }) => {
   const [contacts, setContacts] = useState([]);
   const [chatMsgs, setChatMsgs] = useState({});
   const [chatInput, setChatInput] = useState("");
+  const [chatImage, setChatImage] = useState(null);
+  const chatImageRef = useRef(null);
   const chatEnd = useRef(null);
 
   const pending = leads.filter(l => l.status === "pending");
@@ -4213,13 +4292,17 @@ const AdminDashboard = ({ onLogout }) => {
           if (contactList.length > 0 && selChatRef.current === null) setSelChat(0);
           const msgMap = {};
           contactList.forEach((c, i) => {
-            msgMap[i] = grouped[c.email].map(m => ({
-              from: m.sender === "mentee" ? c.name : "Jess",
-              sender: m.sender,
-              text: m.text,
-              audioUrl: m.audio_url || null,
-              t: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" })
-            }));
+            msgMap[i] = grouped[c.email].filter(m => !m.text?.startsWith("__GRADUATION__")).map(m => {
+              const isImage = m.audio_url?.startsWith("__IMAGE__");
+              return {
+                from: m.sender === "mentee" ? c.name : "Jess",
+                sender: m.sender,
+                text: m.text,
+                audioUrl: isImage ? null : (m.audio_url || null),
+                imageUrl: isImage ? m.audio_url.replace("__IMAGE__", "") : null,
+                t: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" })
+              };
+            });
           });
           setChatMsgs(msgMap);
         });
@@ -4270,13 +4353,31 @@ const AdminDashboard = ({ onLogout }) => {
   }, [selChat, chatMsgs]);
 
   const sendChat = async () => {
-    if (!chatInput.trim() || selChat === null || !contacts[selChat]) return;
+    if (!chatInput.trim() && !chatImage || selChat === null || !contacts[selChat]) return;
     const contact = contacts[selChat];
     const text = chatInput;
-    setChatMsgs(p => ({ ...p, [selChat]: [...(p[selChat] || []), { from: "Jess", text, t: "now" }] }));
+    let imageUrl = null;
+
+    if (chatImage) {
+      const ext = chatImage.name.split('.').pop();
+      const fileName = `msg-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("images").upload(fileName, chatImage, { contentType: chatImage.type });
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from("images").getPublicUrl(fileName);
+        imageUrl = urlData.publicUrl;
+      }
+      setChatImage(null);
+      if (chatImageRef.current) chatImageRef.current.value = "";
+    }
+
+    setChatMsgs(p => ({ ...p, [selChat]: [...(p[selChat] || []), { from: "Jess", text: text || "📷", t: "now", imageUrl }] }));
     setChatInput("");
     await supabase.functions.invoke('send-message', {
-      body: { mentee_email: contact.email, sender: "jess", text }
+      body: {
+        mentee_email: contact.email, sender: "jess",
+        text: text || (imageUrl ? "📷 Image" : ""),
+        audio_url: imageUrl ? `__IMAGE__${imageUrl}` : null
+      }
     });
   };
 
@@ -5226,6 +5327,8 @@ const AdminDashboard = ({ onLogout }) => {
                           </div>
                           <audio controls src={m.audioUrl} style={{ width:"100%", minWidth:160, height:36 }} controlsList="nodownload" />
                         </div>
+                      ) : m.imageUrl ? (
+                        <img src={m.imageUrl} alt="Shared" style={{ maxWidth:"100%", maxHeight:220, display:"block", borderRadius:2 }} />
                       ) : (
                         <p style={{ margin: 0, fontSize: 12, color: isJ ? B.ivory : B.charcoal, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
                       )}
@@ -5248,21 +5351,28 @@ const AdminDashboard = ({ onLogout }) => {
               <span style={{ fontSize:10, color:B.mid, fontWeight:300 }}>Tap mic again to send</span>
             </div>
           )}
-          <div style={{ padding: "10px 18px", background: B.white, display: "flex", gap: 2, flexShrink: 0 }}>
-            <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder={recording ? "Recording voice note..." : `Reply to ${contacts[selChat]?.name}…`} disabled={recording} style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, fontWeight: 300, opacity: recording ? 0.5 : 1 }} />
-            {/* Voice note button — tap to start, tap to stop & send */}
-            <button
-              onClick={async () => {
-                if (!recording) {
-                  startRecording("message");
-                } else if (recordingFor === "message") {
-                  await sendVoiceNote();
-                }
-              }}
-              style={{ width:44, height:44, background: recording && recordingFor === "message" ? B.blush : B.off, border:`1px solid ${recording && recordingFor === "message" ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0, transition:"all .15s" }}>
-              <Ic n="mic" size={16} color={recording && recordingFor === "message" ? B.white : B.mid} />
-            </button>
-            <button onClick={sendChat} disabled={recording} style={{ width: 44, height: 44, background: B.black, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, opacity: recording ? 0.4 : 1 }}><Ic n="send" size={15} color={B.white} /></button>
+          <div style={{ padding: "10px 18px", background: B.white, display: "flex", flexDirection:"column", gap:6, flexShrink: 0 }}>
+            {chatImage && (
+              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 10px", background:B.off, border:`1px solid ${B.cloud}` }}>
+                <Ic n="file" size={12} color={B.blush} />
+                <span style={{ fontSize:11, color:B.charcoal, flex:1, fontWeight:300 }}>{chatImage.name}</span>
+                <button onClick={() => { setChatImage(null); if(chatImageRef.current) chatImageRef.current.value=""; }} style={{ background:"none", border:"none", cursor:"pointer", color:B.mid, fontSize:14, padding:0 }}>×</button>
+              </div>
+            )}
+            <div style={{ display:"flex", gap:2 }}>
+              <input ref={chatImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setChatImage(e.target.files[0])} />
+              <button onClick={() => chatImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
+                <Ic n="image" size={16} color={B.mid} />
+              </button>
+              <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder={recording ? "Recording voice note..." : `Reply to ${contacts[selChat]?.name}…`} disabled={recording} style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, fontWeight: 300, opacity: recording ? 0.5 : 1 }} />
+              {/* Voice note button */}
+              <button onClick={async () => { if (!recording) { startRecording("message"); } else if (recordingFor === "message") { await sendVoiceNote(); } }}
+                style={{ width:44, height:44, background: recording && recordingFor === "message" ? B.blush : B.off, border:`1px solid ${recording && recordingFor === "message" ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0, transition:"all .15s" }}>
+                <Ic n="mic" size={16} color={recording && recordingFor === "message" ? B.white : B.mid} />
+              </button>
+              <button onClick={sendChat} disabled={recording} style={{ width: 44, height: 44, background: B.black, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, opacity: recording ? 0.4 : 1 }}><Ic n="send" size={15} color={B.white} /></button>
+            </div>
+          </div>
           </div>
             </>
           )}
