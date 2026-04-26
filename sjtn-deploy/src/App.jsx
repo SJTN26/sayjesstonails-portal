@@ -154,7 +154,6 @@ const PX = {
   /* ── Category icons — premium line style ── */
   catWin:"M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z", catTip:"M12 2a7 7 0 017 7c0 2.9-1.7 5.4-4.2 6.6V17a1 1 0 01-1 1h-3.6a1 1 0 01-1-1v-1.4A7 7 0 015 9a7 7 0 017-7zM9.5 21h5M10.5 19h3", catQuestion:"M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01", catResource:"M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6M9 13h6M9 17h4", catIntro:"M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z",
   user:"M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z",
-  image:"M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM8.5 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 15l-5-5L5 21",
 };
 const Ic = ({ n, size = 18, color = "currentColor", sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -2248,7 +2247,7 @@ const MenteePortal = ({ user, onLogout }) => {
           <div style={{ display:"flex", gap:2 }}>
             <input ref={msgImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setMsgImage(e.target.files[0])} />
             <button onClick={() => msgImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
-              <Ic n="image" size={16} color={B.mid} />
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={B.mid} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             </button>
             <input value={msgInput} onChange={e => setMsgInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg()} placeholder="Message Jess…" style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, background: B.white, fontWeight: 300 }} />
             <button onClick={sendMsg} style={{ width: 44, height: 44, background: B.blush, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><Ic n="send" size={14} color={B.white} /></button>
@@ -2416,7 +2415,7 @@ const MenteePortal = ({ user, onLogout }) => {
               <span style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>Posting as {user.firstName}</span>
               <input ref={commPostImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setCommPostImage(e.target.files[0])} />
               <button onClick={() => commPostImageRef.current?.click()} style={{ display:"flex", alignItems:"center", gap:4, padding:"4px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, fontSize:9, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>
-                <Ic n="image" size={11} color={B.mid} />Photo
+                <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke={B.mid} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Photo
               </button>
             </div>
             <button onClick={submitCommPost} disabled={!commPostInput.trim() && !commPostImage} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: (commPostInput.trim() || commPostImage) ? B.blush : B.cloud, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: (commPostInput.trim() || commPostImage) ? "pointer" : "default", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
@@ -5363,7 +5362,7 @@ const AdminDashboard = ({ onLogout }) => {
             <div style={{ display:"flex", gap:2 }}>
               <input ref={chatImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setChatImage(e.target.files[0])} />
               <button onClick={() => chatImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
-                <Ic n="image" size={16} color={B.mid} />
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={B.mid} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </button>
               <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder={recording ? "Recording voice note..." : `Reply to ${contacts[selChat]?.name}…`} disabled={recording} style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, fontWeight: 300, opacity: recording ? 0.5 : 1 }} />
               {/* Voice note button */}
