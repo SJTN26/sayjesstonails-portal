@@ -1472,10 +1472,16 @@ const MenteePortal = ({ user, onLogout }) => {
 
   useEffect(() => {
     if (!user.email) return;
-    supabase.from('resources').select('*')
-      .or(`mentee_email.eq.${user.email},mentee_email.is.null`)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => { if (data) setMenteeResources(data); });
+    const fetchResources = async () => {
+      const [{ data: specific }, { data: global }] = await Promise.all([
+        supabase.from('resources').select('*').eq('mentee_email', user.email).order('created_at', { ascending: false }),
+        supabase.from('resources').select('*').is('mentee_email', null).order('created_at', { ascending: false })
+      ]);
+      setMenteeResources([...(specific || []), ...(global || [])]);
+    };
+    fetchResources();
+    const interval = setInterval(fetchResources, 30000);
+    return () => clearInterval(interval);
   }, [user.email]);
   const commCatColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
   const commCatLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
@@ -2471,7 +2477,7 @@ const MenteePortal = ({ user, onLogout }) => {
             </div>
           ));
         })()}
-        {[
+        {menteeResources.length === 0 && [
           { topic: "Pricing", color: B.blush, items: [{ name: "Pricing Calculator Workbook", type: "PDF", desc: "Set your prices with confidence using Jess's formula.", unlocked: true }, { name: "How to Raise Prices Without Losing Clients", type: "Guide", desc: "The exact language and timing strategy Jess uses.", unlocked: true }, { name: "Price Increase Announcement Templates", type: "Templates", desc: "3 caption templates ready to copy and customize.", unlocked: profile.tierKey !== "hourly" }] },
           { topic: "Client Attraction", color: B.success, items: [{ name: "Instagram Bio Formula", type: "Template", desc: "A bio that converts visitors to bookings.", unlocked: true }, { name: "5-Day Content Plan for Nail Techs", type: "PDF", desc: "Post ideas for every day of your first week.", unlocked: true }, { name: "Rebooking Script", type: "Guide", desc: "What to say at checkout to guarantee the next appointment.", unlocked: profile.tierKey !== "hourly" }] },
           { topic: "Business Setup", color: "#9B6EA0", items: [{ name: "Nail Tech Business Checklist", type: "PDF", desc: "Everything you need to operate legally and professionally.", unlocked: true }, { name: "Service Menu Template", type: "Template", desc: "A clean, professional service menu design.", unlocked: profile.tierKey === "elite" }] },
