@@ -5373,6 +5373,7 @@ const AdminDashboard = ({ onLogout }) => {
               <button onClick={sendChat} disabled={recording} style={{ width: 44, height: 44, background: B.black, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, opacity: recording ? 0.4 : 1 }}><Ic n="send" size={15} color={B.white} /></button>
             </div>
           </div>
+          </>
           )}
         </div>
       )}
