@@ -712,9 +712,8 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
 
       // Check if mentee has graduated — override role to community
       if (role === "mentee") {
-        const { data: profile } = await supabase.from("mentee_profiles")
-          .select("graduated").eq("email", email.toLowerCase()).single();
-        if (profile?.graduated) role = "community";
+        const { data: gradData } = await supabase.functions.invoke('assign-task', { body: { action: 'check_graduated', email } });
+        if (gradData?.graduated) role = "community";
       }
 
       const userData = {
@@ -951,7 +950,7 @@ const CommunityApply = ({ onBack, onSubmit }) => {
     const q3 = form.isBeautyPro === "yes" ? `Yes — ${form.field}` : "No";
     // Save application to Supabase
     try {
-      const { error } = await supabase.from("community_applications").insert([{
+      const appResult = await supabase.functions.invoke('assign-task', { body: { action: 'insert_application', application: {
         first_name: form.firstName,
         email: form.email.toLowerCase(),
         q1: form.q1,
@@ -1398,26 +1397,27 @@ const MenteePortal = ({ user, onLogout }) => {
     const isDemoUser = !!user.password;
     if (!isDemoUser && user.email) {
       const fetchProfile = () => {
-        supabase.from("mentee_profiles").select("*").eq("email", user.email).single()
+        supabase.functions.invoke('assign-task', { body: { action: 'get_profile', email: user.email } })
           .then(({ data }) => {
-            if (data) {
+            const profile_data = data?.profile;
+            if (profile_data) {
               setProfile(p => ({
                 ...p,
-                tier: data.tier || p.tier,
-                tierKey: data.tier_key || p.tierKey,
-                startDate: data.start_date || p.startDate,
-                daysRemaining: data.days_remaining ?? p.daysRemaining,
-                totalDays: data.total_days || p.totalDays,
-                sessionsCompleted: data.sessions_completed ?? p.sessionsCompleted,
-                sessionsTotal: data.sessions_total || p.sessionsTotal,
-                goal: data.goal || p.goal,
-                nextSession: data.next_session_date ? {
-                  date: data.next_session_date,
-                  time: data.next_session_time || "",
-                  type: data.next_session_type || "Session"
+                tier: profile_data.tier || p.tier,
+                tierKey: profile_data.tier_key || p.tierKey,
+                startDate: profile_data.start_date || p.startDate,
+                daysRemaining: profile_data.days_remaining ?? p.daysRemaining,
+                totalDays: profile_data.total_days || p.totalDays,
+                sessionsCompleted: profile_data.sessions_completed ?? p.sessionsCompleted,
+                sessionsTotal: profile_data.sessions_total || p.sessionsTotal,
+                goal: profile_data.goal || p.goal,
+                nextSession: profile_data.next_session_date ? {
+                  date: profile_data.next_session_date,
+                  time: profile_data.next_session_time || "",
+                  type: profile_data.next_session_type || "Session"
                 } : null,
-                roomUrl: data.room_url || null,
-                graduated: data.graduated || false,
+                roomUrl: profile_data.room_url || null,
+                graduated: profile_data.graduated || false,
               }));
             }
           });
@@ -1436,12 +1436,11 @@ const MenteePortal = ({ user, onLogout }) => {
 
   useEffect(() => {
     if (!user.email) return;
-    supabase.from("mentee_wins").select("*")
-      .eq("mentee_email", user.email)
-      .order("created_at", { ascending: false })
+    supabase.functions.invoke('assign-task', { body: { action: 'get_wins', mentee_email: user.email } })
       .then(({ data }) => {
-        if (data && data.length > 0) {
-          setWins(data.map(w => ({
+        const wins_data = data?.wins || [];
+        if (wins_data.length > 0) {
+          setWins(wins_data.map(w => ({
             id: w.id,
             date: new Date(w.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
             cat: w.cat,
@@ -1478,8 +1477,7 @@ const MenteePortal = ({ user, onLogout }) => {
     if (!user.email) return;
     const fetchResources = async () => {
       const [{ data: specific }, { data: global }] = await Promise.all([
-        supabase.from('resources').select('*').eq('mentee_email', user.email).order('created_at', { ascending: false }),
-        supabase.from('resources').select('*').is('mentee_email', null).order('created_at', { ascending: false })
+        supabase.functions.invoke('assign-task', { body: { action: 'get_resources', mentee_email: user.email } })
       ]);
       setMenteeResources([...(specific || []), ...(global || [])]);
     };
@@ -1493,10 +1491,11 @@ const MenteePortal = ({ user, onLogout }) => {
 
   useEffect(() => {
     const fetchPosts = () => {
-      supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
+      supabase.functions.invoke("community-post", { body: { action: "fetch" } })
         .then(({ data }) => {
-          if (data && data.length > 0) {
-            setCommunityPosts(data.map(p => ({
+          const posts = data?.posts || [];
+          if (posts.length > 0) {
+            setCommunityPosts(posts.map(p => ({
               id: p.id, author: p.author, avatar: p.avatar,
               time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
               text: p.text, likes: p.likes || 0, comments: [], isJess: p.is_jess, cat: p.cat,
@@ -1549,10 +1548,7 @@ const MenteePortal = ({ user, onLogout }) => {
     const newPost = { author: user.firstName, avatar: user.avatar, text: commPostInput, likes: 0, comments: [], isJess: false, cat: commPostCat, time: "Just now", id: Date.now(), isGraduate: isGrad, imageUrl };
     setCommunityPosts(p => [newPost, ...p]);
     setCommPostInput("");
-    await supabase.from("community_posts").insert([{
-      author: user.firstName, avatar: user.avatar, text: commPostInput || "📷",
-      cat: commPostCat, likes: 0, is_jess: false, is_graduate: isGrad, audio_url: imageUrl ? `__POSTIMAGE__${imageUrl}` : null
-    }]);
+    await supabase.functions.invoke("community-post", { body: { action: "insert", author: user.firstName, avatar: user.avatar, text: commPostInput || "📷", cat: commPostCat, is_jess: false, is_graduate: isGrad, audio_url: imageUrl ? `__POSTIMAGE__${imageUrl}` : null } });
   };
 
   const [sessionPrep, setSessionPrep] = useState({ win:"", challenge:"", need:"", submitted:false });
@@ -1610,9 +1606,9 @@ const MenteePortal = ({ user, onLogout }) => {
   useEffect(() => {
     if (!user.email || !!user.password) return;
     const checkGrad = () => {
-      supabase.from("messages").select("text").eq("mentee_email", user.email).like("text", "__GRADUATION__%").limit(1)
+      supabase.functions.invoke('send-message', { body: { action: 'check_graduation', mentee_email: user.email } })
         .then(({ data }) => {
-          if (data && data.length > 0) {
+          if (data?.graduated) {
             try { if (!localStorage.getItem(gradKey)) setShowGraduation(true); } catch { setShowGraduation(true); }
           }
         });
@@ -1665,12 +1661,11 @@ const MenteePortal = ({ user, onLogout }) => {
     const email = user.email;
 
     const fetchMsgs = () => {
-      supabase.from("messages").select("*")
-        .eq("mentee_email", email)
-        .order("created_at", { ascending: true })
+      supabase.functions.invoke("send-message", { body: { action: "get", mentee_email: email } })
         .then(({ data }) => {
-          if (data && data.length > 0) {
-            setMsgs(data.filter(m => !m.text?.startsWith("__GRADUATION__")).map(m => {
+          const msgs_data = data?.messages || [];
+          if (msgs_data.length > 0) {
+            setMsgs(msgs_data.filter(m => !m.text?.startsWith("__GRADUATION__")).map(m => {
               const isImage = m.audio_url?.startsWith("__IMAGE__");
               return {
                 from: m.sender === "mentee" ? "You" : "Jess",
@@ -1697,11 +1692,7 @@ const MenteePortal = ({ user, onLogout }) => {
   useEffect(() => {
     if (view === "messages" && user.email) {
       const email = user.email;
-      supabase.from("messages")
-        .update({ read: true })
-        .eq("mentee_email", email)
-        .eq("sender", "jess")
-        .eq("read", false)
+      supabase.functions.invoke("send-message", { body: { action: "mark_read", mentee_email: email } })
         .then(() => {
           setMsgs(p => p.map(m => ({ ...m, unread: false })));
         });
@@ -1730,12 +1721,7 @@ const MenteePortal = ({ user, onLogout }) => {
     setMsgs(p => [...p, { from: "You", time: "Just now", text: msgInput || "", imageUrl }]);
     setMsgInput("");
     if (!email) return;
-    await supabase.from("messages").insert([{
-      mentee_email: email, sender: "mentee",
-      text: msgInput || (imageUrl ? "📷 Image" : ""),
-      audio_url: imageUrl ? `__IMAGE__${imageUrl}` : null,
-      read: false
-    }]);
+    await supabase.functions.invoke("send-message", { body: { mentee_email: email, sender: "mentee", text: msgInput || (imageUrl ? "📷 Image" : ""), audio_url: imageUrl ? `__IMAGE__${imageUrl}` : null } });
   };
   useEffect(() => { msgEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
@@ -1746,7 +1732,7 @@ const MenteePortal = ({ user, onLogout }) => {
     setWinInput("");
     setCelebratingWin(w);
     setTimeout(() => setCelebratingWin(null), 3500);
-    await supabase.from("mentee_wins").insert([{
+    await supabase.functions.invoke('assign-task', { body: { action: 'insert_win', mentee_email: user.email || profile.email, text: winInput } }); const fakeWin = [{
       mentee_email: user.email,
       text: winInput,
       cat: winCat,
@@ -2954,7 +2940,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
 
   useEffect(() => {
     if (!user.email || user.password) return;
-    supabase.from("mentee_profiles").select("graduated").eq("email", user.email.toLowerCase()).single()
+    supabase.functions.invoke('assign-task', { body: { action: 'check_graduated', email: user.email } })
       .then(({ data }) => {
         if (data?.graduated) {
           setIsGraduate(true);
@@ -2965,10 +2951,11 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
 
   useEffect(() => {
     const fetchPosts = () => {
-      supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
+      supabase.functions.invoke("community-post", { body: { action: "fetch" } })
         .then(({ data }) => {
-          if (data && data.length > 0) {
-            setPosts(data.map(p => ({
+          const posts = data?.posts || [];
+          if (posts.length > 0) {
+            setPosts(posts.map(p => ({
               id: p.id, author: p.author, avatar: p.avatar,
               time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
               text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat,
@@ -3036,10 +3023,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     const newPost = { id: Date.now(), author: user.firstName, avatar: user.avatar, time: "Just now", text: postInput, likes: 0, isJess: false, cat: postCat, isGraduate: isGraduate };
     setPosts(p => [newPost, ...p]);
     setPostInput("");
-    await supabase.from("community_posts").insert([{
-      author: user.firstName, avatar: user.avatar, text: postInput,
-      cat: postCat, likes: 0, is_jess: false, is_graduate: isGraduate
-    }]);
+    await supabase.functions.invoke("community-post", { body: { action: "insert", author: user.firstName, avatar: user.avatar, text: postInput, cat: postCat, is_jess: false, is_graduate: isGraduate } });
   };
 
   const resources = [
@@ -3465,7 +3449,7 @@ const ApplicationsView = () => {
   const approve = async (id) => {
     const trialStart = new Date();
     const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await supabase.from("community_applications").update({
+    await supabase.functions.invoke('assign-task', { body: { action: 'update_application', id,
       status: "approved",
       trial_start: trialStart.toISOString(),
       trial_end: trialEnd.toISOString()
@@ -3474,12 +3458,12 @@ const ApplicationsView = () => {
   };
 
   const decline = async (id) => {
-    await supabase.from("community_applications").update({ status: "declined" }).eq("id", id);
+    await supabase.functions.invoke('assign-task', { body: { action: 'update_application', id, status: 'declined' } });
     setApplications(p => p.map(a => a.id === id ? { ...a, status:"declined" } : a));
   };
 
   const markPaid = async (id) => {
-    await supabase.from("community_applications").update({ paid: true }).eq("id", id);
+    await supabase.functions.invoke('assign-task', { body: { action: 'update_application', id, paid: true } });
     setApplications(p => p.map(a => a.id === id ? { ...a, paid:true } : a));
   };
 
@@ -3684,7 +3668,7 @@ const InviteGraduateForm = () => {
       });
       if (error) throw new Error(error.message);
       // Mark as graduated in mentee_profiles
-      await supabase.from("mentee_profiles").upsert({
+      await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: {
         email: email.toLowerCase(),
         first_name: name,
         tier: "Community Graduate",
@@ -3794,7 +3778,7 @@ const AdminCommunityResources = () => {
   const DEFAULT_CATS = ["Pricing", "Client Attraction", "Business Setup", "Mindset", "Social Media", "Education", "Templates", "Other"];
 
   useEffect(() => {
-    supabase.from('resources').select('*').order('created_at', { ascending: false })
+    supabase.functions.invoke('assign-task', { body: { action: 'get_all_resources' } })
       .then(({ data }) => { if (data) setResources(data); });
   }, []);
 
@@ -3808,11 +3792,8 @@ const AdminCommunityResources = () => {
       const { error: uploadError } = await supabase.storage.from("resources").upload(fileName, file, { contentType: file.type });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("resources").getPublicUrl(fileName);
-      const { data: inserted } = await supabase.from('resources').insert([{
-        title: form.title, description: form.description, file_url: urlData.publicUrl,
-        file_name: file.name, file_type: ext, mentee_email: null,
-        category: form.category || "General"
-      }]).select().single();
+      const { data: resResult } = await supabase.functions.invoke('assign-task', { body: { action: 'insert_resource', title: form.title, description: form.description, file_url: urlData.publicUrl, file_name: file.name, file_type: ext, mentee_email: null, category: form.category || 'General' } });
+      const inserted = resResult?.resource;
       if (inserted) setResources(r => [inserted, ...r]);
       setForm({ title:"", description:"", category:"", file:null });
       setCustomCat(false);
@@ -3823,7 +3804,7 @@ const AdminCommunityResources = () => {
 
   const remove = async (id) => {
     if (!window.confirm("Remove this resource?")) return;
-    await supabase.from('resources').delete().eq('id', id);
+    await supabase.functions.invoke('assign-task', { body: { action: 'delete_resource', id } });
     setResources(r => r.filter(x => x.id !== id));
   };
 
@@ -3918,9 +3899,10 @@ const AdminCommunity = ({ menteeList, communityList }) => {
   }, []);
 
   useEffect(() => {
-    supabase.from("community_posts").select("*").order("created_at", { ascending: false }).limit(50)
+    supabase.functions.invoke("community-post", { body: { action: "fetch" } })
       .then(({ data }) => {
-        if (data) setCommunityPosts(data.map(p => ({
+        const posts = data?.posts || [];
+        if (posts.length > 0) setCommunityPosts(posts.map(p => ({
           id: p.id, author: p.author, avatar: p.avatar,
           time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
           text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, pinned: p.pinned,
@@ -4148,9 +4130,9 @@ const AdminDashboard = ({ onLogout }) => {
   const [graduates, setGraduates] = useState([]);
 
   const fetchGraduates = () => {
-    supabase.from("mentee_profiles").select("*").eq("graduated", true).order("start_date", { ascending: false })
+    supabase.functions.invoke('assign-task', { body: { action: 'get_graduates' } })
       .then(({ data }) => {
-        if (data) setGraduates(data.map(g => ({
+        if (data?.profiles) setGraduates(data.profiles.map(g => ({
           email: g.email,
           firstName: g.first_name || g.email.split("@")[0],
           name: g.first_name || g.email.split("@")[0],
@@ -4186,11 +4168,12 @@ const AdminDashboard = ({ onLogout }) => {
 
   // Fetch sessions history grouped by mentee email
   useEffect(() => {
-    supabase.from("sessions_history").select("*").order("occurred_at", { ascending: false })
+    supabase.functions.invoke('assign-task', { body: { action: 'get_sessions' } })
       .then(({ data }) => {
-        if (data) {
+        const sessions = data?.sessions || [];
+        if (sessions.length > 0) {
           const grouped = {};
-          data.forEach(s => {
+          sessions.forEach(s => {
             if (!grouped[s.mentee_email]) grouped[s.mentee_email] = [];
             grouped[s.mentee_email].push(s);
           });
@@ -4250,10 +4233,10 @@ const AdminDashboard = ({ onLogout }) => {
 
   // Fetch real mentees from Supabase and merge with demo data
   useEffect(() => {
-    supabase.from("mentee_profiles").select("*").order("start_date", { ascending: false })
+    supabase.functions.invoke('assign-task', { body: { action: 'get_all_profiles' } })
       .then(({ data }) => {
-        if (data && data.length > 0) {
-          const realMentees = data.map(m => ({
+        if (data?.profiles && data.profiles.length > 0) {
+          const realMentees = data.profiles.map(m => ({
             email: m.email,
             name: m.first_name || m.email.split("@")[0],
             firstName: m.first_name || m.email.split("@")[0],
@@ -4294,12 +4277,12 @@ const AdminDashboard = ({ onLogout }) => {
 
   useEffect(() => {
     const fetchAllMessages = () => {
-      supabase.from("messages").select("mentee_email, text, sender, created_at, read, audio_url")
-        .order("created_at", { ascending: true })
+      supabase.functions.invoke("send-message", { body: { action: "get_all" } })
         .then(({ data }) => {
-          if (!data || data.length === 0) return;
+          const allMsgs = data?.messages || [];
+          if (!allMsgs || allMsgs.length === 0) return;
           const grouped = {};
-          data.forEach(m => {
+          allMsgs.forEach(m => {
             if (!grouped[m.mentee_email]) grouped[m.mentee_email] = [];
             grouped[m.mentee_email].push(m);
           });
@@ -4349,11 +4332,12 @@ const AdminDashboard = ({ onLogout }) => {
         setAdminUnread(0);
         return;
       }
-      supabase.from("messages")
-        .select("id", { count: "exact" })
-        .eq("sender", "mentee")
-        .eq("read", false)
-        .then(({ count }) => setAdminUnread(count || 0));
+      supabase.functions.invoke("send-message", { body: { action: "get_all" } })
+        .then(({ data }) => {
+          const allMsgs = data?.messages || [];
+          const unread = allMsgs.filter(m => m.sender === "mentee" && !m.read).length;
+          setAdminUnread(unread);
+        });
     };
     fetchUnread();
     const interval = setInterval(fetchUnread, 5000);
@@ -4368,11 +4352,7 @@ const AdminDashboard = ({ onLogout }) => {
     setContacts(prev => {
       const contact = prev[selChat];
       if (!contact) return prev;
-      supabase.from("messages")
-        .update({ read: true })
-        .eq("mentee_email", contact.email)
-        .eq("sender", "mentee")
-        .eq("read", false)
+      supabase.functions.invoke("send-message", { body: { action: "mark_read", mentee_email: contact.email } })
         .then(({ error }) => {
           if (error) console.error("Mark read failed:", error.message);
         });
@@ -4536,7 +4516,7 @@ const AdminDashboard = ({ onLogout }) => {
                     body: { sessionName: "Quick Call", participantName: m.name }
                   });
                   if (error || data?.error) { alert("Could not create video room."); return; }
-                  await supabase.from("mentee_profiles").upsert({ email: m.email, room_url: data.url }, { onConflict: "email" });
+                  await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: { email: m.email, room_url: data.url } } });
                   setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email, isSession: false });
                 }}>Start Call</Btn>
                 <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
@@ -5144,11 +5124,7 @@ const AdminDashboard = ({ onLogout }) => {
                 if (uploadError) throw uploadError;
                 const { data: urlData } = supabase.storage.from("resources").getPublicUrl(fileName);
                 const menteeEmail = addResource === "global" ? null : addResource.mentee.email;
-                await supabase.from("resources").insert([{
-                  title: resourceForm.title, description: resourceForm.description,
-                  file_url: urlData.publicUrl, file_name: file.name, file_type: ext,
-                  mentee_email: menteeEmail, category: resourceForm.category || "General"
-                }]);
+                await supabase.functions.invoke("assign-task", { body: { action: "insert_resource", title: resourceForm.title, description: resourceForm.description, file_url: urlData.publicUrl, file_name: file.name, file_type: ext, mentee_email: menteeEmail, category: resourceForm.category || "General" } });
                 // Notify mentee if specific
                 if (menteeEmail) {
                   await supabase.functions.invoke('send-message', {
@@ -5196,12 +5172,12 @@ const AdminDashboard = ({ onLogout }) => {
               if (!window.confirm(`Cancel the session for ${scheduleSession.firstName || scheduleSession.name.split(" ")[0]}? They will receive a message in their portal.`)) return;
               setSessionBusy(true);
               try {
-                await supabase.from("mentee_profiles").upsert({
+                await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: {
                   email: scheduleSession.email,
                   next_session_date: null,
                   next_session_time: null,
                   next_session_type: null,
-                }, { onConflict: "email" });
+                } } });
                 // Send automated message via edge function
                 await supabase.functions.invoke('send-message', {
                   body: {
@@ -5263,12 +5239,12 @@ const AdminDashboard = ({ onLogout }) => {
               const dateFormatted = new Date(sessionForm.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
               const timeFormatted = new Date("1970-01-01T" + sessionForm.time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
               try {
-                await supabase.from("mentee_profiles").upsert({
+                await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: {
                   email: scheduleSession.email,
                   next_session_date: dateFormatted,
                   next_session_time: `${timeFormatted} EST`,
                   next_session_type: sessionForm.type,
-                }, { onConflict: "email" });
+                } } });
                 const firstName = scheduleSession.firstName || scheduleSession.name.split(" ")[0];
                 // Send automated message via edge function
                 const msgText = hasExistingSession
@@ -5473,15 +5449,12 @@ const AdminDashboard = ({ onLogout }) => {
         onClose={async () => {
           if (adminCall.menteeEmail) {
             // Clear room URL
-            await supabase.from("mentee_profiles").upsert({ email: adminCall.menteeEmail, room_url: null }, { onConflict: "email" });
+            await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: { email: adminCall.menteeEmail, room_url: null } } });
             // If this was a real session, archive it and increment counter
             if (adminCall.isSession) {
-              await supabase.from("sessions_history").insert([{
-                mentee_email: adminCall.menteeEmail,
-                session_type: adminCall.sessionType,
-              }]);
+              await supabase.functions.invoke('assign-task', { body: { action: 'insert_session', mentee_email: adminCall.menteeEmail, session_type: adminCall.sessionType } });
               // Refresh sessions history
-              supabase.from("sessions_history").select("*").order("occurred_at", { ascending: false })
+              supabase.functions.invoke("assign-task", { body: { action: "get_sessions" } })
                 .then(({ data }) => {
                   if (data) {
                     const grouped = {};
@@ -5495,13 +5468,13 @@ const AdminDashboard = ({ onLogout }) => {
               // Increment sessions_completed
               const mentee = menteeList.find(m => m.email === adminCall.menteeEmail);
               const newCount = (mentee?.sessionsCompleted || 0) + 1;
-              await supabase.from("mentee_profiles").upsert({
+              await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: {
                 email: adminCall.menteeEmail,
                 sessions_completed: newCount,
                 next_session_date: null,
                 next_session_time: null,
                 next_session_type: null,
-              }, { onConflict: "email" });
+              } } });
               // Update local state
               setMenteeList(p => p.map(m => m.email === adminCall.menteeEmail ? {
                 ...m, sessionsCompleted: newCount, nextSession: null
@@ -5878,7 +5851,7 @@ const AdminDashboard = ({ onLogout }) => {
                                body: { sessionName: "Impromptu Call", participantName: m.name }
                              });
                              if (error || data?.error) { alert("Could not create video room."); return; }
-                             await supabase.from("mentee_profiles").upsert({ email: m.email, room_url: data.url }, { onConflict: "email" });
+                             await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: { email: m.email, room_url: data.url } } });
                              await supabase.functions.invoke('send-message', {
                                body: { mentee_email: m.email, sender: "jess", text: `Hi ${m.firstName || m.name.split(" ")[0]}! I'm jumping on a quick call — join when you're ready! 📹` }
                              });
@@ -5893,7 +5866,7 @@ const AdminDashboard = ({ onLogout }) => {
                                  body: { sessionName: m.nextSession.type, participantName: m.name }
                                });
                                if (error || data?.error) { alert("Could not create video room."); return; }
-                               await supabase.from("mentee_profiles").upsert({ email: m.email, room_url: data.url }, { onConflict: "email" });
+                               await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: { email: m.email, room_url: data.url } } });
                                await supabase.functions.invoke('send-message', {
                                  body: { mentee_email: m.email, sender: "jess", text: `Hi ${m.firstName || m.name.split(" ")[0]}! Your session is live — "${m.nextSession.type}". Join whenever you're ready! 🎯` }
                                });
