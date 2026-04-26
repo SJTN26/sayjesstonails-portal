@@ -5827,73 +5827,110 @@ const AdminDashboard = ({ onLogout }) => {
                          <div style={{ height:"100%", width:`${pct}%`, background: pct >= 75 ? B.success : pct >= 40 ? B.amber : B.blush, transition:"width .5s ease" }} />
                        </div>
 
-                       {/* Stat tiles — clean grid */}
-                       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", gap:0, borderBottom:`1px solid ${B.cloud}` }}>
-                         {statTiles.map(({ value, label, tab, accent }, idx) => (
-                           <button key={label} onClick={() => setMenteeDrawer({ mentee: m, tab })}
-                             style={{ padding:"14px 16px", background:"transparent", border:"none", borderRight: idx < statTiles.length-1 ? `1px solid ${B.cloud}` : "none", cursor:"pointer", textAlign:"center", fontFamily:FONTS.body, transition:"background .15s" }}
-                             onMouseEnter={e => e.currentTarget.style.background = B.off}
-                             onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                             <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:22, color: accent ? B.blush : B.black, lineHeight:1 }}>{value}</div>
-                             <div style={{ fontSize:8, color:B.mid, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginTop:4 }}>{label}</div>
-                             <div style={{ fontSize:7, color:B.blush, fontWeight:700, letterSpacing:0.5, marginTop:2, textTransform:"uppercase" }}>tap →</div>
+                       {/* Stat tiles — 2x2 on mobile, 5-col on desktop */}
+                       {isMobile ? (
+                         <div style={{ borderBottom:`1px solid ${B.cloud}` }}>
+                           <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:0 }}>
+                             {statTiles.slice(0,4).map(({ value, label, tab, accent }, idx) => (
+                               <button key={label} onClick={() => setMenteeDrawer({ mentee: m, tab })}
+                                 style={{ padding:"14px 12px", background:"transparent", border:"none", borderRight: idx%2===0 ? `1px solid ${B.cloud}` : "none", borderBottom:`1px solid ${B.cloud}`, cursor:"pointer", textAlign:"center", fontFamily:FONTS.body }}>
+                                 <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:22, color: accent ? B.blush : B.black, lineHeight:1 }}>{value}</div>
+                                 <div style={{ fontSize:8, color:B.mid, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginTop:4 }}>{label}</div>
+                                 <div style={{ fontSize:7, color:B.blush, fontWeight:700, marginTop:2, textTransform:"uppercase" }}>tap →</div>
+                               </button>
+                             ))}
+                           </div>
+                           {/* Progress full width */}
+                           <button onClick={() => setMenteeDrawer({ mentee: m, tab:"Progress" })}
+                             style={{ width:"100%", padding:"12px", background:"transparent", border:"none", cursor:"pointer", textAlign:"center", fontFamily:FONTS.body, display:"flex", alignItems:"center", justifyContent:"center", gap:16 }}>
+                             <div>
+                               <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:26, color:B.blush, lineHeight:1 }}>{pct}%</div>
+                               <div style={{ fontSize:8, color:B.mid, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginTop:3 }}>Progress</div>
+                             </div>
+                             <div style={{ flex:1, height:6, background:B.off, borderRadius:3 }}>
+                               <div style={{ height:"100%", width:`${pct}%`, background: pct>=75?B.success:pct>=40?B.amber:B.blush, borderRadius:3 }} />
+                             </div>
+                             <div style={{ fontSize:7, color:B.blush, fontWeight:700, textTransform:"uppercase" }}>tap →</div>
                            </button>
-                         ))}
-                       </div>
+                         </div>
+                       ) : (
+                         <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:0, borderBottom:`1px solid ${B.cloud}` }}>
+                           {statTiles.map(({ value, label, tab, accent }, idx) => (
+                             <button key={label} onClick={() => setMenteeDrawer({ mentee: m, tab })}
+                               style={{ padding:"14px 16px", background:"transparent", border:"none", borderRight: idx < statTiles.length-1 ? `1px solid ${B.cloud}` : "none", cursor:"pointer", textAlign:"center", fontFamily:FONTS.body, transition:"background .15s" }}
+                               onMouseEnter={e => e.currentTarget.style.background = B.off}
+                               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                               <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:22, color: accent ? B.blush : B.black, lineHeight:1 }}>{value}</div>
+                               <div style={{ fontSize:8, color:B.mid, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", marginTop:4 }}>{label}</div>
+                               <div style={{ fontSize:7, color:B.blush, fontWeight:700, letterSpacing:0.5, marginTop:2, textTransform:"uppercase" }}>tap →</div>
+                             </button>
+                           ))}
+                         </div>
+                       )}
 
-                       {/* Action row */}
-                       <div style={{ padding:"12px 16px", display:"flex", gap:6, flexWrap:"wrap", alignItems:"center", background:B.off }}>
-                         {/* Impromptu call button */}
-                         <button onClick={async () => {
-                           const { data, error } = await supabase.functions.invoke('create-video-room', {
-                             body: { sessionName: "Impromptu Call", participantName: m.name }
-                           });
-                           if (error || data?.error) { alert("Could not create video room."); return; }
-                           await supabase.from("mentee_profiles").upsert({ email: m.email, room_url: data.url }, { onConflict: "email" });
-                           await supabase.functions.invoke('send-message', {
-                             body: { mentee_email: m.email, sender: "jess", text: `Hi ${m.firstName || m.name.split(" ")[0]}! I'm jumping on a quick call — join when you're ready! 📹` }
-                           });
-                           setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email, isSession: false });
-                         }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.black, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                           <Ic n="video" size={12} color={B.white} />Quick Call
-                         </button>
+                       {/* Action area — organized groups */}
+                       <div style={{ padding:"12px 16px", background:B.off }}>
 
-                         {/* Start Session button — only shows when session is scheduled */}
-                         {m.nextSession && (
+                         {/* Primary actions row */}
+                         <div style={{ display:"grid", gridTemplateColumns: m.nextSession ? "1fr 1fr 1fr" : "1fr 1fr", gap:6, marginBottom:6 }}>
                            <button onClick={async () => {
                              const { data, error } = await supabase.functions.invoke('create-video-room', {
-                               body: { sessionName: m.nextSession.type, participantName: m.name }
+                               body: { sessionName: "Impromptu Call", participantName: m.name }
                              });
                              if (error || data?.error) { alert("Could not create video room."); return; }
                              await supabase.from("mentee_profiles").upsert({ email: m.email, room_url: data.url }, { onConflict: "email" });
                              await supabase.functions.invoke('send-message', {
-                               body: { mentee_email: m.email, sender: "jess", text: `Hi ${m.firstName || m.name.split(" ")[0]}! Your session is live — "${m.nextSession.type}". Join whenever you're ready! 🎯` }
+                               body: { mentee_email: m.email, sender: "jess", text: `Hi ${m.firstName || m.name.split(" ")[0]}! I'm jumping on a quick call — join when you're ready! 📹` }
                              });
-                             setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email, isSession: true, sessionType: m.nextSession.type });
-                           }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                             <div style={{ width:6, height:6, borderRadius:"50%", background:B.white }} />
-                             Start Session
+                             setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email, isSession: false });
+                           }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.black, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="video" size={12} color={B.white} />Quick Call
                            </button>
-                         )}
-                         <button onClick={() => { setSelChat(i); setView("messages"); }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                           <Ic n="message" size={12} color={B.steel} />Message
-                         </button>
-                         <button onClick={() => setScheduleSession(m)} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                           <Ic n="calendar" size={12} color={B.steel} />
-                           {m.nextSession ? "Reschedule" : "Schedule Session"}
-                         </button>
-                         <button onClick={() => setAssignTask(m)} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                           <Ic n="check" size={12} color={B.steel} />Assign Task
-                         </button>
-                         <button onClick={() => { setAddResource({ mentee: m }); setResourceForm({ title:"", description:"", file:null }); }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                           <Ic n="file" size={12} color={B.steel} />Add Resource
-                         </button>
-                         <button onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase", marginLeft:"auto" }}>
-                           <Ic n="send" size={12} color={B.white} />Welcome Letter
-                         </button>
-                         <button onClick={async () => {
-                           if (!window.confirm(`Mark ${m.firstName || m.name}'s program as complete? They will have 1 year of community access and lose mentee portal access.`)) return;
-                           const firstName = m.firstName || m.name.split(" ")[0];
+
+                           {m.nextSession && (
+                             <button onClick={async () => {
+                               const { data, error } = await supabase.functions.invoke('create-video-room', {
+                                 body: { sessionName: m.nextSession.type, participantName: m.name }
+                               });
+                               if (error || data?.error) { alert("Could not create video room."); return; }
+                               await supabase.from("mentee_profiles").upsert({ email: m.email, room_url: data.url }, { onConflict: "email" });
+                               await supabase.functions.invoke('send-message', {
+                                 body: { mentee_email: m.email, sender: "jess", text: `Hi ${m.firstName || m.name.split(" ")[0]}! Your session is live — "${m.nextSession.type}". Join whenever you're ready! 🎯` }
+                               });
+                               setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email, isSession: true, sessionType: m.nextSession.type });
+                             }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                               <div style={{ width:6, height:6, borderRadius:"50%", background:B.white }} />
+                               Start Session
+                             </button>
+                           )}
+
+                           <button onClick={() => { setSelChat(i); setView("messages"); }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="message" size={12} color={B.steel} />Message
+                           </button>
+                         </div>
+
+                         {/* Secondary actions row */}
+                         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6, marginBottom:6 }}>
+                           <button onClick={() => setScheduleSession(m)} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="calendar" size={12} color={B.steel} />
+                             {m.nextSession ? "Reschedule" : "Schedule"}
+                           </button>
+                           <button onClick={() => setAssignTask(m)} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="check" size={12} color={B.steel} />Task
+                           </button>
+                           <button onClick={() => { setAddResource({ mentee: m }); setResourceForm({ title:"", description:"", category:"", file:null }); }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="file" size={12} color={B.steel} />Resource
+                           </button>
+                         </div>
+
+                         {/* Tertiary actions row */}
+                         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+                           <button onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="send" size={12} color={B.white} />Welcome Letter
+                           </button>
+                           <button onClick={async () => {
+                             if (!window.confirm(`Mark ${m.firstName || m.name}'s program as complete?`)) return;
+                             const firstName = m.firstName || m.name.split(" ")[0];
                            // Change auth role to community
                            const { error } = await supabase.functions.invoke('invite-mentee', {
                              body: { email: m.email, action: 'graduate' }
@@ -5922,9 +5959,10 @@ const AdminDashboard = ({ onLogout }) => {
                            setMenteeList(p => p.filter(x => x.email !== m.email));
                            fetchGraduates();
                            alert(`${firstName}'s program is complete. They now have 1 year of community access.`);
-                         }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.success, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                         }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.success, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
                            <Ic n="check" size={12} color={B.white} />Complete Program
                          </button>
+                       </div>
                        </div>
 
                        {/* Next session indicator if scheduled */}
