@@ -1468,6 +1468,15 @@ const MenteePortal = ({ user, onLogout }) => {
   const [commLiked, setCommLiked] = useState([]);
   const [jessVoice, setJessVoice] = useState(null); // { text, audioUrl }
   const [menteeStatDrawer, setMenteeStatDrawer] = useState(null);
+  const [menteeResources, setMenteeResources] = useState([]);
+
+  useEffect(() => {
+    if (!user.email) return;
+    supabase.from('resources').select('*')
+      .or(`mentee_email.eq.${user.email},mentee_email.is.null`)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { if (data) setMenteeResources(data); });
+  }, [user.email]);
   const commCatColors = { win: B.blush, tip: B.success, question: "#9B6EA0", resource: B.amber, intro: B.steel };
   const commCatLabels = { win: "Win", tip: "Tip", question: "Question", resource: "Resource", intro: "Intro" };
   const commCatIcons  = { win: "catWin", tip: "catTip", question: "catQuestion", resource: "catResource", intro: "catIntro" };
@@ -2087,6 +2096,28 @@ const MenteePortal = ({ user, onLogout }) => {
             ))}
           </Card>
         )}
+
+        {/* ── Resources from Jess ── */}
+        {menteeResources.length > 0 && (
+          <Card style={{ marginBottom: 16 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+              <Section>Resources from Jess</Section>
+              <button onClick={() => setView("resources")} style={{ fontSize:9, color:B.blush, border:"none", background:"none", cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase", padding:0 }}>View All →</button>
+            </div>
+            {menteeResources.slice(0,3).map(r => (
+              <a key={r.id} href={r.file_url} target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:`1px solid ${B.cloud}`, textDecoration:"none" }}>
+                <div style={{ width:32, height:32, background:B.blushPale, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  <Ic n="file" size={14} color={B.blush} />
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:B.black }}>{r.title}</div>
+                  {r.description && <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{r.description}</div>}
+                </div>
+                <span style={{ fontSize:8, fontWeight:700, color:B.blush, background:`${B.blush}15`, padding:"2px 7px", letterSpacing:1, textTransform:"uppercase", flexShrink:0 }}>{r.file_type?.toUpperCase()}</span>
+              </a>
+            ))}
+          </Card>
+        )}
       </Pg>
     ),
 
@@ -2402,6 +2433,35 @@ const MenteePortal = ({ user, onLogout }) => {
     resources: (
       <Pg title="Resources" sub="Resource Library">
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Tools, guides, and templates curated by Jess for your growth.</p>
+
+        {/* Jess's uploaded resources */}
+        {menteeResources.length > 0 && (
+          <div style={{ marginBottom:24 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+              <div style={{ width:3, height:20, background:B.blush, flexShrink:0 }} />
+              <Section style={{ color:B.blush }}>From Jess</Section>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+              {menteeResources.map(r => (
+                <Card key={r.id} style={{ padding:"14px 18px" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12 }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:B.black }}>{r.title}</span>
+                        <span style={{ fontSize:8, fontWeight:700, color:B.blush, background:`${B.blush}15`, padding:"2px 7px", letterSpacing:1, textTransform:"uppercase" }}>{r.file_type?.toUpperCase()}</span>
+                        {!r.mentee_email && <span style={{ fontSize:7, color:B.mid, fontWeight:300 }}>For all mentees</span>}
+                      </div>
+                      {r.description && <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{r.description}</div>}
+                    </div>
+                    <a href={r.file_url} target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:5, padding:"7px 12px", border:`1px solid ${B.cloud}`, background:"none", color:B.steel, fontSize:9, textDecoration:"none", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", flexShrink:0 }}>
+                      <Ic n="download" size={11} color={B.blush} />Access
+                    </a>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
         {[
           { topic: "Pricing", color: B.blush, items: [{ name: "Pricing Calculator Workbook", type: "PDF", desc: "Set your prices with confidence using Jess's formula.", unlocked: true }, { name: "How to Raise Prices Without Losing Clients", type: "Guide", desc: "The exact language and timing strategy Jess uses.", unlocked: true }, { name: "Price Increase Announcement Templates", type: "Templates", desc: "3 caption templates ready to copy and customize.", unlocked: profile.tierKey !== "hourly" }] },
           { topic: "Client Attraction", color: B.success, items: [{ name: "Instagram Bio Formula", type: "Template", desc: "A bio that converts visitors to bookings.", unlocked: true }, { name: "5-Day Content Plan for Nail Techs", type: "PDF", desc: "Post ideas for every day of your first week.", unlocked: true }, { name: "Rebooking Script", type: "Guide", desc: "What to say at checkout to guarantee the next appointment.", unlocked: profile.tierKey !== "hourly" }] },
@@ -3642,6 +3702,106 @@ const InviteForm = ({ isMobile }) => {
   );
 };
 
+/* ── Admin Community Resources — manage global resources ── */
+const AdminCommunityResources = () => {
+  const [resources, setResources] = useState([]);
+  const [form, setForm] = useState({ title:"", description:"", file:null });
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef(null);
+
+  useEffect(() => {
+    supabase.from('resources').select('*').order('created_at', { ascending: false })
+      .then(({ data }) => { if (data) setResources(data); });
+  }, []);
+
+  const upload = async () => {
+    if (!form.title || !form.file) { alert("Title and file are required."); return; }
+    setBusy(true);
+    try {
+      const file = form.file;
+      const ext = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage.from("resources").upload(fileName, file, { contentType: file.type });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("resources").getPublicUrl(fileName);
+      const { data: inserted } = await supabase.from('resources').insert([{
+        title: form.title, description: form.description, file_url: urlData.publicUrl,
+        file_name: file.name, file_type: ext, mentee_email: null
+      }]).select().single();
+      if (inserted) setResources(r => [inserted, ...r]);
+      setForm({ title:"", description:"", file:null });
+      if (fileRef.current) fileRef.current.value = "";
+    } catch(e) { alert(`Error: ${e.message}`); }
+    setBusy(false);
+  };
+
+  const remove = async (id) => {
+    if (!window.confirm("Remove this resource?")) return;
+    await supabase.from('resources').delete().eq('id', id);
+    setResources(r => r.filter(x => x.id !== id));
+  };
+
+  const globalResources = resources.filter(r => !r.mentee_email);
+  const specificResources = resources.filter(r => r.mentee_email);
+
+  return (
+    <div>
+      {/* Upload global resource */}
+      <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"18px 20px", marginBottom:20 }}>
+        <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:14 }}>Add Global Resource — All Mentees</div>
+        <input value={form.title} onChange={e => setForm(f => ({...f, title:e.target.value}))} placeholder="Resource title..." style={{ width:"100%", padding:"9px 12px", background:"#1a1a1a", border:`1px solid #333`, color:B.ivory, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", marginBottom:8 }} />
+        <input value={form.description} onChange={e => setForm(f => ({...f, description:e.target.value}))} placeholder="Short description..." style={{ width:"100%", padding:"9px 12px", background:"#1a1a1a", border:`1px solid #333`, color:B.ivory, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", marginBottom:8 }} />
+        <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+          <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onChange={e => setForm(f => ({...f, file:e.target.files[0]}))} style={{ fontSize:12, flex:1, color:B.ivory }} />
+          <button onClick={upload} disabled={busy} style={{ padding:"9px 18px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", opacity:busy?0.6:1 }}>
+            {busy ? "Uploading…" : "Upload"}
+          </button>
+        </div>
+      </div>
+
+      {/* Global resources list */}
+      {globalResources.length > 0 && (
+        <div style={{ marginBottom:20 }}>
+          <div style={{ fontSize:9, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>Global Resources ({globalResources.length})</div>
+          {globalResources.map(r => (
+            <div key={r.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"12px 16px", marginBottom:2, display:"flex", alignItems:"center", gap:12 }}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:B.black }}>{r.title}</div>
+                {r.description && <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>{r.description}</div>}
+                <div style={{ fontSize:9, color:B.blush, fontWeight:700, textTransform:"uppercase", letterSpacing:1, marginTop:3 }}>{r.file_type?.toUpperCase()} · All mentees</div>
+              </div>
+              <a href={r.file_url} target="_blank" rel="noreferrer" style={{ fontSize:9, padding:"4px 10px", border:`1px solid ${B.cloud}`, color:B.steel, textDecoration:"none", fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>View</a>
+              <button onClick={() => remove(r.id)} style={{ fontSize:9, padding:"4px 10px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Per-mentee resources list */}
+      {specificResources.length > 0 && (
+        <div>
+          <div style={{ fontSize:9, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>Mentee-Specific Resources ({specificResources.length})</div>
+          {specificResources.map(r => (
+            <div key={r.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"12px 16px", marginBottom:2, display:"flex", alignItems:"center", gap:12 }}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:B.black }}>{r.title}</div>
+                {r.description && <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:2 }}>{r.description}</div>}
+                <div style={{ fontSize:9, color:B.steel, fontWeight:700, textTransform:"uppercase", letterSpacing:1, marginTop:3 }}>{r.file_type?.toUpperCase()} · {r.mentee_email}</div>
+              </div>
+              <a href={r.file_url} target="_blank" rel="noreferrer" style={{ fontSize:9, padding:"4px 10px", border:`1px solid ${B.cloud}`, color:B.steel, textDecoration:"none", fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>View</a>
+              <button onClick={() => remove(r.id)} style={{ fontSize:9, padding:"4px 10px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {resources.length === 0 && (
+        <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic", padding:"20px 0" }}>No resources uploaded yet.</div>
+      )}
+    </div>
+  );
+};
+
 /* ── Admin Community — fully standalone to prevent remounting ── */
 const AdminCommunity = ({ menteeList, communityList }) => {
   const { isMobile } = useLayout();
@@ -3702,7 +3862,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
 
       {/* Sub tabs */}
       <div style={{ display:"flex", gap:2, marginBottom:20 }}>
-        {[["feed","Community Feed"], ["members","Members"], ["wins","Mentee Wins"]].map(([id, label]) => (
+        {[["feed","Community Feed"], ["members","Members"], ["wins","Mentee Wins"], ["resources","Resources"]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{ padding:"8px 18px", border:`1px solid ${tab===id ? B.blush : B.cloud}`, background: tab===id ? B.blush : B.white, color: tab===id ? B.white : B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>{label}</button>
         ))}
       </div>
@@ -3826,6 +3986,10 @@ const AdminCommunity = ({ menteeList, communityList }) => {
           )}
         </div>
       )}
+
+      {tab === "resources" && (
+        <AdminCommunityResources />
+      )}
     </div>
   );
 };
@@ -3841,6 +4005,9 @@ const AdminDashboard = ({ onLogout }) => {
   const [inviteForm, setInviteForm] = useState({ name:"", email:"", tier:"Hourly Session" });
   const [menteeDrawer, setMenteeDrawer] = useState(null);
   const [assignTask, setAssignTask] = useState(null); // { mentee }
+  const [addResource, setAddResource] = useState(null); // null | { mentee } | "global"
+  const [resourceForm, setResourceForm] = useState({ title:"", description:"", file:null });
+  const [resourceUploading, setResourceUploading] = useState(false);
   const [taskForm, setTaskForm] = useState({ title:"", due_date:"", jess_notes:"" });
   const [taskBusy, setTaskBusy] = useState(false);
   const [adminTasks, setAdminTasks] = useState({});
@@ -4770,6 +4937,68 @@ const AdminDashboard = ({ onLogout }) => {
     </div>
   ) : null;
 
+  // ── Add Resource Modal ───────────────────────────────────────────────────
+  const ResourceModal = addResource ? (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
+      <div style={{ background:B.white, width:"100%", maxWidth:460 }}>
+        <div style={{ background:B.black, padding:"20px 24px", display:"flex", justifyContent:"space-between", alignItems:"center", borderLeft:`4px solid ${B.blush}` }}>
+          <div>
+            <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>Add Resource</div>
+            <div style={{ fontSize:16, fontWeight:700, color:B.ivory }}>{addResource === "global" ? "All Mentees" : addResource.mentee.name}</div>
+            <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{addResource === "global" ? "This resource will be visible to every mentee" : addResource.mentee.tier}</div>
+          </div>
+          <button onClick={() => setAddResource(null)} style={{ width:28, height:28, border:`1px solid #333`, background:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><Ic n="close" size={13} color={B.mid} /></button>
+        </div>
+        <div style={{ padding:"24px" }}>
+          <div style={{ marginBottom:14 }}>
+            <label style={{ fontSize:9, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", display:"block", marginBottom:6 }}>Title *</label>
+            <input value={resourceForm.title} onChange={e => setResourceForm(f => ({...f, title:e.target.value}))} placeholder="e.g. Pricing Confidence Guide" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box" }} />
+          </div>
+          <div style={{ marginBottom:14 }}>
+            <label style={{ fontSize:9, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", display:"block", marginBottom:6 }}>Description</label>
+            <input value={resourceForm.description} onChange={e => setResourceForm(f => ({...f, description:e.target.value}))} placeholder="What is this resource about?" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box" }} />
+          </div>
+          <div style={{ marginBottom:20 }}>
+            <label style={{ fontSize:9, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", display:"block", marginBottom:6 }}>File *</label>
+            <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.mp4,.mov" onChange={e => setResourceForm(f => ({...f, file:e.target.files[0]}))} style={{ fontSize:12, fontFamily:FONTS.body, width:"100%" }} />
+            {resourceForm.file && <div style={{ fontSize:10, color:B.success, marginTop:6 }}>✓ {resourceForm.file.name}</div>}
+          </div>
+          <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
+            <Btn variant="ghost" onClick={() => setAddResource(null)}>Cancel</Btn>
+            <Btn variant="blush" onClick={async () => {
+              if (!resourceForm.title || !resourceForm.file) { alert("Title and file are required."); return; }
+              setResourceUploading(true);
+              try {
+                const file = resourceForm.file;
+                const ext = file.name.split('.').pop();
+                const fileName = `${Date.now()}-${file.name}`;
+                const { data: uploadData, error: uploadError } = await supabase.storage.from("resources").upload(fileName, file, { contentType: file.type });
+                if (uploadError) throw uploadError;
+                const { data: urlData } = supabase.storage.from("resources").getPublicUrl(fileName);
+                const menteeEmail = addResource === "global" ? null : addResource.mentee.email;
+                await supabase.from("resources").insert([{
+                  title: resourceForm.title, description: resourceForm.description,
+                  file_url: urlData.publicUrl, file_name: file.name, file_type: ext,
+                  mentee_email: menteeEmail
+                }]);
+                // Notify mentee if specific
+                if (menteeEmail) {
+                  await supabase.functions.invoke('send-message', {
+                    body: { mentee_email: menteeEmail, sender:"jess", text:`📎 I just added a new resource for you: "${resourceForm.title}". Check your Resources tab!` }
+                  });
+                }
+                setAddResource(null);
+                setResourceForm({ title:"", description:"", file:null });
+                alert("Resource added successfully!");
+              } catch(e) { alert(`Error: ${e.message}`); }
+              setResourceUploading(false);
+            }} disabled={resourceUploading}>{resourceUploading ? "Uploading…" : "Upload Resource"}</Btn>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   // ── Session Scheduling Modal ─────────────────────────────────────────────
   const hasExistingSession = scheduleSession?.nextSession?.date;
 
@@ -5080,6 +5309,7 @@ const AdminDashboard = ({ onLogout }) => {
       {WelcomeLetterModal}
       {SessionScheduleModal}
       {AssignTaskModal}
+      {ResourceModal}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:opacity .15s;cursor:pointer} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}}`}</style>
 
       {useSidebar && (
@@ -5441,6 +5671,9 @@ const AdminDashboard = ({ onLogout }) => {
                          </button>
                          <button onClick={() => setAssignTask(m)} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
                            <Ic n="check" size={12} color={B.steel} />Assign Task
+                         </button>
+                         <button onClick={() => { setAddResource({ mentee: m }); setResourceForm({ title:"", description:"", file:null }); }} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                           <Ic n="file" size={12} color={B.steel} />Add Resource
                          </button>
                          <button onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase", marginLeft:"auto" }}>
                            <Ic n="send" size={12} color={B.white} />Welcome Letter
