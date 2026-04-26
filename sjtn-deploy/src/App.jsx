@@ -2247,7 +2247,7 @@ const MenteePortal = ({ user, onLogout }) => {
           <div style={{ display:"flex", gap:2 }}>
             <input ref={msgImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setMsgImage(e.target.files[0])} />
             <button onClick={() => msgImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
-              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={B.mid} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              📷
             </button>
             <input value={msgInput} onChange={e => setMsgInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg()} placeholder="Message Jess…" style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, background: B.white, fontWeight: 300 }} />
             <button onClick={sendMsg} style={{ width: 44, height: 44, background: B.blush, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><Ic n="send" size={14} color={B.white} /></button>
@@ -2415,7 +2415,7 @@ const MenteePortal = ({ user, onLogout }) => {
               <span style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>Posting as {user.firstName}</span>
               <input ref={commPostImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setCommPostImage(e.target.files[0])} />
               <button onClick={() => commPostImageRef.current?.click()} style={{ display:"flex", alignItems:"center", gap:4, padding:"4px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, fontSize:9, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>
-                <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke={B.mid} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Photo
+                📷Photo
               </button>
             </div>
             <button onClick={submitCommPost} disabled={!commPostInput.trim() && !commPostImage} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: (commPostInput.trim() || commPostImage) ? B.blush : B.cloud, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: (commPostInput.trim() || commPostImage) ? "pointer" : "default", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
@@ -5362,7 +5362,7 @@ const AdminDashboard = ({ onLogout }) => {
             <div style={{ display:"flex", gap:2 }}>
               <input ref={chatImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setChatImage(e.target.files[0])} />
               <button onClick={() => chatImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
-                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={B.mid} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                📷
               </button>
               <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder={recording ? "Recording voice note..." : `Reply to ${contacts[selChat]?.name}…`} disabled={recording} style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, fontWeight: 300, opacity: recording ? 0.5 : 1 }} />
               {/* Voice note button */}
