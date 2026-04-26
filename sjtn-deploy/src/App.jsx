@@ -2246,8 +2246,8 @@ const MenteePortal = ({ user, onLogout }) => {
           )}
           <div style={{ display:"flex", gap:2 }}>
             <input ref={msgImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setMsgImage(e.target.files[0])} />
-              <button onClick={() => msgImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.off, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0, transition:"all .15s" }}>
-                <Ic n="file" size={16} color={B.mid} />
+              <button onClick={() => msgImageRef.current?.click()} style={{ width:44, height:44, border:"none", background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0, fontSize:22, color:B.white, fontWeight:300, lineHeight:1 }}>
+                +
               </button>
             <input value={msgInput} onChange={e => setMsgInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg()} placeholder="Message Jess…" style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, background: B.white, fontWeight: 300 }} />
             <button onClick={sendMsg} style={{ width: 44, height: 44, background: B.blush, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><Ic n="send" size={14} color={B.white} /></button>
@@ -5390,8 +5390,8 @@ const AdminDashboard = ({ onLogout }) => {
             )}
             <div style={{ display:"flex", gap:2 }}>
               <input ref={chatImageRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e => setChatImage(e.target.files[0])} />
-              <button onClick={() => chatImageRef.current?.click()} style={{ width:44, height:44, border:`1px solid ${B.cloud}`, background:B.off, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0, transition:"all .15s" }}>
-                <Ic n="file" size={16} color={B.mid} />
+              <button onClick={() => chatImageRef.current?.click()} style={{ width:44, height:44, border:"none", background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0, fontSize:22, color:B.white, fontWeight:300, lineHeight:1 }}>
+                +
               </button>
               <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder={recording ? "Recording voice note..." : `Reply to ${contacts[selChat]?.name}…`} disabled={recording} style={{ flex: 1, border: `1px solid ${B.cloud}`, padding: "12px 14px", fontSize: 14, color: B.black, outline: "none", fontFamily: FONTS.body, fontWeight: 300, opacity: recording ? 0.5 : 1 }} />
               {/* Voice note button */}
