@@ -2105,24 +2105,17 @@ const MenteePortal = ({ user, onLogout }) => {
 
         {/* ── Resources from Jess ── */}
         {menteeResources.length > 0 && (
-          <Card style={{ marginBottom: 16 }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-              <Section>Resources from Jess</Section>
-              <button onClick={() => setView("resources")} style={{ fontSize:9, color:B.blush, border:"none", background:"none", cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase", padding:0 }}>View All →</button>
+          <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"18px 20px", marginBottom:16, display:"flex", alignItems:"center", justifyContent:"space-between", gap:16 }}>
+            <div>
+              <Section style={{ color:B.blushLight, marginBottom:4 }}>Resources from Jess</Section>
+              <div style={{ color:B.ivory, fontSize:13, fontWeight:300 }}>
+                {menteeResources.length} resource{menteeResources.length !== 1 ? "s" : ""} available for you
+              </div>
             </div>
-            {menteeResources.slice(0,3).map(r => (
-              <a key={r.id} href={r.file_url} target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:`1px solid ${B.cloud}`, textDecoration:"none" }}>
-                <div style={{ width:32, height:32, background:B.blushPale, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                  <Ic n="file" size={14} color={B.blush} />
-                </div>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:12, fontWeight:700, color:B.black }}>{r.title}</div>
-                  {r.description && <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{r.description}</div>}
-                </div>
-                <span style={{ fontSize:8, fontWeight:700, color:B.blush, background:`${B.blush}15`, padding:"2px 7px", letterSpacing:1, textTransform:"uppercase", flexShrink:0 }}>{r.file_type?.toUpperCase()}</span>
-              </a>
-            ))}
-          </Card>
+            <Btn variant="blush" onClick={() => setView("resources")}>
+              View Resources →
+            </Btn>
+          </div>
         )}
       </Pg>
     ),
