@@ -154,6 +154,7 @@ const PX = {
   /* ── Category icons — premium line style ── */
   catWin:"M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z", catTip:"M12 2a7 7 0 017 7c0 2.9-1.7 5.4-4.2 6.6V17a1 1 0 01-1 1h-3.6a1 1 0 01-1-1v-1.4A7 7 0 015 9a7 7 0 017-7zM9.5 21h5M10.5 19h3", catQuestion:"M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01", catResource:"M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6M9 13h6M9 17h4", catIntro:"M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z",
   user:"M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z",
+  image:"M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM8.5 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 15l-5-5L5 21",
 };
 const Ic = ({ n, size = 18, color = "currentColor", sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
