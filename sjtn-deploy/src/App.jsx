@@ -5306,23 +5306,40 @@ const AdminDashboard = ({ onLogout }) => {
 
   const MessagesView = (
     <div style={{ display: "flex", height: isMobile ? "calc(100dvh - 116px)" : "calc(100vh - 56px)", overflow: "hidden" }}>
+
+      {/* ── Contact Sidebar ── */}
       {(!isMobile || showChatList) && (
-        <div style={{ width: isMobile ? "100%" : 210, borderRight: `1px solid ${B.cloud}`, background: B.white, flexShrink: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ padding: "16px 18px", borderBottom: `1px solid ${B.cloud}` }}>
-            <Section style={{ marginBottom: 6 }}>Messages</Section>
-            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 26, textTransform: "uppercase", color: B.black, margin: 0, letterSpacing: "-0.5px" }}>Inbox</h2>
+        <div style={{ width: isMobile ? "100%" : 260, borderRight: `1px solid ${B.cloud}`, background: B.white, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "18px 20px", borderBottom: `1px solid ${B.cloud}`, background: B.black }}>
+            <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>Messages</div>
+            <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, textTransform: "uppercase", color: B.ivory, margin: 0, letterSpacing: "-0.5px" }}>Inbox</h2>
           </div>
-          {contacts.length === 0 ? (
-            <div style={{ padding:"32px 18px", textAlign:"center", color:B.mid, fontSize:13, fontWeight:300 }}>No messages yet. Messages from mentees will appear here.</div>
-          ) : contacts.map((c, i) => (
-            <div key={i} onClick={() => { setSelChat(i); if (isMobile) setShowChatList(false); }} style={{ padding: "14px 18px", borderBottom: `1px solid ${B.cloud}`, cursor: "pointer", background: selChat === i && !isMobile ? B.blushPale : "transparent", borderLeft: selChat === i && !isMobile ? `3px solid ${B.blush}` : "3px solid transparent" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{c.name}</span>
-                {c.unread > 0 && <span style={{ background: B.blush, color: B.white, fontSize: 8, fontWeight: 700, padding: "1px 5px" }}>{c.unread}</span>}
-              </div>
-              <p style={{ fontSize: 11, color: B.mid, margin: 0, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", fontWeight: 300 }}>{c.preview}</p>
-            </div>
-          ))}
+          <div style={{ flex:1, overflowY:"auto" }}>
+            {contacts.length === 0 ? (
+              <div style={{ padding:"32px 18px", textAlign:"center", color:B.mid, fontSize:13, fontWeight:300 }}>No messages yet.</div>
+            ) : contacts.map((c, i) => {
+              const isActive = selChat === i;
+              return (
+                <div key={i} onClick={() => { setSelChat(i); if (isMobile) setShowChatList(false); }}
+                  style={{ padding:"14px 18px", borderBottom:`1px solid ${B.cloud}`, cursor:"pointer", borderLeft:`3px solid ${isActive ? B.blush : "transparent"}`, background: isActive ? B.blushPale : "transparent", transition:"background .15s" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                    {/* Avatar */}
+                    <div style={{ width:40, height:40, background: isActive ? B.blush : B.black, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:B.white, flexShrink:0, letterSpacing:"0.05em", transition:"background .15s" }}>
+                      {c.name.split(" ").map(w => w[0]).join("").slice(0,2)}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:3 }}>
+                        <span style={{ fontSize:13, fontWeight:700, color: isActive ? B.blush : B.black }}>{c.name}</span>
+                        {c.unread > 0 && <span style={{ background:B.blush, color:B.white, fontSize:8, fontWeight:700, padding:"2px 6px", borderRadius:10 }}>{c.unread}</span>}
+                      </div>
+                      <div style={{ fontSize:10, color:B.mid, fontWeight:300, letterSpacing:0.5, textTransform:"uppercase" }}>{c.tier === "elite" ? "3-Month Elite" : "30-Day Intensive"}</div>
+                      <p style={{ fontSize:11, color:B.mid, margin:"4px 0 0", overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", fontWeight:300 }}>{c.preview}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
       {(!isMobile || !showChatList) && (
@@ -5331,15 +5348,29 @@ const AdminDashboard = ({ onLogout }) => {
             <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", background:B.off }}>
               <div style={{ textAlign:"center" }}>
                 <Ic n="message" size={40} color={B.cloud} />
-                <p style={{ color:B.mid, fontSize:13, marginTop:16, fontWeight:300 }}>Select a conversation to reply</p>
+                <p style={{ color:B.mid, fontSize:13, marginTop:16, fontWeight:300 }}>Select a conversation from the left</p>
               </div>
             </div>
           ) : (
             <>
-          <div style={{ padding: "12px 18px", borderBottom: `1px solid ${B.cloud}`, display: "flex", alignItems: "center", gap: 10, background: B.white, flexShrink: 0 }}>
-            {isMobile && <button onClick={() => setShowChatList(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><Ic n="back" size={18} color={B.blush} /></button>}
-            <div style={{ width: 30, height: 30, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: B.white }}>{contacts[selChat]?.name.split(" ").map(w => w[0]).join("")}</div>
-            <div><div style={{ fontWeight: 700, fontSize: 13, color: B.black, letterSpacing: "0.02em" }}>{contacts[selChat]?.name}</div><Tag>{contacts[selChat]?.tier === "elite" ? "3-Month Elite" : "30-Day Intensive"}</Tag></div>
+          {/* Chat header — clear mentee identity */}
+          <div style={{ background:B.black, padding:"14px 20px", display:"flex", alignItems:"center", gap:14, flexShrink:0, borderBottom:`3px solid ${B.blush}` }}>
+            {isMobile && <button onClick={() => setShowChatList(true)} style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}><Ic n="back" size={18} color={B.blush} /></button>}
+            <div style={{ width:44, height:44, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:B.white, flexShrink:0 }}>
+              {contacts[selChat]?.name.split(" ").map(w => w[0]).join("").slice(0,2)}
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:16, fontWeight:700, color:B.ivory, letterSpacing:"0.02em" }}>{contacts[selChat]?.name}</div>
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:2 }}>
+                <span style={{ fontSize:9, fontWeight:700, color:B.blush, border:`1px solid ${B.blush}`, padding:"1px 8px", letterSpacing:1.5, textTransform:"uppercase" }}>{contacts[selChat]?.tier === "elite" ? "3-Month Elite" : "30-Day Intensive"}</span>
+                <span style={{ fontSize:10, color:"#666", fontWeight:300 }}>{contacts[selChat]?.email}</span>
+              </div>
+            </div>
+            {/* Safety indicator */}
+            <div style={{ background:`${B.blush}20`, border:`1px solid ${B.blush}40`, padding:"6px 12px", flexShrink:0 }}>
+              <div style={{ fontSize:8, fontWeight:700, color:B.blushLight, letterSpacing:1.5, textTransform:"uppercase" }}>Sending to</div>
+              <div style={{ fontSize:11, fontWeight:700, color:B.blushLight }}>{contacts[selChat]?.name.split(" ")[0]}</div>
+            </div>
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 18px", background: B.off }}>
             {(chatMsgs[selChat] || []).map((m, i) => {
@@ -5347,6 +5378,9 @@ const AdminDashboard = ({ onLogout }) => {
               return (
                 <div key={i} style={{ display: "flex", justifyContent: isJ ? "flex-end" : "flex-start", marginBottom: 12 }}>
                   <div style={{ maxWidth: "70%" }}>
+                    <div style={{ fontSize:9, color:B.mid, fontWeight:700, letterSpacing:1, textTransform:"uppercase", marginBottom:3, textAlign: isJ ? "right" : "left" }}>
+                      {isJ ? "Jess" : contacts[selChat]?.name.split(" ")[0]}
+                    </div>
                     <div style={{ background: isJ ? B.black : B.white, border: isJ ? "none" : `1px solid ${B.cloud}`, padding: "10px 14px" }}>
                       {m.audioUrl ? (
                         <div>
@@ -5380,7 +5414,10 @@ const AdminDashboard = ({ onLogout }) => {
               <span style={{ fontSize:10, color:B.mid, fontWeight:300 }}>Tap mic again to send</span>
             </div>
           )}
-          <div style={{ padding: "10px 18px", background: B.white, display: "flex", flexDirection:"column", gap:6, flexShrink: 0 }}>
+          <div style={{ padding: "10px 18px", background: B.white, display: "flex", flexDirection:"column", gap:6, flexShrink: 0, borderTop:`1px solid ${B.cloud}` }}>
+            <div style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase" }}>
+              Replying to {contacts[selChat]?.name.split(" ")[0]}
+            </div>
             {chatImage && (
               <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 10px", background:B.off, border:`1px solid ${B.cloud}` }}>
                 <Ic n="file" size={12} color={B.blush} />
