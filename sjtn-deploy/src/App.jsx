@@ -2434,34 +2434,43 @@ const MenteePortal = ({ user, onLogout }) => {
       <Pg title="Resources" sub="Resource Library">
         <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Tools, guides, and templates curated by Jess for your growth.</p>
 
-        {/* Jess's uploaded resources */}
-        {menteeResources.length > 0 && (
-          <div style={{ marginBottom:24 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
-              <div style={{ width:3, height:20, background:B.blush, flexShrink:0 }} />
-              <Section style={{ color:B.blush }}>From Jess</Section>
-            </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
-              {menteeResources.map(r => (
-                <Card key={r.id} style={{ padding:"14px 18px" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12 }}>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
-                        <span style={{ fontSize:12, fontWeight:700, color:B.black }}>{r.title}</span>
-                        <span style={{ fontSize:8, fontWeight:700, color:B.blush, background:`${B.blush}15`, padding:"2px 7px", letterSpacing:1, textTransform:"uppercase" }}>{r.file_type?.toUpperCase()}</span>
-                        {!r.mentee_email && <span style={{ fontSize:7, color:B.mid, fontWeight:300 }}>For all mentees</span>}
+        {/* Jess's uploaded resources grouped by category */}
+        {menteeResources.length > 0 && (() => {
+          const catColors = { "Pricing":B.blush, "Client Attraction":B.success, "Business Setup":"#9B6EA0", "Mindset":B.amber, "Social Media":"#E91E8C", "Education":"#2196F3", "Templates":"#FF6B35", "Other":B.steel, "General":B.mid };
+          const grouped = menteeResources.reduce((acc, r) => {
+            const cat = r.category || "General";
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(r);
+            return acc;
+          }, {});
+          return Object.entries(grouped).map(([cat, items]) => (
+            <div key={cat} style={{ marginBottom:24 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+                <div style={{ width:3, height:20, background:catColors[cat] || B.blush, flexShrink:0 }} />
+                <Section style={{ color:catColors[cat] || B.blush }}>{cat}</Section>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+                {items.map(r => (
+                  <Card key={r.id} style={{ padding:"14px 18px" }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12 }}>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+                          <span style={{ fontSize:12, fontWeight:700, color:B.black }}>{r.title}</span>
+                          <span style={{ fontSize:8, fontWeight:700, color:catColors[cat]||B.blush, background:`${catColors[cat]||B.blush}15`, padding:"2px 7px", letterSpacing:1, textTransform:"uppercase" }}>{r.file_type?.toUpperCase()}</span>
+                          {!r.mentee_email && <span style={{ fontSize:7, color:B.mid, fontWeight:300 }}>For all</span>}
+                        </div>
+                        {r.description && <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{r.description}</div>}
                       </div>
-                      {r.description && <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>{r.description}</div>}
+                      <a href={r.file_url} target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:5, padding:"7px 12px", border:`1px solid ${B.cloud}`, background:"none", color:B.steel, fontSize:9, textDecoration:"none", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", flexShrink:0 }}>
+                        <Ic n="download" size={11} color={catColors[cat]||B.blush} />Access
+                      </a>
                     </div>
-                    <a href={r.file_url} target="_blank" rel="noreferrer" style={{ display:"flex", alignItems:"center", gap:5, padding:"7px 12px", border:`1px solid ${B.cloud}`, background:"none", color:B.steel, fontSize:9, textDecoration:"none", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1.5, textTransform:"uppercase", flexShrink:0 }}>
-                      <Ic n="download" size={11} color={B.blush} />Access
-                    </a>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          ));
+        })()}
         {[
           { topic: "Pricing", color: B.blush, items: [{ name: "Pricing Calculator Workbook", type: "PDF", desc: "Set your prices with confidence using Jess's formula.", unlocked: true }, { name: "How to Raise Prices Without Losing Clients", type: "Guide", desc: "The exact language and timing strategy Jess uses.", unlocked: true }, { name: "Price Increase Announcement Templates", type: "Templates", desc: "3 caption templates ready to copy and customize.", unlocked: profile.tierKey !== "hourly" }] },
           { topic: "Client Attraction", color: B.success, items: [{ name: "Instagram Bio Formula", type: "Template", desc: "A bio that converts visitors to bookings.", unlocked: true }, { name: "5-Day Content Plan for Nail Techs", type: "PDF", desc: "Post ideas for every day of your first week.", unlocked: true }, { name: "Rebooking Script", type: "Guide", desc: "What to say at checkout to guarantee the next appointment.", unlocked: profile.tierKey !== "hourly" }] },
@@ -3705,9 +3714,12 @@ const InviteForm = ({ isMobile }) => {
 /* ── Admin Community Resources — manage global resources ── */
 const AdminCommunityResources = () => {
   const [resources, setResources] = useState([]);
-  const [form, setForm] = useState({ title:"", description:"", file:null });
+  const [form, setForm] = useState({ title:"", description:"", category:"", file:null });
   const [busy, setBusy] = useState(false);
+  const [customCat, setCustomCat] = useState(false);
   const fileRef = useRef(null);
+
+  const DEFAULT_CATS = ["Pricing", "Client Attraction", "Business Setup", "Mindset", "Social Media", "Education", "Templates", "Other"];
 
   useEffect(() => {
     supabase.from('resources').select('*').order('created_at', { ascending: false })
@@ -3726,10 +3738,12 @@ const AdminCommunityResources = () => {
       const { data: urlData } = supabase.storage.from("resources").getPublicUrl(fileName);
       const { data: inserted } = await supabase.from('resources').insert([{
         title: form.title, description: form.description, file_url: urlData.publicUrl,
-        file_name: file.name, file_type: ext, mentee_email: null
+        file_name: file.name, file_type: ext, mentee_email: null,
+        category: form.category || "General"
       }]).select().single();
       if (inserted) setResources(r => [inserted, ...r]);
-      setForm({ title:"", description:"", file:null });
+      setForm({ title:"", description:"", category:"", file:null });
+      setCustomCat(false);
       if (fileRef.current) fileRef.current.value = "";
     } catch(e) { alert(`Error: ${e.message}`); }
     setBusy(false);
@@ -3751,6 +3765,19 @@ const AdminCommunityResources = () => {
         <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:14 }}>Add Global Resource — All Mentees</div>
         <input value={form.title} onChange={e => setForm(f => ({...f, title:e.target.value}))} placeholder="Resource title..." style={{ width:"100%", padding:"9px 12px", background:"#1a1a1a", border:`1px solid #333`, color:B.ivory, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", marginBottom:8 }} />
         <input value={form.description} onChange={e => setForm(f => ({...f, description:e.target.value}))} placeholder="Short description..." style={{ width:"100%", padding:"9px 12px", background:"#1a1a1a", border:`1px solid #333`, color:B.ivory, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", marginBottom:8 }} />
+        <div style={{ display:"flex", gap:8, marginBottom:8, flexWrap:"wrap" }}>
+          {DEFAULT_CATS.map(cat => (
+            <button key={cat} onClick={() => { setForm(f => ({...f, category:cat})); setCustomCat(false); }}
+              style={{ padding:"5px 10px", border:`1px solid ${form.category===cat ? B.blush : "#444"}`, background: form.category===cat ? B.blush : "transparent", color: form.category===cat ? B.white : "#999", fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+              {cat}
+            </button>
+          ))}
+          <button onClick={() => { setCustomCat(true); setForm(f => ({...f, category:""})); }}
+            style={{ padding:"5px 10px", border:`1px solid ${customCat ? B.blush : "#444"}`, background: customCat ? B.blush : "transparent", color: customCat ? B.white : "#999", fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+            + Custom
+          </button>
+        </div>
+        {customCat && <input value={form.category} onChange={e => setForm(f => ({...f, category:e.target.value}))} placeholder="Enter category name..." style={{ width:"100%", padding:"9px 12px", background:"#1a1a1a", border:`1px solid ${B.blush}`, color:B.ivory, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box", marginBottom:8 }} />}
         <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
           <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onChange={e => setForm(f => ({...f, file:e.target.files[0]}))} style={{ fontSize:12, flex:1, color:B.ivory }} />
           <button onClick={upload} disabled={busy} style={{ padding:"9px 18px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", opacity:busy?0.6:1 }}>
@@ -4006,8 +4033,9 @@ const AdminDashboard = ({ onLogout }) => {
   const [menteeDrawer, setMenteeDrawer] = useState(null);
   const [assignTask, setAssignTask] = useState(null); // { mentee }
   const [addResource, setAddResource] = useState(null); // null | { mentee } | "global"
-  const [resourceForm, setResourceForm] = useState({ title:"", description:"", file:null });
+  const [resourceForm, setResourceForm] = useState({ title:"", description:"", category:"", file:null });
   const [resourceUploading, setResourceUploading] = useState(false);
+  const RESOURCE_CATS = ["Pricing", "Client Attraction", "Business Setup", "Mindset", "Social Media", "Education", "Templates", "Other"];
   const [taskForm, setTaskForm] = useState({ title:"", due_date:"", jess_notes:"" });
   const [taskBusy, setTaskBusy] = useState(false);
   const [adminTasks, setAdminTasks] = useState({});
@@ -4958,6 +4986,17 @@ const AdminDashboard = ({ onLogout }) => {
             <label style={{ fontSize:9, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", display:"block", marginBottom:6 }}>Description</label>
             <input value={resourceForm.description} onChange={e => setResourceForm(f => ({...f, description:e.target.value}))} placeholder="What is this resource about?" style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", boxSizing:"border-box" }} />
           </div>
+          <div style={{ marginBottom:14 }}>
+            <label style={{ fontSize:9, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", display:"block", marginBottom:6 }}>Category</label>
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+              {RESOURCE_CATS.map(cat => (
+                <button key={cat} onClick={() => setResourceForm(f => ({...f, category:cat}))}
+                  style={{ padding:"5px 10px", border:`1px solid ${resourceForm.category===cat ? B.blush : B.cloud}`, background: resourceForm.category===cat ? B.blush : "transparent", color: resourceForm.category===cat ? B.white : B.mid, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
           <div style={{ marginBottom:20 }}>
             <label style={{ fontSize:9, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", display:"block", marginBottom:6 }}>File *</label>
             <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.mp4,.mov" onChange={e => setResourceForm(f => ({...f, file:e.target.files[0]}))} style={{ fontSize:12, fontFamily:FONTS.body, width:"100%" }} />
@@ -4979,7 +5018,7 @@ const AdminDashboard = ({ onLogout }) => {
                 await supabase.from("resources").insert([{
                   title: resourceForm.title, description: resourceForm.description,
                   file_url: urlData.publicUrl, file_name: file.name, file_type: ext,
-                  mentee_email: menteeEmail
+                  mentee_email: menteeEmail, category: resourceForm.category || "General"
                 }]);
                 // Notify mentee if specific
                 if (menteeEmail) {
