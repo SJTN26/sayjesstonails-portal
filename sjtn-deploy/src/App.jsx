@@ -5822,7 +5822,7 @@ const AdminDashboard = ({ onLogout }) => {
                        )}
 
                        {/* Action area — organized groups */}
-                       <div style={{ padding:"12px 16px", background:B.off }}>
+                       <div style={{ padding:"12px 16px", background:B.white, borderTop:`1px solid ${B.cloud}` }}>
 
                          {/* Primary actions row */}
                          <div style={{ display:"grid", gridTemplateColumns: m.nextSession ? "1fr 1fr 1fr" : "1fr 1fr", gap:6, marginBottom:6 }}>
@@ -5857,22 +5857,22 @@ const AdminDashboard = ({ onLogout }) => {
                              </button>
                            )}
 
-                           <button onClick={() => { setSelChat(i); setView("messages"); }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                             <Ic n="message" size={12} color={B.steel} />Message
+                           <button onClick={() => { setSelChat(i); setView("messages"); }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.white, border:`1px solid ${B.steel}`, color:B.black, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="message" size={12} color={B.black} />Message
                            </button>
                          </div>
 
                          {/* Secondary actions row */}
                          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6, marginBottom:6 }}>
-                           <button onClick={() => setScheduleSession(m)} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                             <Ic n="calendar" size={12} color={B.steel} />
+                           <button onClick={() => setScheduleSession(m)} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.white, border:`1px solid ${B.steel}`, color:B.black, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="calendar" size={12} color={B.black} />
                              {m.nextSession ? "Reschedule" : "Schedule"}
                            </button>
-                           <button onClick={() => setAssignTask(m)} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                             <Ic n="check" size={12} color={B.steel} />Task
+                           <button onClick={() => setAssignTask(m)} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.white, border:`1px solid ${B.steel}`, color:B.black, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="check" size={12} color={B.black} />Task
                            </button>
-                           <button onClick={() => { setAddResource({ mentee: m }); setResourceForm({ title:"", description:"", category:"", file:null }); }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:"transparent", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
-                             <Ic n="file" size={12} color={B.steel} />Resource
+                           <button onClick={() => { setAddResource({ mentee: m }); setResourceForm({ title:"", description:"", category:"", file:null }); }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.white, border:`1px solid ${B.steel}`, color:B.black, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                             <Ic n="file" size={12} color={B.black} />Resource
                            </button>
                          </div>
 
