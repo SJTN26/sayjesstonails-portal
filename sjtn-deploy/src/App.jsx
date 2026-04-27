@@ -3447,35 +3447,52 @@ const InvoicesView = () => {
             {/* From / To */}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:28 }}>
               <div>
-                <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:2, textTransform:"uppercase", marginBottom:6 }}>From</div>
-                <div style={{ fontSize:13, fontWeight:700, color:B.black }}>Jess — SayJessToNails</div>
-                <div style={{ fontSize:11, color:B.mid }}>portal.sayjesstonails.com</div>
+                <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>From</div>
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <img src="https://eytysuurxsfsbimgpion.supabase.co/storage/v1/object/public/Assets/SJTN_Favicon.png" alt="SJTN" style={{ width:36, height:36, objectFit:"contain", flexShrink:0 }} onError={e => { e.target.style.display="none"; }} />
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:700, color:B.black }}>Jess — SayJessToNails</div>
+                    <div style={{ fontSize:11, color:B.mid }}>info@sayjesstonails.com</div>
+                  </div>
+                </div>
               </div>
               <div>
-                <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:2, textTransform:"uppercase", marginBottom:6 }}>To</div>
+                <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>To</div>
                 <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{form.to}</div>
                 <div style={{ fontSize:11, color:B.mid }}>{form.email}</div>
               </div>
             </div>
 
             {/* Line item */}
-            <div style={{ border:`1px solid ${B.cloud}`, borderRadius:2, overflow:"hidden", marginBottom:20 }}>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:12, padding:"10px 16px", background:B.off, borderBottom:`1px solid ${B.cloud}` }}>
-                <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1.5, textTransform:"uppercase" }}>Description</div>
-                <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1.5, textTransform:"uppercase" }}>Amount</div>
-              </div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:12, padding:"14px 16px" }}>
-                <div>
-                  <div style={{ fontSize:13, fontWeight:600, color:B.black }}>{form.tier}</div>
-                  {form.note && <div style={{ fontSize:11, color:B.mid, marginTop:3, fontStyle:"italic" }}>{form.note}</div>}
+            {(() => {
+              const tierDescriptions = {
+                "Hourly Session": "One-on-one mentorship session with Jess — personalized coaching, Q&A, and strategy.",
+                "30-Day Intensive": "30 days of focused mentorship — daily access, custom action plan, and accountability check-ins.",
+                "3-Month Elite": "Full 3-month elite program — deep-dive strategy, weekly calls, community access, and ongoing support.",
+                "Community": "Monthly SayJessToNails community membership — resources, group coaching, and peer support.",
+              };
+              const desc = tierDescriptions[form.tier] || null;
+              return (
+                <div style={{ border:`1px solid ${B.cloud}`, borderRadius:2, overflow:"hidden", marginBottom:20 }}>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:12, padding:"10px 16px", background:B.off, borderBottom:`1px solid ${B.cloud}` }}>
+                    <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1.5, textTransform:"uppercase" }}>Description</div>
+                    <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1.5, textTransform:"uppercase" }}>Amount</div>
+                  </div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:12, padding:"14px 16px" }}>
+                    <div>
+                      <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{form.tier}</div>
+                      {desc && <div style={{ fontSize:11, color:B.steel, marginTop:3 }}>{desc}</div>}
+                      {form.note && <div style={{ fontSize:11, color:B.mid, marginTop:4, fontStyle:"italic" }}>{form.note}</div>}
+                    </div>
+                    <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:18, color:B.black, whiteSpace:"nowrap" }}>${Number(form.amount).toLocaleString()}</div>
+                  </div>
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:12, padding:"12px 16px", background:B.off, borderTop:`1px solid ${B.cloud}` }}>
+                    <div style={{ fontSize:10, fontWeight:700, color:B.black, letterSpacing:1, textTransform:"uppercase" }}>Total Due</div>
+                    <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:20, color:B.blush }}>${Number(form.amount).toLocaleString()}</div>
+                  </div>
                 </div>
-                <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:18, color:B.black }}>${Number(form.amount).toLocaleString()}</div>
-              </div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:12, padding:"12px 16px", background:B.off, borderTop:`1px solid ${B.cloud}` }}>
-                <div style={{ fontSize:10, fontWeight:700, color:B.black, letterSpacing:1, textTransform:"uppercase" }}>Total Due</div>
-                <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:20, color:B.blush }}>${Number(form.amount).toLocaleString()}</div>
-              </div>
-            </div>
+              );
+            })()}
 
             <div style={{ fontSize:11, color:B.mid, marginBottom:24 }}>A Stripe payment link will be generated and saved. You can share it with {form.to} directly.</div>
 
