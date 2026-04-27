@@ -4311,26 +4311,17 @@ const AdminDashboard = ({ onLogout }) => {
     fetchAllMessages();
     const interval = setInterval(fetchAllMessages, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [menteeList.length]);
 
-  // Separate polling just for unread count — independent of contacts state
+  // Derive unread count from contacts state — already computed in fetchAllMessages
   useEffect(() => {
-    const fetchUnread = () => {
-      if (viewRef.current === "messages") {
-        setAdminUnread(0);
-        return;
-      }
-      supabase.functions.invoke("send-message", { body: { action: "get_all" } })
-        .then(({ data }) => {
-          const allMsgs = data?.messages || [];
-          const unread = allMsgs.filter(m => m.sender === "mentee" && !m.read).length;
-          setAdminUnread(unread);
-        });
-    };
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    if (viewRef.current === "messages") {
+      setAdminUnread(0);
+      return;
+    }
+    const total = contacts.reduce((sum, c) => sum + (c.unread || 0), 0);
+    setAdminUnread(total);
+  }, [contacts, view]);
 
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs, selChat]);
 
