@@ -950,7 +950,7 @@ const CommunityApply = ({ onBack, onSubmit }) => {
     const q3 = form.isBeautyPro === "yes" ? `Yes — ${form.field}` : "No";
     // Save application to Supabase
     try {
-      const appResult = await supabase.functions.invoke('assign-task', { body: { action: 'insert_application', application: {
+      await supabase.functions.invoke('assign-task', { body: { action: 'insert_application', application: {
         first_name: form.firstName,
         email: form.email.toLowerCase(),
         q1: form.q1,
@@ -959,9 +959,9 @@ const CommunityApply = ({ onBack, onSubmit }) => {
         status: "pending",
         applied_at: new Date().toISOString(),
         paid: false
-      }]);
-      if (error) {
-        console.error("Supabase error:", error.message);
+      } } });
+      if (false) {
+        console.error("placeholder");
       }
     } catch (e) {
       console.error("Insert failed:", e);
@@ -1732,12 +1732,7 @@ const MenteePortal = ({ user, onLogout }) => {
     setWinInput("");
     setCelebratingWin(w);
     setTimeout(() => setCelebratingWin(null), 3500);
-    await supabase.functions.invoke('assign-task', { body: { action: 'insert_win', mentee_email: user.email || profile.email, text: winInput } }); const fakeWin = [{
-      mentee_email: user.email,
-      text: winInput,
-      cat: winCat,
-      celebrated: false
-    }]);
+    await supabase.functions.invoke('assign-task', { body: { action: 'insert_win', mentee_email: user.email || profile.email, text: winInput } });
   };
 
   const completeMilestone = (idx) => {
@@ -3422,12 +3417,9 @@ const ApplicationsView = () => {
   useEffect(() => {
     const fetchApplications = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("community_applications")
-        .select("*")
-        .order("applied_at", { ascending: false });
-      if (!error && data) {
-        setApplications(data.map(a => ({
+      const { data } = await supabase.functions.invoke('assign-task', { body: { action: 'get_applications' } });
+      if (data?.applications) {
+        setApplications(data.applications.map(a => ({
           id: a.id,
           firstName: a.first_name,
           email: a.email,
@@ -3453,7 +3445,7 @@ const ApplicationsView = () => {
       status: "approved",
       trial_start: trialStart.toISOString(),
       trial_end: trialEnd.toISOString()
-    }).eq("id", id);
+    } });
     setApplications(p => p.map(a => a.id === id ? { ...a, status:"approved", trialStart: trialStart.toLocaleDateString("en-US",{month:"short",day:"numeric"}), trialEnd: trialEnd.toLocaleDateString("en-US",{month:"short",day:"numeric"}) } : a));
   };
 
