@@ -1687,7 +1687,7 @@ const MenteePortal = ({ user, onLogout }) => {
   useEffect(() => {
     if (view === "messages" && user.email) {
       const email = user.email;
-      supabase.functions.invoke("send-message", { body: { action: "mark_read", mentee_email: email } })
+      supabase.functions.invoke("send-message", { body: { action: "mark_read", mentee_email: email, role: "mentee" } })
         .then(() => {
           setMsgs(p => p.map(m => ({ ...m, unread: false })));
         });
