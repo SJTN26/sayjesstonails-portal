@@ -3667,7 +3667,7 @@ const InviteGraduateForm = () => {
         graduated: true,
         start_date: new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }),
         sessions_completed: 0, sessions_total: 0, days_remaining: 0, total_days: 0
-      }, { onConflict: "email" });
+      } } });
       if (nameRef.current) nameRef.current.value = "";
       if (emailRef.current) emailRef.current.value = "";
       setDone(true);
