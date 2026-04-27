@@ -960,9 +960,6 @@ const CommunityApply = ({ onBack, onSubmit }) => {
         applied_at: new Date().toISOString(),
         paid: false
       } } });
-      if (false) {
-        console.error("placeholder");
-      }
     } catch (e) {
       console.error("Insert failed:", e);
     }
@@ -5448,9 +5445,10 @@ const AdminDashboard = ({ onLogout }) => {
               // Refresh sessions history
               supabase.functions.invoke("assign-task", { body: { action: "get_sessions" } })
                 .then(({ data }) => {
-                  if (data) {
+                  const sessions_data = data?.sessions || [];
+                  if (sessions_data.length > 0) {
                     const grouped = {};
-                    data.forEach(s => {
+                    sessions_data.forEach(s => {
                       if (!grouped[s.mentee_email]) grouped[s.mentee_email] = [];
                       grouped[s.mentee_email].push(s);
                     });
