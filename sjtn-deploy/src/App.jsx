@@ -3297,10 +3297,12 @@ const InvoicesView = () => {
   const [showNew, setShowNew] = useState(false);
   const [preview, setPreview] = useState(false);
   const [toast, setToast] = useState(null);
+  const [filter, setFilter] = useState("active");
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [form, setForm] = useState({ to:"", email:"", tier:"Hourly Session", amount:"250", note:"" });
   const tiers = [["Hourly Session","250"],["30-Day Intensive","1120"],["3-Month Elite","3360"],["Community","27"],["Custom",""]];
-  const statusColor = { paid: B.success, pending: B.amber, draft: B.mid };
-  const statusBg    = { paid: B.successPale, pending: B.amberPale, draft: B.off };
+  const statusColor = { paid: B.success, pending: B.amber, draft: B.mid, declined: B.mid };
+  const statusBg    = { paid: B.successPale, pending: B.amberPale, draft: B.off, declined: B.off };
 
   const showToast = (msg, isError = false) => {
     setToast({ msg, isError });
@@ -3357,6 +3359,29 @@ const InvoicesView = () => {
       showToast("Marked as paid!");
     } catch (e) {
       showToast("Failed to update invoice", true);
+    }
+  };
+
+  const declineInvoice = async (id) => {
+    try {
+      const { error } = await supabase.functions.invoke('stripe-invoice', { body: { action: 'decline_invoice', id } });
+      if (error) throw error;
+      setInvoices(p => p.map(i => i.id === id ? { ...i, status: "declined" } : i));
+      showToast("Invoice moved to declined.");
+    } catch (e) {
+      showToast("Failed to decline invoice", true);
+    }
+  };
+
+  const deleteInvoice = async (id) => {
+    try {
+      const { error } = await supabase.functions.invoke('stripe-invoice', { body: { action: 'delete_invoice', id } });
+      if (error) throw error;
+      setInvoices(p => p.filter(i => i.id !== id));
+      setConfirmDelete(null);
+      showToast("Invoice deleted.");
+    } catch (e) {
+      showToast("Failed to delete invoice", true);
     }
   };
 
@@ -3508,54 +3533,102 @@ const InvoicesView = () => {
       )}
 
       {/* Summary tiles */}
-      <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)", gap:2, marginBottom:20 }}>
-        {[["Total Sent", invoices.length, false], ["Paid", invoices.filter(i=>i.status==="paid").length, false], ["Pending", invoices.filter(i=>i.status==="pending").length, true]].map(([l,v,warn]) => (
-          <div key={l} style={{ padding:"16px 18px", border:`1px solid ${B.cloud}`, background:B.white, borderTop:`3px solid ${warn&&v>0?B.amber:l==="Paid"?B.success:B.cloud}` }}>
+      <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(4,1fr)", gap:2, marginBottom:20 }}>
+        {[
+          ["Total Sent", invoices.filter(i=>i.status!=="declined").length, false, B.cloud],
+          ["Paid", invoices.filter(i=>i.status==="paid").length, false, B.success],
+          ["Pending", invoices.filter(i=>i.status==="pending").length, true, B.amber],
+          ["Declined", invoices.filter(i=>i.status==="declined").length, false, B.mid],
+        ].map(([l,v,warn,accent]) => (
+          <div key={l} style={{ padding:"16px 18px", border:`1px solid ${B.cloud}`, background:B.white, borderTop:`3px solid ${warn&&v>0?B.amber:accent}` }}>
             <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:32, color:B.black, lineHeight:1 }}>{loading ? "—" : v}</div>
             <div style={{ fontSize:9, fontWeight:700, color:B.mid, marginTop:5, letterSpacing:1.5, textTransform:"uppercase" }}>{l}</div>
           </div>
         ))}
       </div>
 
+      {/* Filter tabs */}
+      <div style={{ display:"flex", gap:2, marginBottom:16 }}>
+        {[["active","Active"],["declined","Declined"],["all","All"]].map(([val,label]) => (
+          <button key={val} onClick={() => setFilter(val)} style={{ padding:"7px 16px", fontSize:9, fontWeight:700, letterSpacing:1, textTransform:"uppercase", fontFamily:FONTS.body, cursor:"pointer", border:`1px solid ${filter===val?B.blush:B.cloud}`, background:filter===val?B.blush:"transparent", color:filter===val?B.white:B.steel, transition:"all 0.15s" }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Confirm delete modal */}
+      {confirmDelete && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:9998, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ background:B.white, padding:"28px 32px", maxWidth:380, width:"90%", borderTop:`3px solid ${B.black}` }}>
+            <p style={{ fontSize:9, fontWeight:700, color:B.mid, letterSpacing:2, textTransform:"uppercase", margin:"0 0 10px" }}>Confirm Delete</p>
+            <p style={{ fontSize:14, fontWeight:700, color:B.black, margin:"0 0 8px" }}>Permanently delete this invoice?</p>
+            <p style={{ fontSize:12, color:B.mid, margin:"0 0 22px", lineHeight:1.5 }}>This cannot be undone. If you may need to revisit it, use <strong>Decline</strong> instead.</p>
+            <div style={{ display:"flex", gap:8 }}>
+              <button onClick={() => deleteInvoice(confirmDelete)} style={{ padding:"9px 20px", background:B.black, border:"none", color:B.white, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Delete Forever</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding:"9px 20px", background:"none", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Invoice list */}
       {loading ? (
         <div style={{ textAlign:"center", padding:"40px 0", color:B.mid, fontSize:13 }}>Loading invoices…</div>
-      ) : invoices.length === 0 ? (
-        <div style={{ textAlign:"center", padding:"40px 0", color:B.mid, fontSize:13 }}>No invoices yet. Create your first one above.</div>
       ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
-          {invoices.map((inv) => (
-            <div key={inv.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, borderRadius:4, padding:"16px 18px" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:8 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-                  <div style={{ width:36, height:36, background:B.blushPale, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:B.blush, flexShrink:0 }}>
-                    {(inv.to_name||"?").split(" ").map(w=>w[0]).join("").toUpperCase()}
-                  </div>
-                  <div>
-                    <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{inv.to_name}</div>
-                    <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{inv.mentee_email}</div>
-                    <div style={{ fontSize:10, color:B.steel, fontWeight:300, marginTop:2 }}>{inv.tier} · {formatDate(inv.created_at)}</div>
-                    {inv.note && <div style={{ fontSize:10, color:B.steel, fontWeight:300, marginTop:2, fontStyle:"italic" }}>{inv.note}</div>}
-                  </div>
-                </div>
-                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:22, color:B.black }}>{formatAmount(inv.amount)}</div>
-                  <span style={{ fontSize:8, fontWeight:700, padding:"3px 8px", letterSpacing:1, textTransform:"uppercase", color:statusColor[inv.status]||B.mid, background:statusBg[inv.status]||B.off }}>{inv.status}</span>
-                </div>
-              </div>
-              <div style={{ display:"flex", gap:6, marginTop:12, flexWrap:"wrap" }}>
-                {inv.stripe_payment_link && (
-                  <a href={inv.stripe_payment_link} target="_blank" rel="noreferrer" style={{ padding:"7px 14px", background:B.blush, border:"none", color:B.white, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", textDecoration:"none", display:"inline-block" }}>
-                    Copy Link ↗
-                  </a>
-                )}
-                {inv.status === "pending" && (
-                  <button onClick={() => markPaid(inv.id)} style={{ padding:"7px 14px", background:B.success, border:"none", color:B.white, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Mark Paid</button>
-                )}
-              </div>
+        (() => {
+          const filtered = invoices.filter(inv => {
+            if (filter === "active") return inv.status !== "declined";
+            if (filter === "declined") return inv.status === "declined";
+            return true;
+          });
+          if (filtered.length === 0) return (
+            <div style={{ textAlign:"center", padding:"40px 0", color:B.mid, fontSize:13 }}>
+              {filter === "declined" ? "No declined invoices." : filter === "active" ? "No active invoices yet. Create one above." : "No invoices yet."}
             </div>
-          ))}
-        </div>
+          );
+          return (
+            <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+              {filtered.map((inv) => (
+                <div key={inv.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, borderRadius:4, padding:"16px 18px", opacity: inv.status==="declined" ? 0.75 : 1 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:8 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                      <div style={{ width:36, height:36, background: inv.status==="declined" ? B.off : B.blushPale, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color: inv.status==="declined" ? B.mid : B.blush, flexShrink:0 }}>
+                        {(inv.to_name||"?").split(" ").map(w=>w[0]).join("").toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{inv.to_name}</div>
+                        <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{inv.mentee_email}</div>
+                        <div style={{ fontSize:10, color:B.steel, fontWeight:300, marginTop:2 }}>{inv.tier} · {formatDate(inv.created_at)}</div>
+                        {inv.note && <div style={{ fontSize:10, color:B.steel, fontWeight:300, marginTop:2, fontStyle:"italic" }}>{inv.note}</div>}
+                      </div>
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:22, color: inv.status==="declined" ? B.mid : B.black }}>{formatAmount(inv.amount)}</div>
+                      <span style={{ fontSize:8, fontWeight:700, padding:"3px 8px", letterSpacing:1, textTransform:"uppercase", color:statusColor[inv.status]||B.mid, background:statusBg[inv.status]||B.off }}>{inv.status}</span>
+                    </div>
+                  </div>
+                  <div style={{ display:"flex", gap:6, marginTop:12, flexWrap:"wrap" }}>
+                    {inv.stripe_payment_link && inv.status !== "declined" && (
+                      <a href={inv.stripe_payment_link} target="_blank" rel="noreferrer" style={{ padding:"7px 14px", background:B.blush, border:"none", color:B.white, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", textDecoration:"none", display:"inline-block" }}>
+                        Copy Link ↗
+                      </a>
+                    )}
+                    {inv.status === "pending" && (
+                      <button onClick={() => markPaid(inv.id)} style={{ padding:"7px 14px", background:B.success, border:"none", color:B.white, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Mark Paid</button>
+                    )}
+                    {inv.status === "pending" && (
+                      <button onClick={() => declineInvoice(inv.id)} style={{ padding:"7px 14px", background:"none", border:`1px solid ${B.cloud}`, color:B.steel, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Decline</button>
+                    )}
+                    {inv.status === "declined" && (
+                      <button onClick={() => declineInvoice(inv.id)} style={{ display:"none" }} />
+                    )}
+                    <button onClick={() => setConfirmDelete(inv.id)} style={{ padding:"7px 14px", background:"none", border:`1px solid ${B.cloud}`, color:B.mid, fontSize:9, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()
       )}
     </div>
   );
