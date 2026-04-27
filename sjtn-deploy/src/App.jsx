@@ -4263,7 +4263,6 @@ const AdminDashboard = ({ onLogout }) => {
   useEffect(() => { viewRef.current = view; }, [view]);
 
   useEffect(() => {
-  useEffect(() => {
     const fetchAllMessages = () => {
       supabase.functions.invoke("send-message", { body: { action: "get_all" } })
         .then(({ data }) => {
