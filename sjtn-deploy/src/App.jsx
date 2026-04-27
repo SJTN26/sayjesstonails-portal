@@ -1476,10 +1476,8 @@ const MenteePortal = ({ user, onLogout }) => {
   useEffect(() => {
     if (!user.email) return;
     const fetchResources = async () => {
-      const [{ data: specific }, { data: global }] = await Promise.all([
-        supabase.functions.invoke('assign-task', { body: { action: 'get_resources', mentee_email: user.email } })
-      ]);
-      setMenteeResources([...(specific || []), ...(global || [])]);
+      const { data } = await supabase.functions.invoke('assign-task', { body: { action: 'get_resources', mentee_email: user.email } });
+      if (data?.resources) setMenteeResources(data.resources);
     };
     fetchResources();
     const interval = setInterval(fetchResources, 30000);
@@ -4268,13 +4266,15 @@ const AdminDashboard = ({ onLogout }) => {
   useEffect(() => { viewRef.current = view; }, [view]);
 
   useEffect(() => {
+  useEffect(() => {
     const fetchAllMessages = () => {
       supabase.functions.invoke("send-message", { body: { action: "get_all" } })
         .then(({ data }) => {
-          const allMsgs = data?.messages || [];
+          const allMsgs = (data?.messages || []).filter(m => !m.text?.startsWith("__GRADUATION__"));
           if (!allMsgs || allMsgs.length === 0) return;
           const grouped = {};
           allMsgs.forEach(m => {
+            if (!m.mentee_email) return;
             if (!grouped[m.mentee_email]) grouped[m.mentee_email] = [];
             grouped[m.mentee_email].push(m);
           });
@@ -4315,7 +4315,7 @@ const AdminDashboard = ({ onLogout }) => {
     fetchAllMessages();
     const interval = setInterval(fetchAllMessages, 5000);
     return () => clearInterval(interval);
-  }, [menteeList]);
+  }, []);
 
   // Separate polling just for unread count — independent of contacts state
   useEffect(() => {
