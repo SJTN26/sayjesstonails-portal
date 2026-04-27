@@ -3295,6 +3295,7 @@ const InvoicesView = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  const [preview, setPreview] = useState(false);
   const [toast, setToast] = useState(null);
   const [form, setForm] = useState({ to:"", email:"", tier:"Hourly Session", amount:"250", note:"" });
   const tiers = [["Hourly Session","250"],["30-Day Intensive","1120"],["3-Month Elite","3360"],["Community","27"],["Custom",""]];
@@ -3339,6 +3340,7 @@ const InvoicesView = () => {
       showToast(`Invoice sent! Payment link created.`);
       setForm({ to:"", email:"", tier:"Hourly Session", amount:"250", note:"" });
       setShowNew(false);
+      setPreview(false);
       await fetchInvoices();
     } catch (e) {
       showToast(e.message || "Failed to create invoice", true);
@@ -3369,6 +3371,8 @@ const InvoicesView = () => {
     return "$" + (cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0 });
   };
 
+  const closeNew = () => { setShowNew(false); setPreview(false); setForm({ to:"", email:"", tier:"Hourly Session", amount:"250", note:"" }); };
+
   /* InvoicesView uses its own Pg-like wrapper since Pg is scoped to AdminDashboard */
   return (
     <div style={{ padding: isMobile ? "20px 18px 40px" : "28px 32px", maxWidth: 1020, width: "100%", position:"relative" }}>
@@ -3386,14 +3390,14 @@ const InvoicesView = () => {
           <p style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", margin:"0 0 8px" }}>Payment Requests</p>
           <h1 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:isMobile?32:44, textTransform:"uppercase", color:B.black, margin:0, lineHeight:0.95, letterSpacing:"-0.5px" }}>Invoices</h1>
         </div>
-        <button onClick={() => setShowNew(s => !s)} style={{ display:"flex", alignItems:"center", gap:6, padding:"9px 16px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase", flexShrink:0 }}>
+        <button onClick={() => { setShowNew(s => !s); setPreview(false); }} style={{ display:"flex", alignItems:"center", gap:6, padding:"9px 16px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:"0.08em", textTransform:"uppercase", flexShrink:0 }}>
           <Ic n="send" size={12} color={B.white} />New Invoice
         </button>
       </div>
 
       <p style={{ color:B.mid, fontSize:13, margin:"-14px 0 20px", fontWeight:300 }}>Request payment or send an invoice to any mentee or lead. A Stripe payment link is created automatically.</p>
 
-      {showNew && (
+      {showNew && !preview && (
         <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderRadius:4, marginBottom:16, padding:"20px 20px", borderTop:`3px solid ${B.blush}` }}>
           <p style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", margin:"0 0 14px" }}>New Payment Request</p>
           <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:10, marginBottom:10 }}>
@@ -3421,10 +3425,67 @@ const InvoicesView = () => {
             <textarea value={form.note} onChange={e => setForm(p=>({...p,note:e.target.value}))} placeholder="e.g. Discovery call follow-up — 3-Month Elite program" rows={2} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", resize:"vertical", color:B.black, boxSizing:"border-box" }} />
           </div>
           <div style={{ display:"flex", gap:8 }}>
-            <Btn variant="blush" icon="send" onClick={sendInvoice} disabled={!form.to.trim()||!form.email.trim()||sending}>
-              {sending ? "Creating…" : "Send Invoice"}
+            <Btn variant="blush" onClick={() => { if (!form.to.trim()||!form.email.trim()||!form.amount) return; setPreview(true); }} disabled={!form.to.trim()||!form.email.trim()||!form.amount}>
+              Preview Invoice
             </Btn>
-            <Btn variant="ghost" onClick={() => setShowNew(false)}>Cancel</Btn>
+            <Btn variant="ghost" onClick={closeNew}>Cancel</Btn>
+          </div>
+        </div>
+      )}
+
+      {/* ── PREVIEW ── */}
+      {showNew && preview && (
+        <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderRadius:4, marginBottom:16, borderTop:`3px solid ${B.blush}` }}>
+          {/* Preview header */}
+          <div style={{ padding:"14px 20px", borderBottom:`1px solid ${B.cloud}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <p style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", margin:0 }}>Invoice Preview</p>
+            <button onClick={() => setPreview(false)} style={{ fontSize:10, fontWeight:700, color:B.steel, background:"none", border:"none", cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>← Edit</button>
+          </div>
+
+          {/* Mock invoice card */}
+          <div style={{ padding: isMobile ? "24px 20px" : "32px 40px" }}>
+            {/* From / To */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:28 }}>
+              <div>
+                <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:2, textTransform:"uppercase", marginBottom:6 }}>From</div>
+                <div style={{ fontSize:13, fontWeight:700, color:B.black }}>Jess — SayJessToNails</div>
+                <div style={{ fontSize:11, color:B.mid }}>portal.sayjesstonails.com</div>
+              </div>
+              <div>
+                <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:2, textTransform:"uppercase", marginBottom:6 }}>To</div>
+                <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{form.to}</div>
+                <div style={{ fontSize:11, color:B.mid }}>{form.email}</div>
+              </div>
+            </div>
+
+            {/* Line item */}
+            <div style={{ border:`1px solid ${B.cloud}`, borderRadius:2, overflow:"hidden", marginBottom:20 }}>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:12, padding:"10px 16px", background:B.off, borderBottom:`1px solid ${B.cloud}` }}>
+                <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1.5, textTransform:"uppercase" }}>Description</div>
+                <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:1.5, textTransform:"uppercase" }}>Amount</div>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:12, padding:"14px 16px" }}>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600, color:B.black }}>{form.tier}</div>
+                  {form.note && <div style={{ fontSize:11, color:B.mid, marginTop:3, fontStyle:"italic" }}>{form.note}</div>}
+                </div>
+                <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:18, color:B.black }}>${Number(form.amount).toLocaleString()}</div>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:12, padding:"12px 16px", background:B.off, borderTop:`1px solid ${B.cloud}` }}>
+                <div style={{ fontSize:10, fontWeight:700, color:B.black, letterSpacing:1, textTransform:"uppercase" }}>Total Due</div>
+                <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:20, color:B.blush }}>${Number(form.amount).toLocaleString()}</div>
+              </div>
+            </div>
+
+            <div style={{ fontSize:11, color:B.mid, marginBottom:24 }}>A Stripe payment link will be generated and saved. You can share it with {form.to} directly.</div>
+
+            <div style={{ display:"flex", gap:8 }}>
+              <Btn variant="blush" icon="send" onClick={sendInvoice} disabled={sending}>
+                {sending ? "Creating…" : "Confirm & Create Invoice"}
+              </Btn>
+              <Btn variant="ghost" onClick={() => setPreview(false)}>← Edit</Btn>
+              <Btn variant="ghost" onClick={closeNew}>Cancel</Btn>
+            </div>
           </div>
         </div>
       )}
