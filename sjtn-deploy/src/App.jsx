@@ -4490,7 +4490,7 @@ const AdminDashboard = ({ onLogout }) => {
     supabase.functions.invoke('assign-task', { body: { action: 'get_all_profiles' } })
       .then(({ data }) => {
         if (data?.profiles && data.profiles.length > 0) {
-          const realMentees = data.profiles.map(m => ({
+          const realMentees = data.profiles.filter(m => !m.graduated && m.role !== "community").map(m => ({
             email: m.email,
             name: m.first_name || m.email.split("@")[0],
             firstName: m.first_name || m.email.split("@")[0],
