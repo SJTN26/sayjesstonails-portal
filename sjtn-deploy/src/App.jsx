@@ -4777,18 +4777,45 @@ const AdminDashboard = ({ onLogout }) => {
       )}
 
       <Section style={{ marginBottom: 10 }}>Today's Sessions</Section>
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2 }}>
-        {[{ name: "Jessica M.", time: "2:00 PM", session: "Session 4" }, { name: "Casey L.", time: "4:30 PM", session: "Check-in" }].map((s, i) => (
-          <div key={i} style={{ background: B.black, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: `3px solid ${B.blush}` }}>
-            <div>
-              <div style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{s.time} EST</div>
-              <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 16, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em" }}>{s.name}</div>
-              <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300 }}>{s.session}</div>
-            </div>
-            <Btn size="sm" variant="blush" icon="video">Start</Btn>
+      {(() => {
+        const todayStr = new Date().toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" }); // e.g. "Monday, Apr 28"
+        const todaySessions = menteeList.filter(m => {
+          if (!m.nextSession?.date) return false;
+          // next_session_date stored as e.g. "Monday Apr 28" or "Apr 28" — normalize both
+          const d = m.nextSession.date.replace(",","").toLowerCase();
+          return todayStr.replace(",","").toLowerCase().split(" ").some(part => part.length > 2 && d.includes(part))
+            && d.split(" ").some(part => todayStr.replace(",","").toLowerCase().includes(part));
+        });
+        if (todaySessions.length === 0) return (
+          <div style={{ background: B.off, border: `1px solid ${B.cloud}`, borderLeft: `3px solid ${B.cloud}`, padding: "20px 18px", color: B.mid, fontSize: 12, fontWeight: 300 }}>
+            No sessions scheduled for today.
           </div>
-        ))}
-      </div>
+        );
+        return (
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2 }}>
+            {todaySessions.map((s, i) => (
+              <div key={i} style={{ background: B.black, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: `3px solid ${B.blush}` }}>
+                <div>
+                  <div style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{s.nextSession.time}</div>
+                  <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 16, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em" }}>{s.name}</div>
+                  <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300 }}>{s.nextSession.type}</div>
+                </div>
+                <Btn size="sm" variant="blush" icon="video" onClick={async () => {
+                  const { data, error } = await supabase.functions.invoke('create-video-room', {
+                    body: { sessionName: s.nextSession.type, participantName: s.name }
+                  });
+                  if (error || data?.error) { alert("Could not create video room."); return; }
+                  await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: { email: s.email, room_url: data.url } } });
+                  await supabase.functions.invoke('send-message', {
+                    body: { mentee_email: s.email, sender: "jess", text: `Hi ${s.firstName || s.name.split(" ")[0]}! Your session is live — "${s.nextSession.type}". Join whenever you're ready! 🎯` }
+                  });
+                  setAdminCall({ name: s.name, roomUrl: data.url, menteeEmail: s.email, isSession: true, sessionType: s.nextSession.type });
+                }}>Start</Btn>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
     </Pg>
   );
 
