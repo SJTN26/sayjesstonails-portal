@@ -3027,12 +3027,6 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     await supabase.functions.invoke("community-post", { body: { action: "insert", author: user.firstName, avatar: user.avatar, text: postInput, cat: postCat, is_jess: false, is_graduate: isGraduate } });
   };
 
-  const resources = [
-    { name: "Pricing Confidence Starter Guide", type: "PDF", desc: "Set your prices without apology.", cat: "Pricing" },
-    { name: "Instagram Bio Formula", type: "Template", desc: "A bio that books clients while you sleep.", cat: "Marketing" },
-    { name: "Rebooking Script", type: "Guide", desc: "What to say at checkout every time.", cat: "Clients" },
-  ];
-
   const NAV_C = [
     { id:"feed",      icon:"users",    label:"Community Feed" },
     { id:"resources", icon:"book",     label:"Resources" },
