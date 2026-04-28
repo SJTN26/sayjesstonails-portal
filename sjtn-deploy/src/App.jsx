@@ -6116,12 +6116,12 @@ const AdminDashboard = ({ onLogout }) => {
                            <div style={{ width:46, height:46, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, fontWeight:800, color:B.white, flexShrink:0, letterSpacing:"0.05em" }}>{m.avatar}</div>
                            <div>
                              <div style={{ fontSize:16, fontWeight:700, color:B.ivory, letterSpacing:"0.02em" }}>{m.name}</div>
-                             <div style={{ fontSize:10, color:"#666", fontWeight:300, marginTop:2 }}>{m.email}</div>
+                             <div style={{ fontSize:10, color:"#aaa", fontWeight:300, marginTop:2 }}>{m.email}</div>
                            </div>
                          </div>
                          <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0, maxWidth:isMobile?120:"none" }}>
                            <div style={{ fontSize:8, fontWeight:700, color:B.blush, border:`1px solid ${B.blush}`, padding:"3px 10px", letterSpacing:1.5, textTransform:"uppercase", textAlign:"right", lineHeight:1.3 }}>{m.tier}</div>
-                           {!isMobile && <div style={{ fontSize:8, color:"#555", fontWeight:300 }}>Since {m.startDate}</div>}
+                           {!isMobile && <div style={{ fontSize:8, color:"#aaa", fontWeight:300 }}>Since {m.startDate}</div>}
                          </div>
                        </div>
 
