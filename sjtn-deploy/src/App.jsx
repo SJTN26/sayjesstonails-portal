@@ -1497,11 +1497,7 @@ const MenteePortal = ({ user, onLogout }) => {
               pinned: p.pinned, isGraduate: p.is_graduate || false
             })));
           } else {
-            setCommunityPosts([
-              { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Drop it below.", likes:12, comments:["Sarah T.", "Maya R.", "Bria M."], isJess:true, cat:"tip" },
-              { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you.", likes:24, comments:[], isJess:false, cat:"win" },
-              { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. Thank you Jess and this whole community.", likes:31, comments:[], isJess:false, cat:"win" },
-            ]);
+            setCommunityPosts([]);
           }
         });
     };
@@ -1935,10 +1931,7 @@ const MenteePortal = ({ user, onLogout }) => {
                 <audio controls src={jessVoice.audioUrl} style={{ width:"100%", height:32, outline:"none" }} controlsList="nodownload" />
               </>
             ) : (
-              <>
-                <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>"Your pricing confidence starts with your language."</div>
-                <div style={{ marginTop: 8, height: 3, background: "#2a2a2a", borderRadius: 2 }} />
-              </>
+              <div style={{ color: "#9a8880", fontSize: 12, fontWeight: 300, fontStyle: "italic" }}>Jess hasn't posted this week's note yet — check back soon.</div>
             )}
           </div>
         </div>
@@ -2358,10 +2351,7 @@ const MenteePortal = ({ user, onLogout }) => {
                 <audio controls src={jessVoice.audioUrl} style={{ width:"100%", height:32, outline:"none" }} controlsList="nodownload" />
               </>
             ) : (
-              <>
-                <p style={{ color: B.ivory, fontSize: 13, fontWeight: 300, margin: "0 0 8px", lineHeight: 1.4 }}>"Your pricing confidence starts with your language."</p>
-                <div style={{ height: 3, background: "#333", borderRadius: 2 }} />
-              </>
+              <p style={{ color: "#9a8880", fontSize: 12, fontWeight: 300, margin: 0, fontStyle: "italic" }}>Jess hasn't posted this week's note yet — check back soon.</p>
             )}
           </div>
         </div>
@@ -2402,6 +2392,11 @@ const MenteePortal = ({ user, onLogout }) => {
 
         {/* Feed */}
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {communityPosts.filter(post => !(post.pinned && post.audioUrl)).length === 0 && (
+            <div style={{ padding: "32px 20px", textAlign: "center", color: B.mid, fontSize: 13, fontWeight: 300, border: `1px solid ${B.cloud}`, background: B.white }}>
+              The community feed is just getting started — check back soon!
+            </div>
+          )}
           {communityPosts.filter(post => !(post.pinned && post.audioUrl)).map((post) => (
             <div key={post.id} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "20px 22px", borderTop: post.isJess ? `3px solid ${B.blush}` : `1px solid ${B.cloud}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
@@ -2952,14 +2947,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
               isGraduate: p.is_graduate || false
             })));
           } else {
-            setPosts([
-              { id:1, author:"Jess", avatar:"J", time:"Today 8:00 AM", text:"Good morning crew. This week's focus: your rebooking language. What do YOU say at checkout? Share below — let's build a script together.", likes:14, isJess:true, cat:"tip" },
-              { id:2, author:"Kayla T.", avatar:"KT", time:"Yesterday", text:"Just raised my prices for the 2nd time this quarter. Jess was RIGHT — the right clients don't leave. They congratulate you. Don't be afraid.", likes:31, isJess:false, cat:"win" },
-              { id:3, author:"Bria M.", avatar:"BM", time:"2 days ago", text:"5 new regulars this month. I literally cried. If you're on the fence about mentorship — just do it. Best investment I've made in myself.", likes:44, isJess:false, cat:"win" },
-              { id:4, author:"Savannah R.", avatar:"SR", time:"3 days ago", text:"Question: how do you handle clients who push back on price increases? Struggling with this right now.", likes:8, isJess:false, cat:"question" },
-              { id:5, author:"Jess", avatar:"J", time:"4 days ago", text:"Resource drop — the exact script I use to introduce a price increase without losing the relationship. Grab it in the Resources section.", likes:52, isJess:true, cat:"resource" },
-              { id:6, author:"Maya J.", avatar:"MJ", time:"5 days ago", text:"Just joined the community. So excited to be here with other nail techs who are serious about growth. Already feeling inspired.", likes:19, isJess:false, cat:"intro" },
-            ]);
+            setPosts([]);
           }
         });
     };
@@ -3084,6 +3072,11 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
 
         {/* Feed */}
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {posts.length === 0 && (
+            <div style={{ padding: "32px 20px", textAlign: "center", color: B.mid, fontSize: 13, fontWeight: 300, border: `1px solid ${B.cloud}`, background: B.white }}>
+              The community feed is getting started — be the first to post! 👇
+            </div>
+          )}
           {posts.map((post, i) => (
             <div key={post.id} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "20px 22px", borderTop: post.isJess ? `3px solid ${B.blush}` : `1px solid ${B.cloud}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
@@ -4239,6 +4232,11 @@ const AdminCommunity = ({ menteeList, communityList }) => {
             </div>
           </div>
 
+          {posts.length === 0 && (
+            <div style={{ padding: "32px 20px", textAlign: "center", color: B.mid, fontSize: 13, fontWeight: 300, border: `1px solid ${B.cloud}`, background: B.white }}>
+              No posts yet. Be the first to post in the community!
+            </div>
+          )}
           {posts.map(post => (
             <div key={post.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"16px 20px", marginBottom:2, borderLeft:`3px solid ${post.pinned ? B.amber : post.isJess ? B.blush : B.cloud}` }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:10 }}>
