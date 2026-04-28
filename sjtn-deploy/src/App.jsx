@@ -57,19 +57,9 @@ function useLayout() {
 /* ─── DATABASE ──────────────────────────────────────────────────────────── */
 const DB = {
   users: {
-    "jessica@example.com": { role:"mentee", password:"Demo@1234!", name:"Jessica M.", firstName:"Jessica", avatar:"JM", tier:"3-Month Elite", tierKey:"elite", startDate:"March 15, 2025", daysRemaining:48, totalDays:90, sessionsCompleted:3, sessionsTotal:6, goal:"Fill my books and raise my prices", nextSession:{ date:"Friday Apr 18", time:"2:00 PM EST", type:"Session 4 — Client Retention" }, milestones:[{label:"Complete intake form",done:true},{label:"Book Session 1",done:true},{label:"Join Skool community",done:true},{label:"Raise prices 15%",done:true},{label:"Gain 3 new clients",done:false},{label:"Launch Instagram strategy",done:false}], messages:[{from:"Jess",time:"Today 9:14 AM",text:"Hey! Thinking about your rebooking strategy for Friday — have some ideas I can't wait to share.",unread:true},{from:"You",time:"Yesterday",text:"Two clients accepted my new rate without hesitation. Still shocked!"},{from:"Jess",time:"Yesterday",text:"NOT surprised — your work is worth every penny. Keep going!"}], documents:[{name:"Welcome Packet — 3-Month Elite",type:"PDF",date:"Mar 15",category:"Welcome",size:"2.4 MB"},{name:"90-Day Business Plan",type:"PDF",date:"Mar 17",category:"Plans",size:"1.8 MB"},{name:"Session 1 Recording",type:"Video",date:"Mar 20",category:"Sessions",size:"—"},{name:"Session 1 Action Plan",type:"PDF",date:"Mar 20",category:"Sessions",size:"0.9 MB"},{name:"Pricing Worksheet",type:"PDF",date:"Mar 27",category:"Resources",size:"0.7 MB"},{name:"Session 2 Recording",type:"Video",date:"Apr 2",category:"Sessions",size:"—"},{name:"Session 3 Recording",type:"Video",date:"Apr 10",category:"Sessions",size:"—"}], schedule:[{date:"Apr 18",label:"Session 4",type:"session",time:"2:00 PM"},{date:"Apr 22",label:"Check-in",type:"checkin",time:"Flexible"},{date:"Apr 25",label:"Check-in",type:"checkin",time:"Flexible"},{date:"May 2",label:"Session 5",type:"session",time:"TBD"}], payments:[{date:"Mar 15, 2025",desc:"3-Month Elite Mentorship",amount:"$3,360.00",status:"Paid"}],
-    },
-    "taylor@example.com": { role:"mentee", password:"Demo@1234!", name:"Taylor R.", firstName:"Taylor", avatar:"TR", tier:"30-Day Intensive", tierKey:"intensive", startDate:"April 1, 2025", daysRemaining:18, totalDays:30, sessionsCompleted:1, sessionsTotal:2, goal:"Attract my first 5 consistent clients", nextSession:{ date:"Sunday Apr 20", time:"11:00 AM EST", type:"Session 2 — Momentum Review" }, milestones:[{label:"Complete intake form",done:true},{label:"Book Session 1",done:true},{label:"Update Instagram bio",done:true},{label:"Book 3 new clients",done:false},{label:"Implement pricing structure",done:false}], messages:[{from:"Jess",time:"Today 8:00 AM",text:"Check-in is due today — how are the pricing cards working?",unread:true},{from:"You",time:"Apr 15",text:"Posted my first reel and got 3 DMs asking about booking!"},{from:"Jess",time:"Apr 15",text:"THAT IS HUGE. This is exactly what we planned. Let's convert them."}], documents:[{name:"Welcome Packet — 30-Day",type:"PDF",date:"Apr 1",category:"Welcome",size:"2.1 MB"},{name:"30-Day Business Plan",type:"PDF",date:"Apr 3",category:"Plans",size:"1.4 MB"},{name:"Session 1 Recording",type:"Video",date:"Apr 5",category:"Sessions",size:"—"},{name:"Social Media Quick-Start",type:"PDF",date:"Apr 8",category:"Resources",size:"0.6 MB"}], schedule:[{date:"Apr 20",label:"Session 2",type:"session",time:"11:00 AM"},{date:"Apr 22",label:"Check-in",type:"checkin",time:"Flexible"},{date:"Apr 28",label:"End-of-Month Review",type:"review",time:"TBD"}], payments:[{date:"Apr 1, 2025",desc:"30-Day Intensive",amount:"$1,120.00",status:"Paid"}],
-    },
-    "jess@sayjesstonails.com": { role:"admin", password:"Admin@Jess2025!", name:"Jess Ramos", firstName:"Jess", avatar:"JR" },
-    "maya@example.com": { role:"community", password:"Demo@1234!", name:"Maya J.", firstName:"Maya", avatar:"MJ", tier:"Community Member", tierKey:"community", joinDate:"April 10, 2025" },
+    "jess@sayjesstonails.com": { role:"admin", name:"Jess Ramos", firstName:"Jess", avatar:"JR" },
   },
-  leads: [
-    { id:1, name:"Aaliyah Johnson", email:"aaliyah@example.com", phone:"(305) 555-0182", ig:"@aaliyahnails_miami", licensed:"Yes", experience:"1–3 years", challenge:"I'm undercharging and terrified to raise my prices without losing everyone.", goal:"Double my income in 90 days and stop feeling embarrassed about my rates.", tier:"3-Month Elite ($3,360)", how:"Instagram", slot:{day:"Monday",date:"Apr 21",time:"2:00 PM"}, status:"pending", submitted:"2 hours ago" },
-    { id:2, name:"Destiny Reyes", email:"destiny@example.com", phone:"(786) 555-0291", ig:"@destinyreyes_nails", licensed:"Yes", experience:"3+ years", challenge:"I can't keep clients past 2–3 visits despite consistent work.", goal:"Build a real rebooking system and reach 5 new regulars per month.", tier:"30-Day Intensive ($1,120)", how:"Word of mouth", slot:{day:"Tuesday",date:"Apr 22",time:"11:00 AM"}, status:"pending", submitted:"5 hours ago" },
-    { id:3, name:"Monique Davis", email:"monique@example.com", phone:"(954) 555-0374", ig:"@moniquedavis.nails", licensed:"No", experience:"Just starting", challenge:"Just got my license — no idea how to get my first clients or price myself.", goal:"Land my first 3 paying clients and feel confident about my pricing.", tier:"Hourly Session ($250)", how:"TikTok", slot:{day:"Wednesday",date:"Apr 23",time:"9:00 AM"}, status:"accepted", submitted:"Yesterday", acceptedAt:"1 hour ago" },
-    { id:4, name:"Priya Nair", email:"priya@example.com", phone:"(561) 555-0413", ig:"@priyasnailstudio", licensed:"Yes", experience:"3+ years", challenge:"I want to expand — teach, build a brand, create a second income stream.", goal:"Launch my first class in 90 days and build an income beyond the chair.", tier:"3-Month Elite ($3,360)", how:"Google", slot:{day:"Friday",date:"Apr 25",time:"2:00 PM"}, status:"declined", submitted:"2 days ago" },
-  ],
+  leads: [],
 };
 
 /* ─── LOGO — exact SVG from the real Illustrator file ───────────────────── */
@@ -690,9 +680,9 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
     setBusy(true); setErr("");
     Sec.record(email);
 
-    // First check demo/hardcoded accounts
+    // No hardcoded logins — all auth goes through Supabase
     const u = DB.users[email.toLowerCase()];
-    if (u && u.password === pass) {
+    if (u && u.password && u.password === pass) {
       onLogin(email.toLowerCase(), u, Sec.createSession({ email: email.toLowerCase(), role: u.role }));
       setBusy(false);
       return;
@@ -709,6 +699,14 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
       const tier = user.user_metadata?.tier || "Hourly Session";
       let role = user.user_metadata?.role || "mentee";
       const firstName = user.user_metadata?.first_name || email.split("@")[0];
+
+      // Admin email always gets admin role — use stored admin profile
+      if (email.toLowerCase() === "jess@sayjesstonails.com") {
+        const adminProfile = DB.users["jess@sayjesstonails.com"] || { role:"admin", name:"Jess Ramos", firstName:"Jess", avatar:"JR" };
+        onLogin(email.toLowerCase(), { ...adminProfile, email: email.toLowerCase() }, Sec.createSession({ email: email.toLowerCase(), role: "admin" }));
+        setBusy(false);
+        return;
+      }
 
       // Check if mentee has graduated — override role to community
       if (role === "mentee") {
@@ -3426,7 +3424,7 @@ const InvoicesView = () => {
         <div style={{ background:B.white, border:`1px solid ${B.cloud}`, borderRadius:4, marginBottom:16, padding:"20px 20px", borderTop:`3px solid ${B.blush}` }}>
           <p style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:3, textTransform:"uppercase", margin:"0 0 14px" }}>New Payment Request</p>
           <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:10, marginBottom:10 }}>
-            {[["Name","to","text","e.g. Taylor R."],["Email","email","email","e.g. taylor@example.com"]].map(([lbl,key,type,ph]) => (
+            {[["Name","to","text","e.g. Client Name"],["Email","email","email","e.g. client@email.com"]].map(([lbl,key,type,ph]) => (
               <div key={key}>
                 <div style={{ fontSize:10, fontWeight:700, color:B.steel, letterSpacing:1, textTransform:"uppercase", marginBottom:5 }}>{lbl}</div>
                 <input type={type} value={form[key]} onChange={e => setForm(p=>({...p,[key]:e.target.value}))} placeholder={ph} style={{ width:"100%", padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:13, fontFamily:FONTS.body, outline:"none", color:B.black, boxSizing:"border-box" }} />
@@ -4453,7 +4451,7 @@ const AdminDashboard = ({ onLogout }) => {
     setInvitingLead(null);
   };
   const [menteeList, setMenteeList] = useState(
-    Object.entries(DB.users).filter(([, u]) => u.role === "mentee").map(([email, u]) => ({ email, ...u }))
+    [] // Populated from Supabase on mount
   );
 
   // Fetch real mentees from Supabase and merge with demo data
@@ -4481,16 +4479,13 @@ const AdminDashboard = ({ onLogout }) => {
               type: m.next_session_type || "Session"
             } : null,
           }));
-          // Merge: keep demo users + add any real mentees not in demo
-          const demoEmails = Object.entries(DB.users).filter(([, u]) => u.role === "mentee").map(([e]) => e);
-          const demoMentees = Object.entries(DB.users).filter(([, u]) => u.role === "mentee").map(([email, u]) => ({ email, ...u }));
-          const newRealMentees = realMentees.filter(m => !demoEmails.includes(m.email));
-          setMenteeList([...demoMentees, ...newRealMentees]);
+          // Use only real Supabase mentees
+          setMenteeList(realMentees);
         }
       });
   }, []);
 
-  const communityList = Object.entries(DB.users).filter(([, u]) => u.role === "community").map(([email, u]) => ({ email, ...u }));
+  const communityList = []; // Community members are graduates managed via Supabase
 
   // Real revenue from invoices
   const [allInvoices, setAllInvoices] = useState([]);
@@ -5224,7 +5219,26 @@ const AdminDashboard = ({ onLogout }) => {
             {/* Action buttons */}
             <div style={{ display: "flex", gap: 8, marginTop: 24, justifyContent: "flex-end" }}>
               <Btn variant="ghost" onClick={() => setWelcomeLetter(null)}>Close</Btn>
-              <Btn variant="blush" icon="send" onClick={() => { alert(`Welcome letter sent to ${welcomeLetter.name}.`); setWelcomeLetter(null); }}>Send to {welcomeLetter.name}</Btn>
+              <Btn variant="blush" icon="send" onClick={async () => {
+                try {
+                  await supabase.functions.invoke('send-message', {
+                    body: {
+                      send_email: true,
+                      welcome_email: true,
+                      email_data: {
+                        email: welcomeLetter.email,
+                        firstName: welcomeLetter.name,
+                        tier: welcomeLetter.tier,
+                        startDate: welcomeLetter.startDate,
+                      }
+                    }
+                  });
+                  await supabase.functions.invoke('send-message', {
+                    body: { mentee_email: welcomeLetter.email, sender: "jess", text: `Hi ${welcomeLetter.name}! Your welcome letter has been sent to your email. So excited to work with you! 🎉` }
+                  });
+                } catch(e) { console.error("Welcome letter error:", e); }
+                setWelcomeLetter(null);
+              }}>Send to {welcomeLetter.name}</Btn>
             </div>
           </div>
         </div>
@@ -6129,7 +6143,7 @@ const AdminDashboard = ({ onLogout }) => {
 
                          {/* Tertiary actions row */}
                          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
-                           <button onClick={() => setWelcomeLetter({ name: m.firstName || m.name, tier: m.tier, startDate: m.startDate })} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+                           <button onClick={() => setWelcomeLetter({ name: m.firstName || m.name, email: m.email, tier: m.tier, startDate: m.startDate })} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
                              <Ic n="send" size={12} color={B.white} />Welcome Letter
                            </button>
                            <button onClick={async () => {
