@@ -4569,7 +4569,9 @@ const AdminDashboard = ({ onLogout }) => {
           const contactList = Object.entries(grouped).map(([email, msgs]) => {
             const currentContactEmail = selChatRef.current !== null && contacts[selChatRef.current]?.email;
             const isCurrentlyViewed = viewRef.current === "messages" && currentContactEmail === email;
-            const mentee = menteeList.find(m => m.email?.toLowerCase() === email?.toLowerCase());
+            const mentee = menteeList.find(m => m.email?.toLowerCase() === email?.toLowerCase())
+              || communityList.find(m => m.email?.toLowerCase() === email?.toLowerCase())
+              || graduates.find(m => m.email?.toLowerCase() === email?.toLowerCase());
             const name = mentee
               ? (mentee.firstName && mentee.firstName !== email.split("@")[0] ? mentee.firstName : mentee.name || mentee.firstName || email.split("@")[0])
               : email.split("@")[0];
