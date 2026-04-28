@@ -4488,7 +4488,15 @@ const AdminDashboard = ({ onLogout }) => {
   }, []);
 
   const communityList = Object.entries(DB.users).filter(([, u]) => u.role === "community").map(([email, u]) => ({ email, ...u }));
-  const totalRev = menteeList.reduce((s, m) => s + (m.tierKey === "elite" ? 3360 : m.tierKey === "intensive" ? 1120 : 250), 0);
+
+  // Real revenue from invoices
+  const [allInvoices, setAllInvoices] = useState([]);
+  useEffect(() => {
+    supabase.functions.invoke('stripe-invoice', { body: { action: 'get_invoices' } })
+      .then(({ data }) => { if (data?.invoices) setAllInvoices(data.invoices); });
+  }, []);
+  const totalRev = allInvoices.filter(i => i.status === "paid").reduce((s, i) => s + (i.amount / 100), 0);
+  const pendingRev = allInvoices.filter(i => i.status === "pending").reduce((s, i) => s + (i.amount / 100), 0);
 
   // Fetch all mentee conversations for admin with real-time
   const selChatRef = useRef(null);
@@ -4688,7 +4696,7 @@ const AdminDashboard = ({ onLogout }) => {
       <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Here's everything happening across your mentorship program.</p>
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 2, marginBottom: 20 }}>
-        {[[menteeList.length, "Active Mentees", true], [communityList.length, "Community Members", false], [pending.length, "Pending Leads", pending.length > 0], [`$${totalRev.toLocaleString()}`, "Total Revenue", false]].map(([v, l, accent], i) => (
+        {[[menteeList.length, "Active Mentees", true], [communityList.length, "Community Members", false], [`$${totalRev.toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})}`, "Revenue Collected", false], [`$${pendingRev.toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})}`, "Pending Revenue", pendingRev > 0]].map(([v, l, accent], i) => (
           <div key={i} style={{ padding: "18px 20px", border: `1px solid ${B.cloud}`, background: B.white, borderTop: `3px solid ${accent ? B.blush : B.cloud}` }}>
             <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 28 : 36, color: accent ? B.blush : B.black, lineHeight: 1 }}>{v}</div>
             <div style={{ fontSize: 9, fontWeight: 700, color: B.mid, marginTop: 6, letterSpacing: 1.5, textTransform: "uppercase" }}>{l}</div>
