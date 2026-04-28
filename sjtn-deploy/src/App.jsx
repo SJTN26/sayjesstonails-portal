@@ -1789,7 +1789,7 @@ const MenteePortal = ({ user, onLogout }) => {
         </div>
 
         {/* Letter body */}
-        <div style={{ padding: "28px 32px", flex: 1 }}>
+        <div style={{ padding: isMobile ? "20px 18px" : "28px 32px", flex: 1 }}>
           <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.85, marginBottom: 16, fontWeight: 300 }}>
             I am so incredibly proud of everything you've accomplished. You showed up, you did the work, and you proved what I already knew — that you are capable of building something real.
           </p>
@@ -1863,7 +1863,7 @@ const MenteePortal = ({ user, onLogout }) => {
         </div>
 
         {/* Letter body */}
-        <div style={{ padding: "28px 32px", flex: 1 }}>
+        <div style={{ padding: isMobile ? "20px 18px" : "28px 32px", flex: 1 }}>
           <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.85, marginBottom: 16, fontWeight: 300 }}>
             I'm so excited to support you in this next step of your nail journey. Congratulations on securing your spot in the <strong style={{ fontWeight: 700 }}>{profile.tier}</strong> mentorship with me.
           </p>
@@ -2879,7 +2879,7 @@ const GradWelcomeModal = ({ user, onDismiss, isMobile }) => (
           <span style={{ color:B.blushLight, fontStyle:"italic", fontWeight:300 }}>Inner Circle.</span>
         </h2>
       </div>
-      <div style={{ padding:"28px 32px", flex:1 }}>
+      <div style={{ padding:isMobile?"20px 18px":"28px 32px", flex:1 }}>
         <p style={{ fontSize:14, color:B.charcoal, lineHeight:1.85, marginBottom:16, fontWeight:300 }}>
           Welcome to your new home in the community. You've earned your place here — not just as a member, but as someone who went all in, did the work, and came out the other side.
         </p>
@@ -3470,7 +3470,7 @@ const InvoicesView = () => {
           {/* Mock invoice card */}
           <div style={{ padding: isMobile ? "24px 20px" : "32px 40px" }}>
             {/* From / To */}
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:28 }}>
+            <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?16:20, marginBottom:28 }}>
               <div>
                 <div style={{ fontSize:9, fontWeight:700, color:B.steel, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>From</div>
                 <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -3521,19 +3521,21 @@ const InvoicesView = () => {
 
             <div style={{ fontSize:11, color:B.mid, marginBottom:24 }}>A Stripe payment link will be generated and saved. You can share it with {form.to} directly.</div>
 
-            <div style={{ display:"flex", gap:8 }}>
+            <div style={{ display:"flex", flexDirection:isMobile?"column":"row", gap:6 }}>
               <Btn variant="blush" icon="send" onClick={sendInvoice} disabled={sending}>
                 {sending ? "Creating…" : "Confirm & Create Invoice"}
               </Btn>
-              <Btn variant="ghost" onClick={() => setPreview(false)}>← Edit</Btn>
-              <Btn variant="ghost" onClick={closeNew}>Cancel</Btn>
+              <div style={{ display:"flex", gap:6 }}>
+                <Btn variant="ghost" onClick={() => setPreview(false)}>← Edit</Btn>
+                <Btn variant="ghost" onClick={closeNew}>Cancel</Btn>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Summary tiles */}
-      <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(4,1fr)", gap:2, marginBottom:20 }}>
+      <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:2, marginBottom:20 }}>
         {[
           ["Total Sent", invoices.filter(i=>i.status!=="declined").length, false, B.cloud],
           ["Paid", invoices.filter(i=>i.status==="paid").length, false, B.success],
@@ -4407,7 +4409,8 @@ const AdminDashboard = ({ onLogout }) => {
   const [selLead, setSelLead] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [leadFilter, setLeadFilter] = useState("all");
-  const [crmView, setCrmView] = useState("kanban");
+  const { isMobile: crmIsMobile } = useLayout();
+  const [crmView, setCrmView] = useState(() => window.innerWidth < 768 ? "list" : "board");
   const [selChat, setSelChat] = useState(null);
   const [showChatList, setShowChatList] = useState(true);
   const [contacts, setContacts] = useState([]);
@@ -5027,6 +5030,11 @@ const AdminDashboard = ({ onLogout }) => {
         </div>
 
         {/* Main view */}
+        {crmIsMobile && crmView === "board" ? (
+          <div style={{ padding:"8px 0 12px", fontSize:10, color:B.mid, fontWeight:300 }}>
+            💡 Tip: List view is easier on mobile — try switching above.
+          </div>
+        ) : null}
         {crmView === "board" ? BoardView : ListView}
 
         {/* Archive */}
@@ -6012,9 +6020,9 @@ const AdminDashboard = ({ onLogout }) => {
                              <div style={{ fontSize:10, color:"#666", fontWeight:300, marginTop:2 }}>{m.email}</div>
                            </div>
                          </div>
-                         <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-                           <div style={{ fontSize:8, fontWeight:700, color:B.blush, border:`1px solid ${B.blush}`, padding:"3px 10px", letterSpacing:1.5, textTransform:"uppercase" }}>{m.tier}</div>
-                           <div style={{ fontSize:8, color:"#555", fontWeight:300 }}>Since {m.startDate}</div>
+                         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0, maxWidth:isMobile?120:"none" }}>
+                           <div style={{ fontSize:8, fontWeight:700, color:B.blush, border:`1px solid ${B.blush}`, padding:"3px 10px", letterSpacing:1.5, textTransform:"uppercase", textAlign:"right", lineHeight:1.3 }}>{m.tier}</div>
+                           {!isMobile && <div style={{ fontSize:8, color:"#555", fontWeight:300 }}>Since {m.startDate}</div>}
                          </div>
                        </div>
 
