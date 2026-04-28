@@ -1415,8 +1415,8 @@ const MenteePortal = ({ user, onLogout }) => {
                 tier: profile_data.tier || p.tier,
                 tierKey: profile_data.tier_key || p.tierKey,
                 startDate: profile_data.start_date || p.startDate,
-                totalDays: profile_data.total_days || p.totalDays,
-                daysRemaining: calcDaysRemaining(profile_data.start_date || p.startDate, profile_data.total_days || p.totalDays),
+                totalDays: profile_data.total_days || (profile_data.tier?.includes("Elite") ? 90 : profile_data.tier?.includes("Intensive") ? 30 : p.totalDays || 30),
+                daysRemaining: calcDaysRemaining(profile_data.start_date || p.startDate, profile_data.total_days || (profile_data.tier?.includes("Elite") ? 90 : profile_data.tier?.includes("Intensive") ? 30 : p.totalDays || 30)),
                 sessionsCompleted: profile_data.sessions_completed ?? p.sessionsCompleted,
                 sessionsTotal: profile_data.sessions_total || p.sessionsTotal,
                 goal: profile_data.goal || p.goal,
@@ -2907,6 +2907,12 @@ const GradWelcomeModal = ({ user, onDismiss, isMobile }) => (
             <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>info@sayjesstonails.com · 954.544.2888</div>
           </div>
         </div>
+        <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.amber}`, padding:"14px 18px", marginBottom:16 }}>
+          <div style={{ fontSize:10, fontWeight:700, color:B.amber, letterSpacing:1.5, textTransform:"uppercase", marginBottom:4 }}>One Quick Note</div>
+          <div style={{ fontSize:12, color:B.charcoal, fontWeight:300, lineHeight:1.6 }}>
+            You'll need to sign back in to access your new community portal. Use the same email and password you've always used — nothing changes.
+          </div>
+        </div>
         <button onClick={onDismiss} style={{ width:"100%", padding:"16px", background:B.blush, border:"none", color:B.white, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>
           Let's Go — Take Me to the Community →
         </button>
@@ -2927,6 +2933,18 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const [isGraduate, setIsGraduate] = useState(false);
   const [showGradWelcome, setShowGradWelcome] = useState(false);
   const gradWelcomeKey = `sjtn_grad_welcome_${user.email}`;
+  const [resources, setResources] = useState([]);
+  useEffect(() => {
+    supabase.functions.invoke('assign-task', { body: { action: 'get_all_resources' } })
+      .then(({ data }) => {
+        if (data) {
+          const globalOnes = (Array.isArray(data) ? data : data.resources || [])
+            .filter(r => !r.mentee_email)
+            .map(r => ({ name: r.title, type: r.file_type?.toUpperCase() || "FILE", desc: r.description || "", url: r.file_url }));
+          setResources(globalOnes);
+        }
+      });
+  }, []);
 
   useEffect(() => {
     if (!user.email || user.password) return;
@@ -3045,16 +3063,28 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
         )}
 
         {/* Audio check-in teaser */}
-        <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setView("audio")}>
-          <div style={{ width: 40, height: 40, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
-            <Ic n="mic" size={18} color={B.white} />
+        {jessVoice ? (
+          <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setView("audio")}>
+            <div style={{ width: 40, height: 40, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
+              <Ic n="mic" size={18} color={B.white} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 3px" }}>Jess's Voice — This Week</p>
+              <div style={{ color: B.ivory, fontSize: 13, fontWeight: 300 }}>"{jessVoice.text}"</div>
+            </div>
+            <div style={{ fontSize: 9, color: "#9a8880", flexShrink: 0 }}>Tap to listen →</div>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 3px" }}>Jess's Voice — This Week</p>
-            <div style={{ color: B.ivory, fontSize: 13, fontWeight: 500 }}>"Your pricing confidence starts with your language."</div>
+        ) : (
+          <div style={{ background: B.black, borderLeft: `3px solid #333`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 40, height: 40, background: "#222", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
+              <Ic n="mic" size={18} color={B.mid} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 9, fontWeight: 700, color: "#666", letterSpacing: 3, textTransform: "uppercase", margin: "0 0 3px" }}>Jess's Voice — This Week</p>
+              <div style={{ color: "#9a8880", fontSize: 12, fontWeight: 300, fontStyle: "italic" }}>Jess hasn't posted this week's note yet — check back soon.</div>
+            </div>
           </div>
-          <div style={{ fontSize: 9, color: "#9a8880", flexShrink: 0 }}>Tap to listen →</div>
-        </div>
+        )}
 
         {/* Post composer */}
         <div style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "18px 20px", marginBottom: 16, borderTop: `3px solid ${B.blush}` }}>
@@ -3093,7 +3123,6 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
                     {post.author}
                     {post.isJess && <span style={{ fontSize: 8, background: B.blush, color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>JESS</span>}
                     {post.isGraduate && !post.isJess && <span style={{ fontSize: 7, background: "#2D7D4E", color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>🎓 GRAD</span>}
-                    {post.isGraduate && !post.isJess && <span style={{ fontSize: 7, background: "#2D7D4E", color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>🎓 GRAD</span>}
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 8, background: `${catColors[post.cat]}15`, color: catColors[post.cat], padding: "2px 8px", fontWeight: 700, letterSpacing: 1 }}>
                       <Ic n={catIcons[post.cat]} size={9} color={catColors[post.cat]} sw={1.5} />{catLabels[post.cat]}
                     </span>
@@ -3128,6 +3157,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
       <Pg title="Resources" sub="Free for Members">
         <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 20px", fontWeight: 300 }}>Starter tools from Jess — yours as a community member.</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 24 }}>
+          {resources.length === 0 && <div style={{ padding:"20px", textAlign:"center", color:B.mid, fontSize:12, fontWeight:300, fontStyle:"italic", border:`1px solid ${B.cloud}` }}>Jess will add community resources here — check back soon!</div>}
           {resources.map((r, i) => (
             <div key={i} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -3137,9 +3167,9 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
                 </div>
                 <div style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>{r.desc}</div>
               </div>
-              <button style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", border: `1px solid ${B.cloud}`, background: "none", color: B.steel, fontSize: 9, cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", flexShrink: 0 }}>
+              <a href={r.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", border: `1px solid ${B.cloud}`, background: "none", color: B.steel, fontSize: 9, cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", flexShrink: 0, textDecoration: "none" }}>
                 <Ic n="download" size={11} color={B.blush} />Access
-              </button>
+              </a>
             </div>
           ))}
         </div>
@@ -3158,32 +3188,18 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     audio: isTrial ? <LockedGate section="Jess's Voice" /> : (
       <Pg title="Jess's Voice" sub="Weekly Check-In">
         <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 24px", fontWeight: 300 }}>A personal message from Jess every week — just for this community.</p>
-        <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "28px 28px", marginBottom: 16 }}>
-          <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 6px" }}>This Week · Apr 16, 2025</p>
-          <h3 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 26, textTransform: "uppercase", color: B.ivory, margin: "0 0 12px", letterSpacing: "-0.5px" }}>Pricing Confidence.</h3>
-          <p style={{ color: "#9a8880", fontSize: 13, lineHeight: 1.8, fontWeight: 300, margin: "0 0 20px" }}>"Your pricing confidence starts with your language. This week I want you to say your prices out loud — to yourself, to a friend, to your reflection. Confidence is a practice, not a personality trait. You already have what it takes."</p>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <button onClick={() => setAudioPlaying(p => !p)} style={{ width: 48, height: 48, borderRadius: "50%", background: B.blush, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-              <Ic n={audioPlaying ? "zap" : "play"} size={20} color={B.white} />
-            </button>
-            <div style={{ flex: 1 }}>
-              <div style={{ height: 3, background: "#2a2a2a", borderRadius: 2, marginBottom: 6 }}>
-                <div style={{ height: "100%", width: audioPlaying ? "45%" : "0%", background: B.blush, borderRadius: 2, transition: audioPlaying ? "width 60s linear" : "none" }} />
-              </div>
-              <div style={{ fontSize: 10, color: "#9a8880", fontWeight: 300 }}>{audioPlaying ? "Playing… 1:12 / 2:40" : "Tap to play · 2:40"}</div>
-            </div>
+        {jessVoice ? (
+          <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "28px 28px", marginBottom: 16 }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 6px" }}>This Week</p>
+            <h3 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 26, textTransform: "uppercase", color: B.ivory, margin: "0 0 12px", letterSpacing: "-0.5px" }}>"{jessVoice.text}"</h3>
+            <audio controls src={jessVoice.audioUrl} style={{ width: "100%", height: 32, outline: "none" }} controlsList="nodownload" />
           </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {[["Apr 9, 2025", "Your First 5 Clients"], ["Apr 2, 2025", "Why You Need to Raise Your Prices Now"], ["Mar 26, 2025", "The Mindset Shift That Changes Everything"]].map(([date, title]) => (
-            <div key={date} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div><div style={{ fontSize: 12, fontWeight: 600, color: B.black }}>{title}</div><div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginTop: 2 }}>{date}</div></div>
-              <button style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", border: `1px solid ${B.cloud}`, background: "none", color: B.steel, fontSize: 9, cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>
-                <Ic n="play" size={10} color={B.blush} />Play
-              </button>
-            </div>
-          ))}
-        </div>
+        ) : (
+          <div style={{ background: B.black, borderLeft: `3px solid #333`, padding: "28px 28px", marginBottom: 16, textAlign: "center" }}>
+            <Ic n="mic" size={32} color={B.mid} />
+            <p style={{ color: "#9a8880", fontSize: 13, fontWeight: 300, margin: "12px 0 0", fontStyle: "italic" }}>Jess hasn't posted this week's note yet — check back soon.</p>
+          </div>
+        )}
       </Pg>
     ),
 
@@ -4359,6 +4375,8 @@ const AdminDashboard = ({ onLogout }) => {
   const [sessionBusy, setSessionBusy] = useState(false);
   const [inviteForm, setInviteForm] = useState({ name:"", email:"", tier:"Hourly Session" });
   const [menteeDrawer, setMenteeDrawer] = useState(null);
+  const [sessionsHistory, setSessionsHistory] = useState({});
+  const [winsCache, setWinsCache] = useState({});
   const [assignTask, setAssignTask] = useState(null); // { mentee }
   const [addResource, setAddResource] = useState(null); // null | { mentee } | "global"
   const [resourceForm, setResourceForm] = useState({ title:"", description:"", category:"", file:null });
@@ -4486,8 +4504,8 @@ const AdminDashboard = ({ onLogout }) => {
             tier: m.tier || "Hourly Session",
             tierKey: m.tier_key || "hourly",
             startDate: m.start_date || "Recently",
-            totalDays: m.total_days || 30,
-            daysRemaining: calcDaysRemaining(m.start_date, m.total_days || 30),
+            totalDays: m.total_days || (m.tier?.includes("Elite") ? 90 : m.tier?.includes("Intensive") ? 30 : 30),
+            daysRemaining: calcDaysRemaining(m.start_date, m.total_days || (m.tier?.includes("Elite") ? 90 : m.tier?.includes("Intensive") ? 30 : 30)),
             sessionsCompleted: m.sessions_completed ?? 0,
             sessionsTotal: m.sessions_total || 2,
             goal: m.goal || "",
@@ -4504,7 +4522,27 @@ const AdminDashboard = ({ onLogout }) => {
       });
   }, []);
 
-  const communityList = []; // Community members are graduates managed via Supabase
+  const [communityList, setCommunityList] = useState([]);
+  useEffect(() => {
+    supabase.functions.invoke('assign-task', { body: { action: 'get_all_profiles' } })
+      .then(({ data }) => {
+        if (data?.profiles) {
+          const community = data.profiles
+            .filter(m => m.role === "community" || m.graduated)
+            .map(m => ({
+              email: m.email,
+              name: m.first_name || m.email.split("@")[0],
+              firstName: m.first_name || m.email.split("@")[0],
+              avatar: (m.first_name || m.email.split("@")[0]).slice(0, 2).toUpperCase(),
+              tier: m.tier || "Community Member",
+              graduated: m.graduated || false,
+              paid: m.paid || false,
+              joinDate: m.start_date || "",
+            }));
+          setCommunityList(community);
+        }
+      });
+  }, []);
 
   // Real revenue from invoices
   const [allInvoices, setAllInvoices] = useState([]);
@@ -5915,11 +5953,14 @@ const AdminDashboard = ({ onLogout }) => {
                          </div>
                        )}
                        {menteeDrawer.tab === "Wins" && (() => {
-                         const [drawerWins, setDrawerWins] = React.useState([]);
-                         React.useEffect(() => {
-                           supabase.functions.invoke('assign-task', { body: { action: 'get_wins', mentee_email: menteeDrawer.mentee.email } })
-                             .then(({ data }) => { if (data?.wins) setDrawerWins(data.wins.map(w => ({ text: w.text, date: w.date }))); });
-                         }, [menteeDrawer.mentee.email]);
+                         const email = menteeDrawer.mentee.email;
+                         if (!winsCache[email]) {
+                           supabase.functions.invoke('assign-task', { body: { action: 'get_wins', mentee_email: email } })
+                             .then(({ data }) => {
+                               setWinsCache(p => ({ ...p, [email]: data?.wins?.map(w => ({ text: w.text, date: w.date })) || [] }));
+                             });
+                         }
+                         const drawerWins = winsCache[email] || [];
                          return (
                            <div>
                              <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{drawerWins.length} win{drawerWins.length !== 1 ? "s" : ""} logged</div>
@@ -5929,7 +5970,8 @@ const AdminDashboard = ({ onLogout }) => {
                                  <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{w.date}</div>
                                </div>
                              ))}
-                             {drawerWins.length === 0 && <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No wins logged yet.</div>}
+                             {drawerWins.length === 0 && winsCache[email] !== undefined && <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No wins logged yet.</div>}
+                             {winsCache[email] === undefined && <div style={{ color:B.mid, fontSize:13, fontWeight:300 }}>Loading wins…</div>}
                            </div>
                          );
                        })()}
