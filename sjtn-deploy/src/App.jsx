@@ -4690,7 +4690,7 @@ const AdminDashboard = ({ onLogout }) => {
   );
 
   const Overview = (
-    <Pg title="Good morning, Jess." sub="Admin Overview">
+    <Pg title={`Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, Jess.`} sub="Admin Overview">
       <p style={{ color: B.mid, fontSize: 13, margin: "-14px 0 20px", fontWeight: 300 }}>Here's everything happening across your mentorship program.</p>
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: 2, marginBottom: 20 }}>
