@@ -2717,7 +2717,7 @@ const MenteePortal = ({ user, onLogout }) => {
                 </div>
               )}
 
- menteeStatDrawer === "wins" && (
+              {menteeStatDrawer === "wins" && (
                 <div>
                   <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{wins.length} win{wins.length !== 1 ? "s" : ""} logged</div>
                   {wins.map((w, i) => (
@@ -4512,6 +4512,13 @@ const AdminDashboard = ({ onLogout }) => {
           }));
           // Use only real Supabase mentees
           setMenteeList(realMentees);
+          // Pre-fetch wins for all mentees so counter shows without opening drawer
+          realMentees.forEach(m => {
+            supabase.functions.invoke('assign-task', { body: { action: 'get_wins', mentee_email: m.email } })
+              .then(({ data }) => {
+                setWinsCache(p => ({ ...p, [m.email]: data?.wins?.map(w => ({ text: w.text, date: w.date })) || [] }));
+              });
+          });
         }
       });
   }, []);
@@ -6103,7 +6110,7 @@ const AdminDashboard = ({ onLogout }) => {
                    const statTiles = [
                      { value:`${m.sessionsCompleted}/${m.sessionsTotal}`, label:"Live Sessions", tab:"Sessions" },
                      { value:m.daysRemaining, label:"Days Left", tab:"Days Left" },
-                     { value:mTasks.filter(t=>t.completed).length, label:"Wins", tab:"Wins" },
+                     { value:(winsCache[m.email] || []).length, label:"Wins", tab:"Wins" },
                      { value:`${mTasks.filter(t=>t.completed).length}/${mTasks.length}`, label:"Tasks", tab:"Tasks" },
                      { value:`${pct}%`, label:"Progress", tab:"Progress", accent:true },
                    ];
