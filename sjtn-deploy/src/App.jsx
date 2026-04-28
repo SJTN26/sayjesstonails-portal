@@ -4766,7 +4766,7 @@ const AdminDashboard = ({ onLogout }) => {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 2 }}>
-                  <Btn size="sm" variant="blush" icon="message" onClick={() => { setSelChat(menteeList.findIndex(x => x.email === m.email) !== -1 ? menteeList.findIndex(x => x.email === m.email) : 0); setView("messages"); }}>Invite to Mentor</Btn>
+                  <Btn size="sm" variant="blush" icon="message" onClick={() => { const idx = contacts.findIndex(c => c.email === m.email); setSelChat(idx >= 0 ? idx : null); setView("messages"); }}>Invite to Mentor</Btn>
                   <Btn size="sm" variant="ghost" icon="eye" onClick={() => setView("community")}>View Activity</Btn>
                 </div>
               </div>
