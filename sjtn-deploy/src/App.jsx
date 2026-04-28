@@ -1577,9 +1577,10 @@ const MenteePortal = ({ user, onLogout }) => {
   }, [user.email]);
 
   const completeTask = async (task) => {
-    setTasks(p => p.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t));
+    const newCompleted = !task.completed;
+    setTasks(p => p.map(t => t.id === task.id ? { ...t, completed: newCompleted } : t));
     await supabase.functions.invoke('assign-task', {
-      body: { action: 'update', task_id: task.id, completed: !task.completed }
+      body: { action: 'update', task_id: task.id, completed: newCompleted }
     });
   };
 
@@ -1763,10 +1764,10 @@ const MenteePortal = ({ user, onLogout }) => {
   ];
   const TABS = [
     { id:"dashboard", icon:"home",    label:"Home" },
-    { id:"wins",      icon:"trophy",  label:"Wins" },
+    { id:"sessions",  icon:"video",   label:"Sessions" },
     { id:"community", icon:"users",   label:"Community" },
     { id:"messages",  icon:"message", label:"Messages" },
-    { id:"more",      icon:"menu",    label:"More" },
+    { id:"wins",      icon:"trophy",  label:"Wins" },
   ];
 
   const Pg = MenteePg;
@@ -1954,7 +1955,7 @@ const MenteePortal = ({ user, onLogout }) => {
           {[
             { value:`${profile.sessionsCompleted}/${profile.sessionsTotal}`, label:"Live Sessions", key:"sessions" },
             { value:profile.daysRemaining, label:"Days Left", key:"days" },
-            { value:`${done}/${milestones.length}`, label:"Milestones", key:"milestones" },
+            { value:wins.length, label:"Wins", key:"wins" },
             { value:`${tasks.filter(t=>t.completed).length}/${tasks.length}`, label:"Assignments", key:"assignments" },
             { value:`${pct}%`, label:"Progress", key:"progress", accent:true },
           ].map(({ value, label, key, accent }) => (
@@ -2027,7 +2028,7 @@ const MenteePortal = ({ user, onLogout }) => {
         {/* ── Progress ── */}
         <Card style={{ padding: "18px 20px", marginBottom: 16 }}>
           <Section style={{ marginBottom: 14 }}>Progress Overview</Section>
-          {[["Sessions", pct], ["Timeline", dayPct], ["Milestones", milestones.length ? Math.round((done / milestones.length) * 100) : 0]].map(([l, v]) => (
+          {[["Sessions", pct], ["Timeline", dayPct], ["Wins", wins.length > 0 ? 100 : 0]].map(([l, v]) => (
             <div key={l} style={{ marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                 <span style={{ fontSize: 11, color: B.steel, fontWeight: 300 }}>{l}</span>
@@ -2040,17 +2041,17 @@ const MenteePortal = ({ user, onLogout }) => {
 
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2 }}>
           <Card style={{ padding: "18px 20px" }}>
-            <Section style={{ marginBottom: 12 }}>Milestones</Section>
-            {milestones.map((m, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < milestones.length - 1 ? `1px solid ${B.cloud}` : "none" }}>
-                <button onClick={() => !m.done && completeMilestone(i)} style={{ width: 20, height: 20, background: m.done ? B.blush : "transparent", border: `2px solid ${m.done ? B.blush : B.cloud}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: m.done ? "default" : "pointer", transition: "all .2s", padding: 0 }}>
-                  {m.done && <Ic n="check" size={10} color={B.white} />}
-                </button>
-                <span style={{ fontSize: 11, color: m.done ? B.mid : B.charcoal, textDecoration: m.done ? "line-through" : "none", fontWeight: 300, flex: 1 }}>{m.label}</span>
-                {!m.done && <button onClick={() => completeMilestone(i)} style={{ fontSize: 8, color: B.blush, border: `1px solid ${B.blush}`, background: "none", padding: "2px 7px", cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1, whiteSpace: "nowrap" }}>Done</button>}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <Section>My Wins</Section>
+              <button onClick={() => setView("wins")} style={{ fontSize: 9, color: B.blush, border: "none", background: "none", cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Add a Win →</button>
+            </div>
+            {wins.slice(0, 3).map((w, i) => (
+              <div key={i} style={{ padding: "8px 0", borderBottom: i < Math.min(wins.length, 3) - 1 ? `1px solid ${B.cloud}` : "none" }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: B.black }}>{w.text}</div>
+                <div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 2 }}>{w.date}</div>
               </div>
             ))}
-            {milestones.length === 0 && <p style={{ fontSize: 11, color: B.mid, fontWeight: 300, fontStyle: "italic" }}>No milestones yet.</p>}
+            {wins.length === 0 && <p style={{ fontSize: 11, color: B.mid, fontWeight: 300, fontStyle: "italic" }}>No wins logged yet — add your first one!</p>}
           </Card>
           <Card style={{ padding: "18px 20px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -2139,23 +2140,39 @@ const MenteePortal = ({ user, onLogout }) => {
 
     sessions: (
       <Pg title="Sessions" sub="Live Sessions">
-        <div style={{ background: B.black, padding: "22px 24px", marginBottom: 14, borderLeft: `3px solid ${B.blush}` }}>
-          <Section style={{ color: B.blushLight, marginBottom: 8 }}>Up Next</Section>
-          <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.03em" }}>{profile.nextSession?.type}</div>
-          <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{profile.nextSession?.date} · {profile.nextSession?.time}</div>
-          <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
-        </div>
-        {Array.from({ length: profile.sessionsCompleted || 0 }, (_, i) => (
-          <Card key={i} style={{ padding: "14px 18px", marginBottom: 2 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: B.black, marginBottom: 3, letterSpacing: "0.03em" }}>Session {i + 1} — {["Foundation & Plan", "Pricing & Technique", "Marketing Deep Dive"][i] || "Strategy"}</div>
-                <div style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>Completed · Recording available</div>
+        {profile.nextSession?.date ? (
+          <div style={{ background: B.black, padding: "22px 24px", marginBottom: 14, borderLeft: `3px solid ${B.blush}` }}>
+            <Section style={{ color: B.blushLight, marginBottom: 8 }}>Up Next</Section>
+            <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 20, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.03em" }}>{profile.nextSession?.type}</div>
+            <div style={{ color: "#9a8880", fontSize: 12, marginBottom: 16, fontWeight: 300 }}>{profile.nextSession?.date} · {profile.nextSession?.time}</div>
+            {profile.roomUrl ? (
+              <Btn variant="blush" icon="video" onClick={() => setCallActive(true)}>Join Session</Btn>
+            ) : (
+              <div style={{ fontSize: 11, color: "#9a8880", fontWeight: 300, fontStyle: "italic" }}>Jess will send you the link when it's time to join.</div>
+            )}
+          </div>
+        ) : (
+          <div style={{ background: B.black, padding: "22px 24px", marginBottom: 14, borderLeft: `3px solid #333` }}>
+            <Section style={{ color: "#666", marginBottom: 8 }}>Up Next</Section>
+            <div style={{ color: "#9a8880", fontSize: 13, fontWeight: 300 }}>No session scheduled yet — Jess will reach out to set one up.</div>
+          </div>
+        )}
+        <div style={{ padding: "14px 0" }}>
+          <div style={{ fontSize: 10, color: B.mid, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Sessions Completed ({profile.sessionsCompleted || 0}/{profile.sessionsTotal || 0})</div>
+          {(profile.sessionsCompleted || 0) === 0 && (
+            <p style={{ fontSize: 12, color: B.mid, fontWeight: 300, fontStyle: "italic" }}>Your completed sessions will appear here.</p>
+          )}
+          {Array.from({ length: profile.sessionsCompleted || 0 }, (_, i) => (
+            <Card key={i} style={{ padding: "14px 18px", marginBottom: 2 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: B.black, marginBottom: 3, letterSpacing: "0.03em" }}>Session {i + 1}</div>
+                  <div style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>Completed</div>
+                </div>
               </div>
-              <div style={{ display: "flex", gap: 2, flexShrink: 0 }}><Btn variant="ghost" size="sm" icon="play">Watch</Btn></div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
       </Pg>
     ),
 
@@ -2272,16 +2289,17 @@ const MenteePortal = ({ user, onLogout }) => {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2, marginBottom: 12 }}>
           <Card style={{ padding: "18px 20px" }}>
-            <Section style={{ marginBottom: 12 }}>Milestones</Section>
-            {milestones.map((m, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < milestones.length - 1 ? `1px solid ${B.cloud}` : "none" }}>
-                <button onClick={() => !m.done && completeMilestone(i)} style={{ width: 20, height: 20, background: m.done ? B.blush : "transparent", border: `2px solid ${m.done ? B.blush : B.cloud}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: m.done ? "default" : "pointer", transition: "all .2s", padding: 0 }}>
-                  {m.done && <Ic n="check" size={10} color={B.white} />}
-                </button>
-                <span style={{ fontSize: 11, color: m.done ? B.mid : B.charcoal, textDecoration: m.done ? "line-through" : "none", fontWeight: 300, flex: 1 }}>{m.label}</span>
-                {!m.done && <button onClick={() => completeMilestone(i)} style={{ fontSize: 8, color: B.blush, border: `1px solid ${B.blush}`, background: "none", padding: "2px 7px", cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1 }}>Done ✓</button>}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <Section>My Wins</Section>
+              <button onClick={() => setView("wins")} style={{ fontSize: 9, color: B.blush, border: "none", background: "none", cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Add a Win →</button>
+            </div>
+            {wins.slice(0, 3).map((w, i) => (
+              <div key={i} style={{ padding: "8px 0", borderBottom: i < Math.min(wins.length, 3) - 1 ? `1px solid ${B.cloud}` : "none" }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: B.black }}>{w.text}</div>
+                <div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 2 }}>{w.date}</div>
               </div>
             ))}
+            {wins.length === 0 && <p style={{ fontSize: 11, color: B.mid, fontWeight: 300, fontStyle: "italic" }}>No wins logged yet — add your first one!</p>}
           </Card>
           <Card style={{ padding: "18px 20px" }}>
             <Section style={{ marginBottom: 12 }}>Sessions</Section>
@@ -2472,7 +2490,13 @@ const MenteePortal = ({ user, onLogout }) => {
                 <textarea value={sessionPrep[key]} onChange={e => setSessionPrep(p => ({ ...p, [key]: e.target.value }))} placeholder={hint} rows={4} style={{ width: "100%", padding: "12px 16px", border: `1px solid ${B.cloud}`, fontSize: 14, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "vertical", boxSizing: "border-box", fontWeight: 300, minHeight: 100 }} />
               </div>
             ))}
-            <Btn full variant="blush" icon="send" onClick={() => setSessionPrep(p => ({ ...p, submitted: true }))} disabled={!sessionPrep.win.trim() || !sessionPrep.challenge.trim() || !sessionPrep.need.trim()}>Send to Jess</Btn>
+            <Btn full variant="blush" icon="send" onClick={async () => {
+              const msg = `📋 *Session Prep from ${profile.firstName || profile.name}*\n\n🏆 *Win since last session:*\n${sessionPrep.win}\n\n⚡ *Biggest challenge:*\n${sessionPrep.challenge}\n\n🎯 *What I need from this session:*\n${sessionPrep.need}`;
+              await supabase.functions.invoke('send-message', {
+                body: { mentee_email: user.email, sender: "mentee", text: msg }
+              });
+              setSessionPrep(p => ({ ...p, submitted: true }));
+            }} disabled={!sessionPrep.win.trim() || !sessionPrep.challenge.trim() || !sessionPrep.need.trim()}>Send to Jess</Btn>
           </div>
         )}
       </Pg>
@@ -2520,42 +2544,11 @@ const MenteePortal = ({ user, onLogout }) => {
             </div>
           ));
         })()}
-        {menteeResources.length === 0 && [
-          { topic: "Pricing", color: B.blush, items: [{ name: "Pricing Calculator Workbook", type: "PDF", desc: "Set your prices with confidence using Jess's formula.", unlocked: true }, { name: "How to Raise Prices Without Losing Clients", type: "Guide", desc: "The exact language and timing strategy Jess uses.", unlocked: true }, { name: "Price Increase Announcement Templates", type: "Templates", desc: "3 caption templates ready to copy and customize.", unlocked: profile.tierKey !== "hourly" }] },
-          { topic: "Client Attraction", color: B.success, items: [{ name: "Instagram Bio Formula", type: "Template", desc: "A bio that converts visitors to bookings.", unlocked: true }, { name: "5-Day Content Plan for Nail Techs", type: "PDF", desc: "Post ideas for every day of your first week.", unlocked: true }, { name: "Rebooking Script", type: "Guide", desc: "What to say at checkout to guarantee the next appointment.", unlocked: profile.tierKey !== "hourly" }] },
-          { topic: "Business Setup", color: "#9B6EA0", items: [{ name: "Nail Tech Business Checklist", type: "PDF", desc: "Everything you need to operate legally and professionally.", unlocked: true }, { name: "Service Menu Template", type: "Template", desc: "A clean, professional service menu design.", unlocked: profile.tierKey === "elite" }] },
-        ].map(({ topic, color, items }) => (
-          <div key={topic} style={{ marginBottom: 24 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <div style={{ width: 3, height: 20, background: color, flexShrink: 0 }} />
-              <Section style={{ color }}>{topic}</Section>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {items.map((item, i) => (
-                <Card key={i} style={{ padding: "14px 18px", opacity: item.unlocked ? 1 : 0.6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{item.name}</span>
-                        <span style={{ fontSize: 8, fontWeight: 700, color, background: `${color}15`, padding: "2px 7px", letterSpacing: 1, textTransform: "uppercase" }}>{item.type}</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>{item.desc}</div>
-                    </div>
-                    {item.unlocked ? (
-                      <button style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", border: `1px solid ${B.cloud}`, background: "none", color: B.steel, fontSize: 9, cursor: "pointer", fontFamily: FONTS.body, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", flexShrink: 0 }}>
-                        <Ic n="download" size={11} color={color} />Access
-                      </button>
-                    ) : (
-                      <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 9, color: B.mid, flexShrink: 0 }}>
-                        <Ic n="lock" size={11} color={B.mid} />Elite only
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              ))}
-            </div>
+        {menteeResources.length === 0 && (
+          <div style={{ padding: "32px 20px", textAlign: "center", color: B.mid, fontSize: 13, fontWeight: 300, border: `1px solid ${B.cloud}`, background: B.white }}>
+            Jess will add your resources here as your program progresses — check back soon!
           </div>
-        ))}
+        )}
       </Pg>
     ),
 
@@ -2573,15 +2566,19 @@ const MenteePortal = ({ user, onLogout }) => {
             <div style={{ flex: 1, padding: "12px 16px", background: B.off, border: `1px solid ${B.cloud}`, fontSize: 12, color: B.steel, fontFamily: FONTS.body, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               sayjesstonails.com/ref/{user.firstName.toLowerCase()}{user.avatar.toLowerCase()}
             </div>
-            <button onClick={() => { setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }} style={{ padding: "12px 18px", background: referralCopied ? B.success : B.black, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0, transition: "background .3s", display: "flex", alignItems: "center", gap: 7 }}>
+            <button onClick={() => { navigator.clipboard.writeText(`https://sayjesstonails.com/ref/${user.firstName?.toLowerCase()}${user.avatar?.toLowerCase()}`); setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }} style={{ padding: "12px 18px", background: referralCopied ? B.success : B.black, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0, transition: "background .3s", display: "flex", alignItems: "center", gap: 7 }}>
               <Ic n={referralCopied ? "check" : "link"} size={13} color={B.white} />
               {referralCopied ? "Copied!" : "Copy"}
             </button>
           </div>
         </Card>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 2, marginBottom: 20 }}>
-          {[["Share on Instagram", "instagram", B.blush], ["Share via Text", "send", B.success], ["Copy Link", "link", "#9B6EA0"]].map(([label, icon, color]) => (
-            <button key={label} style={{ padding: "14px", border: `1px solid ${B.cloud}`, background: B.white, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", fontFamily: FONTS.body, fontSize: 12, fontWeight: 600, color: B.charcoal, letterSpacing: "0.02em" }}>
+          {[
+            ["Share on Instagram", "instagram", B.blush, () => window.open("https://www.instagram.com/", "_blank")],
+            ["Share via Text", "send", B.success, () => { const ref = `sayjesstonails.com/ref/${user.firstName?.toLowerCase()}${user.avatar?.toLowerCase()}`; window.open(`sms:?body=Hey! I've been working with Jess at SayJessToNails and it's been amazing. Check it out: https://${ref}`, "_blank"); }],
+            ["Copy Link", "link", "#9B6EA0", () => { navigator.clipboard.writeText(`https://sayjesstonails.com/ref/${user.firstName?.toLowerCase()}${user.avatar?.toLowerCase()}`); setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }],
+          ].map(([label, icon, color, onClick]) => (
+            <button key={label} onClick={onClick} style={{ padding: "14px", border: `1px solid ${B.cloud}`, background: B.white, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", fontFamily: FONTS.body, fontSize: 12, fontWeight: 600, color: B.charcoal, letterSpacing: "0.02em" }}>
               <Ic n={icon} size={15} color={color} />{label}
             </button>
           ))}
@@ -2663,7 +2660,7 @@ const MenteePortal = ({ user, onLogout }) => {
             <div style={{ background:B.black, padding:"20px 24px", borderLeft:`4px solid ${B.blush}`, display:"flex", justifyContent:"space-between", alignItems:"center", flexShrink:0 }}>
               <div>
                 <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:4 }}>Your Progress</div>
-                <div style={{ fontSize:16, fontWeight:700, color:B.ivory }}>{{ sessions:"Live Sessions", days:"Days Left", milestones:"Milestones", assignments:"Assignments", progress:"Overall Progress" }[menteeStatDrawer]}</div>
+                <div style={{ fontSize:16, fontWeight:700, color:B.ivory }}>{{ sessions:"Live Sessions", days:"Days Left", wins:"Wins", assignments:"Assignments", progress:"Overall Progress" }[menteeStatDrawer]}</div>
               </div>
               <button onClick={() => setMenteeStatDrawer(null)} style={{ width:28, height:28, border:`1px solid #333`, background:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><Ic n="close" size={13} color={B.mid} /></button>
             </div>
@@ -2720,23 +2717,19 @@ const MenteePortal = ({ user, onLogout }) => {
                 </div>
               )}
 
-              {menteeStatDrawer === "milestones" && (
+ menteeStatDrawer === "wins" && (
                 <div>
-                  <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{done} of {milestones.length} completed</div>
-                  {milestones.map((ms, i) => (
-                    <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 0", borderBottom:`1px solid ${B.cloud}` }}>
-                      <button onClick={() => !ms.done && completeMilestone(i)} style={{ width:22, height:22, background: ms.done ? B.blush : "transparent", border:`2px solid ${ms.done ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor: ms.done ? "default" : "pointer", padding:0 }}>
-                        {ms.done && <Ic n="check" size={10} color={B.white} />}
-                      </button>
-                      <span style={{ fontSize:12, color: ms.done ? B.mid : B.black, textDecoration: ms.done ? "line-through" : "none", fontWeight:300, flex:1 }}>{ms.label}</span>
-                      {ms.done && <span style={{ fontSize:9, color:B.success, fontWeight:700 }}>Done</span>}
+                  <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{wins.length} win{wins.length !== 1 ? "s" : ""} logged</div>
+                  {wins.map((w, i) => (
+                    <div key={i} style={{ padding:"10px 0", borderBottom:`1px solid ${B.cloud}` }}>
+                      <div style={{ fontSize:12, fontWeight:600, color:B.black, marginBottom:2 }}>{w.text}</div>
+                      <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{w.date}</div>
                     </div>
                   ))}
-                  {milestones.length === 0 && <p style={{ fontSize:12, color:B.mid, fontStyle:"italic", fontWeight:300 }}>No milestones set yet.</p>}
+                  {wins.length === 0 && <p style={{ fontSize:12, color:B.mid, fontWeight:300, fontStyle:"italic" }}>No wins logged yet — add your first one!</p>}
                 </div>
               )}
-
-              {menteeStatDrawer === "assignments" && (
+                           {menteeStatDrawer === "assignments" && (
                 <div>
                   <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{tasks.filter(t=>t.completed).length} of {tasks.length} completed</div>
                   {tasks.length === 0 && <p style={{ fontSize:12, color:B.mid, fontStyle:"italic", fontWeight:300 }}>No assignments yet.</p>}
@@ -2771,7 +2764,7 @@ const MenteePortal = ({ user, onLogout }) => {
                       <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:64, color:B.blush, lineHeight:1 }}>{overall}%</div>
                       <div style={{ fontSize:10, color:B.blush, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginTop:6 }}>Overall Progress</div>
                     </div>
-                    {[["Live Sessions", sessionPct], ["Timeline", dayPct], ["Milestones", milestonePct]].map(([label, p]) => (
+                    {[["Live Sessions", sessionPct], ["Timeline", dayPct], ["Wins", wins.length > 0 ? 100 : 0]].map(([label, p]) => (
                       <div key={label} style={{ marginBottom:18 }}>
                         <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
                           <span style={{ fontSize:11, color:B.steel, fontWeight:300 }}>{label}</span>
@@ -2849,7 +2842,7 @@ const MenteePortal = ({ user, onLogout }) => {
       {!useSidebar && (
         <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: B.white, borderTop: `1px solid ${B.cloud}`, display: "flex", paddingBottom: "env(safe-area-inset-bottom)", zIndex: 100 }}>
           {TABS.map(({ id, icon, label }) => { const on = view === id; const badge = id === "messages" && unread > 0; return (<button key={id} onClick={() => setView(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px 8px", border: "none", background: "transparent", color: on ? B.blush : B.mid, cursor: "pointer", fontFamily: FONTS.body, fontSize: 8, fontWeight: on ? 700 : 300, position: "relative", letterSpacing: 1.5, textTransform: "uppercase" }}><Ic n={icon} size={20} color={on ? B.blush : B.mid} />{label}{badge && <div style={{ position: "absolute", top: 8, right: "calc(50% - 14px)", width: 12, height: 12, background: B.blush, fontSize: 6, color: B.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unread}</div>}</button>); })}
-          <button onClick={onLogout} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px 8px", border: "none", background: "transparent", color: B.mid, fontFamily: FONTS.body, fontSize: 8, fontWeight: 300, letterSpacing: 1.5, textTransform: "uppercase" }}><Ic n="logout" size={20} color={B.mid} />Sign Out</button>
+
         </nav>
       )}
     </div>
@@ -3953,6 +3946,20 @@ const InviteForm = ({ isMobile }) => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      // Store profile with correct total_days and start_date so days remaining calculates correctly
+      const totalDays = tier.includes("Elite") ? 90 : tier.includes("Intensive") ? 30 : 1;
+      const sessionsTotal = tier.includes("Elite") ? 6 : tier.includes("Intensive") ? 2 : 1;
+      await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: {
+        email: email.toLowerCase(),
+        first_name: firstName,
+        tier,
+        tier_key: tier.includes("Elite") ? "elite" : tier.includes("Intensive") ? "intensive" : "hourly",
+        start_date: new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }),
+        total_days: totalDays,
+        days_remaining: totalDays,
+        sessions_total: sessionsTotal,
+        sessions_completed: 0,
+      } } });
       if (nameRef.current) nameRef.current.value = "";
       if (emailRef.current) emailRef.current.value = "";
       setSent(true);
@@ -5907,36 +5914,37 @@ const AdminDashboard = ({ onLogout }) => {
                            ))}
                          </div>
                        )}
-                       {menteeDrawer.tab === "Milestones" && (
-                         <div>
-                           <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{menteeDrawer.mentee.milestones?.filter(x=>x.done).length || 0} of {menteeDrawer.mentee.milestones?.length || 0} completed</div>
-                           {(menteeDrawer.mentee.milestones || []).map((ms, i) => (
-                             <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 0", borderBottom:`1px solid ${B.cloud}` }}>
-                               <div style={{ width:22, height:22, background: ms.done ? B.blush : "transparent", border:`2px solid ${ms.done ? B.blush : B.cloud}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                                 {ms.done && <Ic n="check" size={10} color={B.white} />}
+                       {menteeDrawer.tab === "Wins" && (() => {
+                         const [drawerWins, setDrawerWins] = React.useState([]);
+                         React.useEffect(() => {
+                           supabase.functions.invoke('assign-task', { body: { action: 'get_wins', mentee_email: menteeDrawer.mentee.email } })
+                             .then(({ data }) => { if (data?.wins) setDrawerWins(data.wins.map(w => ({ text: w.text, date: w.date }))); });
+                         }, [menteeDrawer.mentee.email]);
+                         return (
+                           <div>
+                             <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{drawerWins.length} win{drawerWins.length !== 1 ? "s" : ""} logged</div>
+                             {drawerWins.map((w, i) => (
+                               <div key={i} style={{ padding:"10px 0", borderBottom:`1px solid ${B.cloud}` }}>
+                                 <div style={{ fontSize:12, fontWeight:600, color:B.black, marginBottom:2 }}>{w.text}</div>
+                                 <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{w.date}</div>
                                </div>
-                               <span style={{ fontSize:12, color: ms.done ? B.mid : B.black, textDecoration: ms.done ? "line-through" : "none", fontWeight:300, flex:1 }}>{ms.label}</span>
-                               {ms.done && <span style={{ fontSize:9, color:B.success, fontWeight:700, letterSpacing:1 }}>Done</span>}
-                             </div>
-                           ))}
-                           {(!menteeDrawer.mentee.milestones || menteeDrawer.mentee.milestones.length === 0) && (
-                             <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No milestones set yet.</div>
-                           )}
-                         </div>
-                       )}
+                             ))}
+                             {drawerWins.length === 0 && <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No wins logged yet.</div>}
+                           </div>
+                         );
+                       })()}
                        {menteeDrawer.tab === "Progress" && (() => {
                          const m = menteeDrawer.mentee;
                          const sessionPct = m.sessionsTotal ? Math.round((m.sessionsCompleted / m.sessionsTotal) * 100) : 0;
                          const dayPct = m.totalDays ? Math.round(((m.totalDays - m.daysRemaining) / m.totalDays) * 100) : 0;
-                         const milestonePct = m.milestones?.length ? Math.round((m.milestones.filter(x=>x.done).length / m.milestones.length) * 100) : 0;
-                         const overall = Math.round((sessionPct + dayPct + milestonePct) / 3);
+                         const overall = Math.round((sessionPct + dayPct) / 2);
                          return (
                            <div>
                              <div style={{ padding:"20px", background:B.blushPale, borderLeft:`3px solid ${B.blush}`, marginBottom:20, textAlign:"center" }}>
                                <div style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:56, color:B.blush, lineHeight:1 }}>{overall}%</div>
                                <div style={{ fontSize:10, color:B.blush, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginTop:4 }}>Overall Progress</div>
                              </div>
-                             {[["Sessions", sessionPct], ["Timeline", dayPct], ["Milestones", milestonePct]].map(([label, pct]) => (
+                             {[["Sessions", sessionPct], ["Timeline", dayPct]].map(([label, pct]) => (
                                <div key={label} style={{ marginBottom:18 }}>
                                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
                                    <span style={{ fontSize:11, color:B.steel, fontWeight:300 }}>{label}</span>
@@ -6057,7 +6065,7 @@ const AdminDashboard = ({ onLogout }) => {
                    const statTiles = [
                      { value:`${m.sessionsCompleted}/${m.sessionsTotal}`, label:"Live Sessions", tab:"Sessions" },
                      { value:m.daysRemaining, label:"Days Left", tab:"Days Left" },
-                     { value:`${done}/${m.milestones?.length || 0}`, label:"Milestones", tab:"Milestones" },
+                     { value:mTasks.filter(t=>t.completed).length, label:"Wins", tab:"Wins" },
                      { value:`${mTasks.filter(t=>t.completed).length}/${mTasks.length}`, label:"Tasks", tab:"Tasks" },
                      { value:`${pct}%`, label:"Progress", tab:"Progress", accent:true },
                    ];
