@@ -42,6 +42,20 @@ const FONTS = {
   script:  "Georgia, 'Times New Roman', serif",
 };
 
+
+/* ─── UTILITY: Calculate days remaining from start date ─────────────────── */
+function calcDaysRemaining(startDateStr, totalDays) {
+  if (!startDateStr || !totalDays) return totalDays || 0;
+  // Handle "April 25, 2026", "2026-04-25", or any JS-parseable format
+  const start = new Date(startDateStr);
+  if (isNaN(start.getTime())) return totalDays;
+  // Use UTC midnight to avoid timezone drift
+  const startUTC = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+  const todayUTC = Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+  const elapsed = Math.floor((todayUTC - startUTC) / (1000 * 60 * 60 * 24));
+  return Math.max(0, totalDays - elapsed);
+}
+
 /* ─── LAYOUT HOOK ───────────────────────────────────────────────────────── */
 function useLayout() {
   const [s, setS] = useState({ w: window.innerWidth, h: window.innerHeight });
@@ -722,8 +736,8 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
         avatar: firstName.slice(0,2).toUpperCase(),
         tier,
         tierKey: tier.includes("Elite") ? "elite" : tier.includes("Intensive") ? "intensive" : "hourly",
-        daysRemaining: 0,
         totalDays: tier.includes("Elite") ? 90 : tier.includes("Intensive") ? 30 : 1,
+        daysRemaining: calcDaysRemaining(new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }), tier.includes("Elite") ? 90 : tier.includes("Intensive") ? 30 : 1),
         sessionsCompleted: 0,
         sessionsTotal: tier.includes("Elite") ? 6 : tier.includes("Intensive") ? 2 : 1,
         milestones: [],
@@ -1401,8 +1415,8 @@ const MenteePortal = ({ user, onLogout }) => {
                 tier: profile_data.tier || p.tier,
                 tierKey: profile_data.tier_key || p.tierKey,
                 startDate: profile_data.start_date || p.startDate,
-                daysRemaining: profile_data.days_remaining ?? p.daysRemaining,
                 totalDays: profile_data.total_days || p.totalDays,
+                daysRemaining: calcDaysRemaining(profile_data.start_date || p.startDate, profile_data.total_days || p.totalDays),
                 sessionsCompleted: profile_data.sessions_completed ?? p.sessionsCompleted,
                 sessionsTotal: profile_data.sessions_total || p.sessionsTotal,
                 goal: profile_data.goal || p.goal,
@@ -3888,7 +3902,7 @@ const InviteGraduateForm = () => {
         first_name: name,
         tier: "Community Graduate",
         graduated: true,
-        start_date: new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }),
+        start_date: new Date().toISOString().split("T")[0], // ISO format for reliable date math
         sessions_completed: 0, sessions_total: 0, days_remaining: 0, total_days: 0
       } } });
       if (nameRef.current) nameRef.current.value = "";
@@ -4465,8 +4479,8 @@ const AdminDashboard = ({ onLogout }) => {
             tier: m.tier || "Hourly Session",
             tierKey: m.tier_key || "hourly",
             startDate: m.start_date || "Recently",
-            daysRemaining: m.days_remaining ?? 0,
             totalDays: m.total_days || 30,
+            daysRemaining: calcDaysRemaining(m.start_date, m.total_days || 30),
             sessionsCompleted: m.sessions_completed ?? 0,
             sessionsTotal: m.sessions_total || 2,
             goal: m.goal || "",
