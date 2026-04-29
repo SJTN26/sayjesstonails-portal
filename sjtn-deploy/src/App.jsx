@@ -2246,9 +2246,17 @@ const MenteePortal = ({ user, onLogout }) => {
                       </div>
                     ) : m.imageUrl ? (
                       <img src={m.imageUrl} alt="Shared image" style={{ maxWidth:"100%", maxHeight:260, display:"block", borderRadius:2 }} />
-                    ) : (
-                      <p style={{ margin: 0, fontSize: 12, color: isJ ? B.charcoal : B.ivory, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
-                    )}
+                    ) : (() => {
+                        let prep = null;
+                        try { const p = JSON.parse(m.text); if (p.__type === "session_prep") prep = p; } catch {}
+                        if (prep) return (
+                          <div style={{ minWidth:180 }}>
+                            <div style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase", marginBottom:4 }}>Session Prep Submitted ✓</div>
+                            <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>Jess has received your answers.</div>
+                          </div>
+                        );
+                        return <p style={{ margin: 0, fontSize: 12, color: isJ ? B.charcoal : B.ivory, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>;
+                      })()}
                   </div>
                   <div style={{ fontSize: 9, color: B.mid, marginTop: 3, textAlign: isJ ? "left" : "right", fontWeight: 300, letterSpacing: "0.05em" }}>{m.time}</div>
                 </div>
@@ -2515,7 +2523,13 @@ const MenteePortal = ({ user, onLogout }) => {
               </div>
             ))}
             <Btn full variant="blush" icon="send" onClick={async () => {
-              const msg = `📋 *Session Prep from ${profile.firstName || profile.name}*\n\n🏆 *Win since last session:*\n${sessionPrep.win}\n\n⚡ *Biggest challenge:*\n${sessionPrep.challenge}\n\n🎯 *What I need from this session:*\n${sessionPrep.need}`;
+              const msg = JSON.stringify({
+                __type: "session_prep",
+                name: profile.firstName || profile.name,
+                win: sessionPrep.win,
+                challenge: sessionPrep.challenge,
+                need: sessionPrep.need,
+              });
               await supabase.functions.invoke('send-message', {
                 body: { mentee_email: user.email, sender: "mentee", text: msg }
               });
@@ -5723,9 +5737,35 @@ const AdminDashboard = ({ onLogout }) => {
                         </div>
                       ) : m.imageUrl ? (
                         <img src={m.imageUrl} alt="Shared" style={{ maxWidth:"100%", maxHeight:220, display:"block", borderRadius:2 }} />
-                      ) : (
-                        <p style={{ margin: 0, fontSize: 12, color: isJ ? B.ivory : B.charcoal, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>
-                      )}
+                      ) : (() => {
+                        // Detect structured session prep card
+                        let prep = null;
+                        try { const p = JSON.parse(m.text); if (p.__type === "session_prep") prep = p; } catch {}
+                        if (prep) return (
+                          <div style={{ minWidth: 220 }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10, paddingBottom:8, borderBottom:`1px solid ${B.cloud}` }}>
+                              <div style={{ width:28, height:28, background:B.blush, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                                <Ic n="clipBoard" size={13} color={B.white} />
+                              </div>
+                              <div>
+                                <div style={{ fontSize:9, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase" }}>Session Prep</div>
+                                <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{prep.name}</div>
+                              </div>
+                            </div>
+                            {[
+                              ["🏆 Win since last session", prep.win],
+                              ["⚡ Biggest challenge", prep.challenge],
+                              ["🎯 What they need", prep.need],
+                            ].map(([label, val]) => (
+                              <div key={label} style={{ marginBottom:10 }}>
+                                <div style={{ fontSize:8, fontWeight:700, color:B.mid, letterSpacing:1.5, textTransform:"uppercase", marginBottom:3 }}>{label}</div>
+                                <div style={{ fontSize:12, color:B.charcoal, fontWeight:400, lineHeight:1.5 }}>{val}</div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                        return <p style={{ margin: 0, fontSize: 12, color: isJ ? B.ivory : B.charcoal, lineHeight: 1.55, fontWeight: 300 }}>{m.text}</p>;
+                      })()}
                     </div>
                     <div style={{ fontSize: 9, color: B.mid, marginTop: 3, textAlign: isJ ? "right" : "left", fontWeight: 300, letterSpacing: "0.05em" }}>{m.t}</div>
                   </div>
