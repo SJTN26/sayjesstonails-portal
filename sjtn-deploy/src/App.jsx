@@ -2971,6 +2971,12 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const [isGraduate, setIsGraduate] = useState(false);
   const [showGradWelcome, setShowGradWelcome] = useState(false);
   const gradWelcomeKey = `sjtn_grad_welcome_${user.email}`;
+  const [jessVoice, setJessVoice] = useState(null);
+  useEffect(() => {
+    supabase.functions.invoke('assign-task', { body: { action: 'get_voice' } })
+      .then(({ data }) => { if (data?.voice) setJessVoice({ text: data.voice.title, audioUrl: data.voice.audio_url }); });
+  }, []);
+
   const [resources, setResources] = useState([]);
   useEffect(() => {
     supabase.functions.invoke('assign-task', { body: { action: 'get_all_resources' } })
