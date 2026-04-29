@@ -2948,14 +2948,17 @@ const GradWelcomeModal = ({ user, onDismiss, isMobile, isWelcomeBack = false }) 
             <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>info@sayjesstonails.com · 954.544.2888</div>
           </div>
         </div>
-        <button onClick={onDismiss} style={{ width:"100%", padding:"16px", background:B.blush, border:"none", color:B.white, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>
-          {isWelcomeBack ? "Let's Go →" : "Enter the Community — Sign In →"}
-        </button>
         {!isWelcomeBack && (
-          <p style={{ fontSize:11, color:B.mid, fontWeight:300, textAlign:"center", marginTop:10, lineHeight:1.5 }}>
-            You'll be signed out and taken to the login screen. Sign back in with your same email and password.
-          </p>
+          <div style={{ background:B.amber, padding:"16px 20px", marginBottom:16 }}>
+            <div style={{ fontSize:10, fontWeight:700, color:B.white, letterSpacing:1.5, textTransform:"uppercase", marginBottom:6 }}>📋 Before You Click</div>
+            <div style={{ fontSize:13, color:B.white, fontWeight:600, lineHeight:1.6 }}>
+              Clicking the button below will sign you out. To access your new community portal, sign back in with the <strong>same email and password</strong> you've always used.
+            </div>
+          </div>
         )}
+        <button onClick={onDismiss} style={{ width:"100%", padding:"16px", background:B.blush, border:"none", color:B.white, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>
+          {isWelcomeBack ? "Let's Go →" : "Sign Out & Enter the Community →"}
+        </button>
       </div>
     </div>
   </div>
