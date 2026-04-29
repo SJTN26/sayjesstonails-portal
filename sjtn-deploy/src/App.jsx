@@ -6483,14 +6483,13 @@ export default function App() {
             setActiveUser(u); setActiveSession(s);
             const dest = s.role === "admin" ? "admin" : s.role === "community" ? "community" : "portal";
             setScreen(dest);
-          } else if (s.role === "mentee" && s.userId) {
-            // Real Supabase mentee — restore from stored session data
+          } else if ((s.role === "mentee" || s.role === "community") && s.userId) {
+            // Real Supabase user — restore from stored session data
             const storedUser = sessionStorage.getItem("sjtn_user");
             if (storedUser) {
               const userData = JSON.parse(storedUser);
               setActiveUser(userData); setActiveSession(s);
-              // Check if role changed (e.g. graduated mentee now has community role)
-              const dest = s.role === "community" ? "community" : "portal";
+              const dest = s.role === "admin" ? "admin" : s.role === "community" ? "community" : "portal";
               setScreen(dest);
             } else {
               sessionStorage.removeItem("sjtn_session");
