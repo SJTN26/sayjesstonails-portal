@@ -1572,16 +1572,23 @@ const MenteePortal = ({ user, onLogout }) => {
   const [taskNoteInput, setTaskNoteInput] = useState("");
 
   // Fetch tasks from Supabase via edge function
-  const taskPollPaused = useRef(false);
+  // Local overrides survive fetches — key: task_id, value: completed bool
+  const taskOverrides = useRef({});
 
   useEffect(() => {
     if (!user.email || !!user.password) return;
     const fetchTasks = () => {
-      if (taskPollPaused.current) return;
       supabase.functions.invoke('assign-task', {
         body: { action: 'fetch', mentee_email: user.email }
       }).then(({ data }) => {
-        if (data?.tasks && !taskPollPaused.current) setTasks(data.tasks);
+        if (data?.tasks) {
+          // Apply any local overrides so fetch never reverts a pending save
+          setTasks(data.tasks.map(t =>
+            taskOverrides.current.hasOwnProperty(t.id)
+              ? { ...t, completed: taskOverrides.current[t.id] }
+              : t
+          ));
+        }
       });
     };
     fetchTasks();
@@ -1591,17 +1598,14 @@ const MenteePortal = ({ user, onLogout }) => {
 
   const completeTask = async (task) => {
     const newCompleted = !task.completed;
-    taskPollPaused.current = true;
+    // Store override immediately
+    taskOverrides.current[task.id] = newCompleted;
     setTasks(p => p.map(t => t.id === task.id ? { ...t, completed: newCompleted } : t));
     await supabase.functions.invoke('assign-task', {
       body: { action: 'update', task_id: task.id, completed: newCompleted }
     });
-    // Re-fetch after save to sync DB state, then resume polling
-    const { data } = await supabase.functions.invoke('assign-task', {
-      body: { action: 'fetch', mentee_email: user.email }
-    });
-    if (data?.tasks) setTasks(data.tasks);
-    taskPollPaused.current = false;
+    // Clear override after 20s — enough time for DB to reflect the save
+    setTimeout(() => { delete taskOverrides.current[task.id]; }, 20000);
   };
 
   const saveTaskNote = async (taskId) => {
