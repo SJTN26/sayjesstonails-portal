@@ -1486,7 +1486,14 @@ const MenteePortal = ({ user, onLogout }) => {
     if (!user.email) return;
     const fetchResources = async () => {
       const { data } = await supabase.functions.invoke('assign-task', { body: { action: 'get_resources', mentee_email: user.email } });
-      if (data?.resources) setMenteeResources(data.resources);
+      const { data: globalData } = await supabase.functions.invoke('assign-task', { body: { action: 'get_all_resources' } });
+      const menteeSpecific = data?.resources || [];
+      const globalResources = (Array.isArray(globalData) ? globalData : globalData?.resources || [])
+        .filter(r => !r.mentee_email)
+        .map(r => ({ ...r, title: r.title, file_url: r.file_url, file_type: r.file_type, category: r.category || "General", description: r.description }));
+      // Merge, avoiding duplicates by id
+      const ids = new Set(menteeSpecific.map(r => r.id));
+      setMenteeResources([...menteeSpecific, ...globalResources.filter(r => !ids.has(r.id))]);
     };
     fetchResources();
     const interval = setInterval(fetchResources, 30000);
@@ -1562,13 +1569,16 @@ const MenteePortal = ({ user, onLogout }) => {
   const [taskNoteInput, setTaskNoteInput] = useState("");
 
   // Fetch tasks from Supabase via edge function
+  const taskPollPaused = React.useRef(false);
+
   useEffect(() => {
     if (!user.email || !!user.password) return;
     const fetchTasks = () => {
+      if (taskPollPaused.current) return;
       supabase.functions.invoke('assign-task', {
         body: { action: 'fetch', mentee_email: user.email }
       }).then(({ data }) => {
-        if (data?.tasks) setTasks(data.tasks);
+        if (data?.tasks && !taskPollPaused.current) setTasks(data.tasks);
       });
     };
     fetchTasks();
@@ -1578,10 +1588,12 @@ const MenteePortal = ({ user, onLogout }) => {
 
   const completeTask = async (task) => {
     const newCompleted = !task.completed;
+    taskPollPaused.current = true;
     setTasks(p => p.map(t => t.id === task.id ? { ...t, completed: newCompleted } : t));
     await supabase.functions.invoke('assign-task', {
       body: { action: 'update', task_id: task.id, completed: newCompleted }
     });
+    setTimeout(() => { taskPollPaused.current = false; }, 5000);
   };
 
   const saveTaskNote = async (taskId) => {
@@ -1767,7 +1779,7 @@ const MenteePortal = ({ user, onLogout }) => {
     { id:"sessions",  icon:"video",   label:"Sessions" },
     { id:"community", icon:"users",   label:"Community" },
     { id:"messages",  icon:"message", label:"Messages" },
-    { id:"wins",      icon:"trophy",  label:"Wins" },
+    { id:"more",      icon:"menu",    label:"More" },
   ];
 
   const Pg = MenteePg;
