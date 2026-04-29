@@ -723,9 +723,10 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
       }
 
       // Check if mentee has graduated — override role to community
-      if (role === "mentee") {
+      let isGraduate = false;
+      if (role === "mentee" || role === "community") {
         const { data: gradData } = await supabase.functions.invoke('assign-task', { body: { action: 'check_graduated', email } });
-        if (gradData?.graduated) role = "community";
+        if (gradData?.graduated) { role = "community"; isGraduate = true; }
       }
 
       const userData = {
@@ -735,7 +736,9 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
         email: email.toLowerCase(),
         avatar: firstName.slice(0,2).toUpperCase(),
         tier,
-        tierKey: tier.includes("Elite") ? "elite" : tier.includes("Intensive") ? "intensive" : "hourly",
+        tierKey: isGraduate ? "graduate" : tier.includes("Elite") ? "elite" : tier.includes("Intensive") ? "intensive" : "hourly",
+        paid: isGraduate ? true : false,
+        graduated: isGraduate,
         totalDays: tier.includes("Elite") ? 90 : tier.includes("Intensive") ? 30 : 1,
         daysRemaining: calcDaysRemaining(new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }), tier.includes("Elite") ? 90 : tier.includes("Intensive") ? 30 : 1),
         sessionsCompleted: 0,
@@ -2945,15 +2948,12 @@ const GradWelcomeModal = ({ user, onDismiss, isMobile }) => (
             <div style={{ fontSize:11, color:B.mid, fontWeight:300 }}>info@sayjesstonails.com · 954.544.2888</div>
           </div>
         </div>
-        <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.amber}`, padding:"14px 18px", marginBottom:16 }}>
-          <div style={{ fontSize:10, fontWeight:700, color:B.amber, letterSpacing:1.5, textTransform:"uppercase", marginBottom:4 }}>One Quick Note</div>
-          <div style={{ fontSize:12, color:B.charcoal, fontWeight:300, lineHeight:1.6 }}>
-            You'll need to sign back in to access your new community portal. Use the same email and password you've always used — nothing changes.
-          </div>
-        </div>
         <button onClick={onDismiss} style={{ width:"100%", padding:"16px", background:B.blush, border:"none", color:B.white, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>
-          Let's Go — Take Me to the Community →
+          Enter the Community — Sign In →
         </button>
+        <p style={{ fontSize:11, color:B.mid, fontWeight:300, textAlign:"center", marginTop:10, lineHeight:1.5 }}>
+          You'll be signed out and taken to the login screen. Sign back in with your same email and password.
+        </p>
       </div>
     </div>
   </div>
@@ -3019,8 +3019,8 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Trial detection — community users without paid status are on trial
-  const isTrial = user.tierKey === "community" && !user.paid;
+  // Trial detection — graduates and paid members are never on trial
+  const isTrial = !user.paid && !user.graduated && user.tierKey !== "graduate";
 
   // Lock gate component for trial users
   const LockedGate = ({ section }) => (
@@ -3324,6 +3324,8 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
       {showGradWelcome && <GradWelcomeModal user={user} isMobile={isMobile} onDismiss={() => {
         try { localStorage.setItem(gradWelcomeKey, "1"); } catch {}
         setShowGradWelcome(false);
+        // Log them out so they can sign back in as community member
+        setTimeout(() => onLogout(), 300);
       }} />}
     </div>
   );
