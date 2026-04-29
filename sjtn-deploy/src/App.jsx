@@ -1602,7 +1602,7 @@ const MenteePortal = ({ user, onLogout }) => {
     taskOverrides.current[task.id] = newCompleted;
     setTasks(p => p.map(t => t.id === task.id ? { ...t, completed: newCompleted } : t));
     await supabase.functions.invoke('assign-task', {
-      body: { action: 'update', task_id: task.id, completed: newCompleted }
+      body: { action: 'update', id: task.id, completed: newCompleted }
     });
     // Override persists for session — cleared only when fresh data confirms DB saved
     // Will be removed once edge function update action is confirmed working
@@ -1611,7 +1611,7 @@ const MenteePortal = ({ user, onLogout }) => {
   const saveTaskNote = async (taskId) => {
     setTasks(p => p.map(t => t.id === taskId ? { ...t, mentee_notes: taskNoteInput } : t));
     await supabase.functions.invoke('assign-task', {
-      body: { action: 'update', task_id: taskId, mentee_notes: taskNoteInput }
+      body: { action: 'update', id: taskId, mentee_notes: taskNoteInput }
     });
     setEditingTaskNote(null);
     setTaskNoteInput("");
