@@ -1640,7 +1640,13 @@ const MenteePortal = ({ user, onLogout }) => {
       supabase.functions.invoke('send-message', { body: { action: 'check_graduation', mentee_email: user.email } })
         .then(({ data }) => {
           if (data?.graduated) {
-            try { if (!localStorage.getItem(gradKey)) setShowGraduation(true); } catch { setShowGraduation(true); }
+            // Only show if not already a community member (prevents re-triggering on re-login)
+            if (user.role !== "community" && user.graduated !== true) {
+              try { if (!localStorage.getItem(gradKey)) setShowGraduation(true); } catch { setShowGraduation(true); }
+            } else {
+              // Already graduated/community — mark dismissed so it never fires again
+              try { localStorage.setItem(gradKey, "1"); } catch {}
+            }
           }
         });
     };
@@ -1863,6 +1869,12 @@ const MenteePortal = ({ user, onLogout }) => {
             </div>
           </div>
 
+          <div style={{ background:B.amber, padding:"16px 20px", marginBottom:16 }}>
+            <div style={{ fontSize:10, fontWeight:700, color:B.white, letterSpacing:1.5, textTransform:"uppercase", marginBottom:6 }}>📋 Important — Read Before Continuing</div>
+            <div style={{ fontSize:13, color:B.white, fontWeight:600, lineHeight:1.6 }}>
+              Clicking below will <strong>sign you out</strong>. To access your new community portal, sign back in with your <strong>same email and password</strong> — nothing changes.
+            </div>
+          </div>
           <Btn full variant="blush" onClick={async () => {
             dismissGraduation();
             // Clear all local session data
@@ -1871,7 +1883,7 @@ const MenteePortal = ({ user, onLogout }) => {
             await supabase.auth.signOut();
             window.location.href = window.location.origin;
           }} style={{ padding: "16px" }}>
-            Take Me to the Community →
+            Sign Out & Enter the Community →
           </Btn>
         </div>
       </div>
