@@ -1604,8 +1604,8 @@ const MenteePortal = ({ user, onLogout }) => {
     await supabase.functions.invoke('assign-task', {
       body: { action: 'update', id: task.id, completed: newCompleted }
     });
-    // Override persists for session — cleared only when fresh data confirms DB saved
-    // Will be removed once edge function update action is confirmed working
+    // Clear override after 15s — DB has confirmed save by then
+    setTimeout(() => { delete taskOverrides.current[task.id]; }, 15000);
   };
 
   const saveTaskNote = async (taskId) => {
