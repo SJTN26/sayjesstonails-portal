@@ -2907,7 +2907,7 @@ const CommunityPg = ({ title, sub, children }) => {
 };
 
 /* ── Graduate Welcome Modal — standalone to avoid JSX nesting issues ── */
-const GradWelcomeModal = ({ user, onDismiss, isMobile }) => (
+const GradWelcomeModal = ({ user, onDismiss, isMobile, isWelcomeBack = false }) => (
   <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", zIndex:1001, overflowY:"auto", display:"flex", alignItems:"flex-start", justifyContent:"center", padding: isMobile ? "0" : "40px 16px" }}>
     <div style={{ background:B.white, width:"100%", maxWidth:580, minHeight: isMobile ? "100dvh" : "auto", display:"flex", flexDirection:"column" }}>
       <div style={{ background:B.blush, padding:"32px 32px 24px", textAlign:"center" }}>
@@ -2949,11 +2949,13 @@ const GradWelcomeModal = ({ user, onDismiss, isMobile }) => (
           </div>
         </div>
         <button onClick={onDismiss} style={{ width:"100%", padding:"16px", background:B.blush, border:"none", color:B.white, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>
-          Enter the Community — Sign In →
+          {isWelcomeBack ? "Let's Go →" : "Enter the Community — Sign In →"}
         </button>
-        <p style={{ fontSize:11, color:B.mid, fontWeight:300, textAlign:"center", marginTop:10, lineHeight:1.5 }}>
-          You'll be signed out and taken to the login screen. Sign back in with your same email and password.
-        </p>
+        {!isWelcomeBack && (
+          <p style={{ fontSize:11, color:B.mid, fontWeight:300, textAlign:"center", marginTop:10, lineHeight:1.5 }}>
+            You'll be signed out and taken to the login screen. Sign back in with your same email and password.
+          </p>
+        )}
       </div>
     </div>
   </div>
@@ -3327,11 +3329,9 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
           </button>
         </nav>
       )}
-      {showGradWelcome && <GradWelcomeModal user={user} isMobile={isMobile} onDismiss={() => {
+      {showGradWelcome && <GradWelcomeModal user={user} isMobile={isMobile} isWelcomeBack onDismiss={() => {
         try { localStorage.setItem(gradWelcomeKey, "1"); } catch {}
         setShowGradWelcome(false);
-        // Log them out so they can sign back in as community member
-        setTimeout(() => onLogout(), 300);
       }} />}
     </div>
   );
