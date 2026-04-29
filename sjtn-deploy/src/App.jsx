@@ -1596,7 +1596,12 @@ const MenteePortal = ({ user, onLogout }) => {
     await supabase.functions.invoke('assign-task', {
       body: { action: 'update', task_id: task.id, completed: newCompleted }
     });
-    setTimeout(() => { taskPollPaused.current = false; }, 5000);
+    // Re-fetch after save to sync DB state, then resume polling
+    const { data } = await supabase.functions.invoke('assign-task', {
+      body: { action: 'fetch', mentee_email: user.email }
+    });
+    if (data?.tasks) setTasks(data.tasks);
+    taskPollPaused.current = false;
   };
 
   const saveTaskNote = async (taskId) => {
