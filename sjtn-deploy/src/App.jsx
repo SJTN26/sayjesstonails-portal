@@ -2617,9 +2617,9 @@ const MenteePortal = ({ user, onLogout }) => {
           <Section style={{ marginBottom: 12 }}>Your Personal Referral Link</Section>
           <div style={{ display: "flex", gap: 2 }}>
             <div style={{ flex: 1, padding: "12px 16px", background: B.off, border: `1px solid ${B.cloud}`, fontSize: 12, color: B.steel, fontFamily: FONTS.body, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              sayjesstonails.com/ref/{user.firstName.toLowerCase()}{user.avatar.toLowerCase()}
+              portal.sayjesstonails.com/?ref={user.firstName.toLowerCase()}{user.avatar.toLowerCase()}
             </div>
-            <button onClick={() => { navigator.clipboard.writeText(`https://sayjesstonails.com/ref/${user.firstName?.toLowerCase()}${user.avatar?.toLowerCase()}`); setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }} style={{ padding: "12px 18px", background: referralCopied ? B.success : B.black, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0, transition: "background .3s", display: "flex", alignItems: "center", gap: 7 }}>
+            <button onClick={() => { navigator.clipboard.writeText(`https://portal.sayjesstonails.com/?ref=${user.firstName?.toLowerCase()}${user.avatar?.toLowerCase()}`); setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }} style={{ padding: "12px 18px", background: referralCopied ? B.success : B.black, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0, transition: "background .3s", display: "flex", alignItems: "center", gap: 7 }}>
               <Ic n={referralCopied ? "check" : "link"} size={13} color={B.white} />
               {referralCopied ? "Copied!" : "Copy"}
             </button>
@@ -2628,8 +2628,8 @@ const MenteePortal = ({ user, onLogout }) => {
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 2, marginBottom: 20 }}>
           {[
             ["Share on Instagram", "instagram", B.blush, () => window.open("https://www.instagram.com/", "_blank")],
-            ["Share via Text", "send", B.success, () => { const ref = `sayjesstonails.com/ref/${user.firstName?.toLowerCase()}${user.avatar?.toLowerCase()}`; window.open(`sms:?body=Hey! I've been working with Jess at SayJessToNails and it's been amazing. Check it out: https://${ref}`, "_blank"); }],
-            ["Copy Link", "link", "#9B6EA0", () => { navigator.clipboard.writeText(`https://sayjesstonails.com/ref/${user.firstName?.toLowerCase()}${user.avatar?.toLowerCase()}`); setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }],
+            ["Share via Text", "send", B.success, () => { const ref = `portal.sayjesstonails.com/?ref=${user.firstName?.toLowerCase()}${user.avatar?.toLowerCase()}`; window.open(`sms:?body=Hey! I've been working with Jess at SayJessToNails and it's been amazing. Check it out: https://${ref}`, "_blank"); }],
+            ["Copy Link", "link", "#9B6EA0", () => { navigator.clipboard.writeText(`https://portal.sayjesstonails.com/?ref=${user.firstName?.toLowerCase()}${user.avatar?.toLowerCase()}`); setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); }],
           ].map(([label, icon, color, onClick]) => (
             <button key={label} onClick={onClick} style={{ padding: "14px", border: `1px solid ${B.cloud}`, background: B.white, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", fontFamily: FONTS.body, fontSize: 12, fontWeight: 600, color: B.charcoal, letterSpacing: "0.02em" }}>
               <Ic n={icon} size={15} color={color} />{label}
