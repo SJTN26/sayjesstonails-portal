@@ -1486,14 +1486,17 @@ const MenteePortal = ({ user, onLogout }) => {
     if (!user.email) return;
     const fetchResources = async () => {
       const { data } = await supabase.functions.invoke('assign-task', { body: { action: 'get_resources', mentee_email: user.email } });
-      const { data: globalData } = await supabase.functions.invoke('assign-task', { body: { action: 'get_all_resources' } });
       const menteeSpecific = data?.resources || [];
-      const globalResources = (Array.isArray(globalData) ? globalData : globalData?.resources || [])
-        .filter(r => !r.mentee_email)
-        .map(r => ({ ...r, title: r.title, file_url: r.file_url, file_type: r.file_type, category: r.category || "General", description: r.description }));
-      // Merge, avoiding duplicates by id
-      const ids = new Set(menteeSpecific.map(r => r.id));
-      setMenteeResources([...menteeSpecific, ...globalResources.filter(r => !ids.has(r.id))]);
+      try {
+        const { data: globalData } = await supabase.functions.invoke('assign-task', { body: { action: 'get_all_resources' } });
+        const globalResources = (Array.isArray(globalData) ? globalData : globalData?.resources || [])
+          .filter(r => !r.mentee_email)
+          .map(r => ({ ...r, category: r.category || "General" }));
+        const ids = new Set(menteeSpecific.map(r => r.id));
+        setMenteeResources([...menteeSpecific, ...globalResources.filter(r => !ids.has(r.id))]);
+      } catch {
+        setMenteeResources(menteeSpecific);
+      }
     };
     fetchResources();
     const interval = setInterval(fetchResources, 30000);
@@ -1569,7 +1572,7 @@ const MenteePortal = ({ user, onLogout }) => {
   const [taskNoteInput, setTaskNoteInput] = useState("");
 
   // Fetch tasks from Supabase via edge function
-  const taskPollPaused = React.useRef(false);
+  const taskPollPaused = useRef(false);
 
   useEffect(() => {
     if (!user.email || !!user.password) return;
