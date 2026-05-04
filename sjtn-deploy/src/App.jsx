@@ -4441,6 +4441,11 @@ const AdminDashboard = ({ onLogout }) => {
   const [menteeDrawer, setMenteeDrawer] = useState(null);
   const [sessionsHistory, setSessionsHistory] = useState({});
   const [winsCache, setWinsCache] = useState({});
+  const [leaderboard, setLeaderboard] = useState([]);
+  useEffect(() => {
+    supabase.functions.invoke('track-referral', { body: { action: 'get_leaderboard' } })
+      .then(({ data }) => { if (data?.leaderboard) setLeaderboard(data.leaderboard); });
+  }, []);
   const [assignTask, setAssignTask] = useState(null); // { mentee }
   const [addResource, setAddResource] = useState(null); // null | { mentee } | "global"
   const [resourceForm, setResourceForm] = useState({ title:"", description:"", category:"", file:null });
@@ -4948,39 +4953,31 @@ const AdminDashboard = ({ onLogout }) => {
       })()}
 
         {/* Referral Leaderboard */}
-        {(() => {
-          const [leaderboard, setLeaderboard] = React.useState([]);
-          React.useEffect(() => {
-            supabase.functions.invoke('track-referral', { body: { action: 'get_leaderboard' } })
-              .then(({ data }) => { if (data?.leaderboard) setLeaderboard(data.leaderboard); });
-          }, []);
-          if (leaderboard.length === 0) return null;
-          return (
-            <div style={{ marginTop: 28 }}>
-              <Section style={{ marginBottom: 10 }}>Referral Leaderboard</Section>
-              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {leaderboard.slice(0, 5).map((r, i) => (
-                  <div key={i} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: `3px solid ${B.blush}` }}>
+        {leaderboard.length > 0 && (
+          <div style={{ marginTop: 28 }}>
+            <Section style={{ marginBottom: 10 }}>Referral Leaderboard</Section>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {leaderboard.slice(0, 5).map((r, i) => (
+                <div key={i} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: `3px solid ${B.blush}` }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: B.black }}>{r.name}</div>
+                    <div style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>{r.email}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 16, textAlign: "center" }}>
                     <div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: B.black }}>{r.name}</div>
-                      <div style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>{r.email}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: B.blush }}>{r.clicks}</div>
+                      <div style={{ fontSize: 8, color: B.mid, letterSpacing: 1, textTransform: "uppercase" }}>Clicks</div>
                     </div>
-                    <div style={{ display: "flex", gap: 16, textAlign: "center" }}>
-                      <div>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: B.blush }}>{r.clicks}</div>
-                        <div style={{ fontSize: 8, color: B.mid, letterSpacing: 1, textTransform: "uppercase" }}>Clicks</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: B.success }}>{r.conversions}</div>
-                        <div style={{ fontSize: 8, color: B.mid, letterSpacing: 1, textTransform: "uppercase" }}>Joined</div>
-                      </div>
+                    <div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: B.success }}>{r.conversions}</div>
+                      <div style={{ fontSize: 8, color: B.mid, letterSpacing: 1, textTransform: "uppercase" }}>Joined</div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          );
-        })()}
+          </div>
+        )}
     </Pg>
   );
 
