@@ -6539,8 +6539,8 @@ export default function App() {
     }
 
     // Referral tracking — log visit if ?ref= param in URL
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get('ref');
+    const refParams = new URLSearchParams(window.location.search);
+    const ref = refParams.get('ref');
     if (ref) {
       try { sessionStorage.setItem('sjtn_ref', ref); } catch {}
       supabase.functions.invoke('track-referral', {
