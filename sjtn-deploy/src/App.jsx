@@ -4838,11 +4838,18 @@ const AdminDashboard = ({ onLogout }) => {
  tier: mentee?.tierKey || "mentee"
  };
  });
- setContacts(contactList);
- if (contactList.length > 0 && selChatRef.current === null) setSelChat(0);
+ // Also include mentees with no messages yet
+ const existingEmails = new Set(contactList.map(c => c.email.toLowerCase()));
+ const allPeople = [...menteeList, ...communityList, ...graduates];
+ const noMsgContacts = allPeople
+   .filter(m => m.email && !existingEmails.has(m.email.toLowerCase()))
+   .map(m => ({ email: m.email, name: m.firstName || m.name || m.email.split("@")[0], preview: "No messages yet — send the first one", unread: 0, tier: m.tierKey || "mentee" }));
+ const fullContactList = [...contactList, ...noMsgContacts];
+ setContacts(fullContactList);
+ if (fullContactList.length > 0 && selChatRef.current === null) setSelChat(0);
  const msgMap = {};
- contactList.forEach((c, i) => {
- msgMap[i] = grouped[c.email].filter(m => !m.text?.startsWith("__GRADUATION__")).map(m => {
+ fullContactList.forEach((c, i) => {
+  msgMap[i] = (grouped[c.email] || []).filter(m => !m.text?.startsWith("__GRADUATION__")).map(m => {
  const isImage = m.audio_url?.startsWith("__IMAGE__");
  return {
  from: m.sender === "mentee" ? c.name : "Jess",
