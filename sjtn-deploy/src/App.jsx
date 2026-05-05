@@ -2710,7 +2710,7 @@ const MenteePortal = ({ user, onLogout }) => {
  };
 
  return (
- <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off, position: "relative" }}>
+ <div className="community-portal" style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off, position: "relative" }}>
  {callActive && <VideoCallModal
  onClose={() => setCallActive(false)}
  sessionName={profile.nextSession?.type || "Live Session"}
@@ -3360,7 +3360,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  };
 
  return (
- <div style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off, position: "relative" }}>
+ <div className="community-portal" style={{ display: "flex", height: "100dvh", overflow: "hidden", fontFamily: FONTS.body, background: B.off, position: "relative" }}>
 
  {useSidebar && (
  <div style={{ width: 220, background: B.white, borderRight: `1px solid ${B.cloud}`, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
@@ -6129,7 +6129,7 @@ const AdminDashboard = ({ onLogout }) => {
  {SessionScheduleModal}
  {AssignTaskModal}
  {ResourceModal}
- <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:opacity.15s;cursor:pointer} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}} .community-h1{font-family:'Barlow Condensed','Arial Narrow',sans-serif!important;font-weight:900!important;}`}</style>
+ <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;700;900&family=DM+Sans:wght@300;400;500;600&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} button{-webkit-tap-highlight-color:transparent;transition:opacity.15s;cursor:pointer} button:active{opacity:.78} input,textarea{font-size:16px!important;font-family:inherit} ::-webkit-scrollbar{width:3px} ::-webkit-scrollbar-thumb{background:${B.cloud}} .community-h1{font-family:'Barlow Condensed','Arial Narrow',sans-serif!important;font-weight:900!important;} .community-portal h1{font-family:'Barlow Condensed','Arial Narrow',sans-serif!important;font-weight:900!important;}`}</style>
 
  {useSidebar && (
  <div style={{ width: 220, background: B.white, borderRight: `1px solid ${B.cloud}`, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
