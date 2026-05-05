@@ -952,7 +952,7 @@ const STEPS = ["About You", "Your Goals", "Pick a Time", "Confirm"];
 const CommunityApply = ({ onBack, onSubmit }) => {
   const { isMobile } = useLayout();
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ firstName:"", email:"", password:"", q1:"", q2:"", q3:"", isBeautyPro:"", field:"" });
+  const [form, setForm] = useState({ firstName:"", email:"", q1:"", q2:"", q3:"", isBeautyPro:"", field:"" });
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -963,7 +963,7 @@ const CommunityApply = ({ onBack, onSubmit }) => {
     if (step === 1) {
       if (!form.firstName.trim()) { setErr("Please enter your first name."); return; }
       if (!form.email.trim()) { setErr("Please enter your email."); return; }
-      if (form.password.length < 8) { setErr("Password must be at least 8 characters."); return; }
+      if (!form.email.includes("@")) { setErr("Please enter a valid email address."); return; }
     }
     setErr(""); setStep(s => s + 1);
   };
@@ -1066,8 +1066,7 @@ const CommunityApply = ({ onBack, onSubmit }) => {
               <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>Email Address</label>
               <input value={form.email} onChange={e => update("email", e.target.value)} type="email" placeholder="your@email.com" style={{ ...inp, marginBottom:16 }} />
 
-              <label style={{ display:"block", fontSize:9, color:B.blushLight, fontWeight:700, letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>Create Password</label>
-              <input value={form.password} onChange={e => update("password", e.target.value)} type="password" placeholder="At least 8 characters" style={{ ...inp, marginBottom: err ? 12 : 24 }} />
+
 
               {err && <div style={{ color:B.blushLight, fontSize:12, marginBottom:16, padding:"10px 14px", background:`${B.blush}15`, borderLeft:`3px solid ${B.blush}`, fontWeight:300 }}>{err}</div>}
 
