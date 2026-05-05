@@ -4868,7 +4868,7 @@ const AdminDashboard = ({ onLogout }) => {
  fetchAllMessages();
  const interval = setInterval(fetchAllMessages, 5000);
  return () => clearInterval(interval);
- }, [menteeList.length]);
+}, [menteeList.length, communityList.length, graduates.length]);
 
  // Derive unread count from contacts state — already computed in fetchAllMessages
  useEffect(() => {
