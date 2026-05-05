@@ -3002,6 +3002,17 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
       .then(({ data }) => { if (data?.voice) setJessVoice({ text: data.voice.title, audioUrl: data.voice.audio_url }); });
   }, []);
 
+  // Fetch trial end date from community_applications
+  const [trialEndDate, setTrialEndDate] = useState(null);
+  useEffect(() => {
+    if (!isTrial) return;
+    supabase.functions.invoke('assign-task', { body: { action: 'get_applications' } })
+      .then(({ data }) => {
+        const app = data?.applications?.find(a => a.email?.toLowerCase() === user.email?.toLowerCase());
+        if (app?.trial_end) setTrialEndDate(app.trial_end);
+      });
+  }, [user.email]);
+
   const [resources, setResources] = useState([]);
   useEffect(() => {
     supabase.functions.invoke('assign-task', { body: { action: 'get_all_resources' } })
@@ -3052,6 +3063,9 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
 
   // Trial detection — graduates and paid members are never on trial
   const isTrial = !user.paid && !user.graduated && user.tierKey !== "graduate";
+  const trialDaysLeft = isTrial && trialEndDate
+    ? Math.max(0, Math.ceil((new Date(trialEndDate) - Date.now()) / (1000 * 60 * 60 * 24)))
+    : isTrial ? 7 : 0;
 
   // Lock gate component for trial users
   const LockedGate = ({ section }) => (
@@ -3118,7 +3132,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
         {isTrial && (
           <div style={{ background:`${B.amber}12`, border:`1px solid ${B.amber}40`, borderLeft:`3px solid ${B.amber}`, padding:"14px 18px", marginBottom:16, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10 }}>
             <div>
-              <div style={{ fontSize:9, fontWeight:700, color:B.amber, letterSpacing:2, textTransform:"uppercase", marginBottom:3 }}>Free Trial Active</div>
+              <div style={{ fontSize:9, fontWeight:700, color:B.amber, letterSpacing:2, textTransform:"uppercase", marginBottom:3 }}>Free Trial Active — {trialDaysLeft} Day{trialDaysLeft !== 1 ? "s" : ""} Left</div>
               <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}><strong style={{ fontWeight:700 }}>Community Feed Access Only.</strong> Resources and audio check-ins unlock with full membership.</div>
             </div>
             <button onClick={() => window.open("https://buy.stripe.com/6oUfZj5H86GPfoieo67wA06", "_blank")} style={{ padding:"8px 16px", background:B.amber, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap" }}>Upgrade — $27/mo</button>
