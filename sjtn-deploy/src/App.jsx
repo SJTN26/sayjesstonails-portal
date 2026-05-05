@@ -4244,6 +4244,21 @@ const AdminCommunity = ({ menteeList, communityList }) => {
   const [postInput, setCommunityPostInput] = useState("");
   const [postCat, setCommunityPostCat] = useState("tip");
   const [tab, setTab] = useState("feed");
+  const [trialList, setTrialList] = useState([]);
+  useEffect(() => {
+    supabase.functions.invoke('assign-task', { body: { action: 'get_applications' } })
+      .then(({ data }) => {
+        const trials = (data?.applications || [])
+          .filter(a => a.status === 'approved' && !a.paid)
+          .map(a => ({
+            name: a.first_name,
+            email: a.email,
+            trialEnd: a.trial_end ? new Date(a.trial_end).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "Unknown",
+            daysLeft: a.trial_end ? Math.max(0, Math.ceil((new Date(a.trial_end) - Date.now()) / (1000 * 60 * 60 * 24))) : 7,
+          }));
+        setTrialList(trials);
+      });
+  }, []);
   const [jessVoiceAdmin, setJessVoiceAdmin] = useState(null);
   const [postImage, setPostImage] = useState(null);
   const postImageRef = useRef(null);
@@ -4461,23 +4476,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
         </div>
       )}
 
-      {tab === "trial" && (() => {
-        const [trialList, setTrialList] = React.useState([]);
-        React.useEffect(() => {
-          supabase.functions.invoke('assign-task', { body: { action: 'get_applications' } })
-            .then(({ data }) => {
-              const trials = (data?.applications || [])
-                .filter(a => a.status === 'approved' && !a.paid)
-                .map(a => ({
-                  name: a.first_name,
-                  email: a.email,
-                  trialEnd: a.trial_end ? new Date(a.trial_end).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "Unknown",
-                  daysLeft: a.trial_end ? Math.max(0, Math.ceil((new Date(a.trial_end) - Date.now()) / (1000 * 60 * 60 * 24))) : 7,
-                }));
-              setTrialList(trials);
-            });
-        }, []);
-        return (
+      {tab === "trial" && (
           <div>
             <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{trialList.length} member{trialList.length !== 1 ? "s" : ""} on free trial</div>
             {trialList.length === 0 && <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No active trial members right now.</div>}
@@ -4495,8 +4494,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
               </div>
             ))}
           </div>
-        );
-      })()}
+      )}
 
       {tab === "resources" && (
         <AdminCommunityResources />
