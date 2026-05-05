@@ -4840,7 +4840,7 @@ const AdminDashboard = ({ onLogout }) => {
  });
  // Also include mentees with no messages yet
  const existingEmails = new Set(contactList.map(c => c.email.toLowerCase()));
- const allPeople = [...menteeList, ...communityList, ...graduates];
+ const allPeople = [...menteeList];
  const noMsgContacts = allPeople
    .filter(m => m.email && !existingEmails.has(m.email.toLowerCase()))
    .map(m => ({ email: m.email, name: m.firstName || m.name || m.email.split("@")[0], preview: "No messages yet — send the first one", unread: 0, tier: m.tierKey || "mentee" }));
@@ -4875,7 +4875,7 @@ const AdminDashboard = ({ onLogout }) => {
     if (menteeList.length === 0 && communityList.length === 0 && graduates.length === 0) return;
     setContacts(prev => {
       const existingEmails = new Set(prev.map(c => c.email?.toLowerCase()));
-      const allPeople = [...menteeList, ...communityList, ...graduates];
+      const allPeople = [...menteeList]; // Only active mentees — community members have no messages tab
       const newContacts = allPeople
         .filter(m => m.email && !existingEmails.has(m.email.toLowerCase()))
         .map(m => ({
@@ -5945,7 +5945,7 @@ const AdminDashboard = ({ onLogout }) => {
  <span style={{ fontSize:13, fontWeight:700, color: isActive ? B.blush : B.black }}>{c.name}</span>
  {c.unread > 0 && <span style={{ background:B.blush, color:B.white, fontSize:8, fontWeight:700, padding:"2px 6px", borderRadius:10 }}>{c.unread}</span>}
  </div>
- <div style={{ fontSize:10, color:B.mid, fontWeight:300, letterSpacing:0.5, textTransform:"uppercase" }}>{c.tier === "elite" ? "3-Month Elite" : "30-Day Intensive"}</div>
+ <div style={{ fontSize:10, color:B.mid, fontWeight:300, letterSpacing:0.5, textTransform:"uppercase" }}>{c.tier === "elite" ? "3-Month Elite" : c.tier === "intensive" ? "30-Day Intensive" : c.tier === "hourly" ? "Hourly Session" : c.tier || "Mentee"}</div>
  <p style={{ fontSize:11, color:B.mid, margin:"4px 0 0", overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", fontWeight:300 }}>{c.preview}</p>
  </div>
  </div>
