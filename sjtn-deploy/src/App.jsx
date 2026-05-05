@@ -3749,13 +3749,36 @@ const ApplicationsView = () => {
   }, []);
 
   const approve = async (id) => {
+    const app = applications.find(a => a.id === id);
+    if (!app) return;
     const trialStart = new Date();
     const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    // Update application status
     await supabase.functions.invoke('assign-task', { body: { action: 'update_application', id,
       status: "approved",
       trial_start: trialStart.toISOString(),
       trial_end: trialEnd.toISOString()
     } });
+    // Invite them as a community member — sends email with set-password link
+    await supabase.functions.invoke('invite-mentee', {
+      body: {
+        email: app.email,
+        first_name: app.firstName,
+        tier: "Community Member",
+        role: "community",
+        paid: false,
+      }
+    });
+    // Save profile so they have correct role on login
+    await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: {
+      email: app.email.toLowerCase(),
+      first_name: app.firstName,
+      role: "community",
+      tier: "Community Member",
+      tier_key: "community",
+      paid: false,
+      start_date: trialStart.toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }),
+    } } });
     setApplications(p => p.map(a => a.id === id ? { ...a, status:"approved", trialStart: trialStart.toLocaleDateString("en-US",{month:"short",day:"numeric"}), trialEnd: trialEnd.toLocaleDateString("en-US",{month:"short",day:"numeric"}) } : a));
   };
 
