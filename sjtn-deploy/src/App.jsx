@@ -4245,12 +4245,44 @@ const AdminCommunity = ({ menteeList, communityList }) => {
   const [postCat, setCommunityPostCat] = useState("tip");
   const [tab, setTab] = useState("feed");
   const [trialList, setTrialList] = useState([]);
+  const [communityInvite, setCommunityInvite] = useState({ name:"", email:"" });
+  const [communityInviting, setCommunityInviting] = useState(false);
+  const [communityInviteSent, setCommunityInviteSent] = useState(false);
+
+  const inviteCommunityDirect = async () => {
+    if (!communityInvite.name.trim() || !communityInvite.email.trim()) return;
+    setCommunityInviting(true);
+    await supabase.functions.invoke('invite-mentee', {
+      body: {
+        email: communityInvite.email.toLowerCase(),
+        first_name: communityInvite.name,
+        tier: "Community Member",
+        role: "community",
+        paid: true,
+      }
+    });
+    await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: {
+      email: communityInvite.email.toLowerCase(),
+      first_name: communityInvite.name,
+      role: "community",
+      tier: "Community Member",
+      tier_key: "community",
+      paid: true,
+      start_date: new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }),
+    } } });
+    setCommunityInviting(false);
+    setCommunityInviteSent(true);
+    setCommunityInvite({ name:"", email:"" });
+    setTimeout(() => setCommunityInviteSent(false), 3000);
+  };
+
   useEffect(() => {
     supabase.functions.invoke('assign-task', { body: { action: 'get_applications' } })
       .then(({ data }) => {
         const trials = (data?.applications || [])
           .filter(a => a.status === 'approved' && !a.paid)
           .map(a => ({
+            id: a.id,
             name: a.first_name,
             email: a.email,
             trialEnd: a.trial_end ? new Date(a.trial_end).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "Unknown",
@@ -4433,6 +4465,18 @@ const AdminCommunity = ({ menteeList, communityList }) => {
 
       {tab === "members" && (
         <div>
+          {/* Direct invite form */}
+          <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"16px 18px", marginBottom:16 }}>
+            <div style={{ fontSize:10, fontWeight:700, color:B.blush, letterSpacing:1.5, textTransform:"uppercase", marginBottom:12 }}>Invite to Community — Full Access</div>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+              <input value={communityInvite.name} onChange={e => setCommunityInvite(p => ({ ...p, name: e.target.value }))} placeholder="First name" style={{ flex:1, minWidth:120, padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:12, fontFamily:FONTS.body, outline:"none" }} />
+              <input value={communityInvite.email} onChange={e => setCommunityInvite(p => ({ ...p, email: e.target.value }))} placeholder="Email address" type="email" style={{ flex:2, minWidth:180, padding:"10px 12px", border:`1px solid ${B.cloud}`, fontSize:12, fontFamily:FONTS.body, outline:"none" }} />
+              <button onClick={inviteCommunityDirect} disabled={communityInviting || !communityInvite.name || !communityInvite.email} style={{ padding:"10px 18px", background: communityInviteSent ? B.success : B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap", opacity: communityInviting ? 0.6 : 1 }}>
+                {communityInviteSent ? "Sent ✓" : communityInviting ? "Sending…" : "Invite"}
+              </button>
+            </div>
+            <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:8 }}>They'll receive an email to set their password and get instant full access — no trial, no payment required.</div>
+          </div>
           <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{communityList.length} community members</div>
           {communityList.map((m, i) => (
             <div key={i} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"14px 18px", marginBottom:2, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -4489,7 +4533,12 @@ const AdminCommunity = ({ menteeList, communityList }) => {
                 <div style={{ textAlign:"right" }}>
                   <div style={{ fontSize:16, fontWeight:700, color: m.daysLeft <= 2 ? B.blush : B.amber }}>{m.daysLeft}</div>
                   <div style={{ fontSize:8, color:B.mid, letterSpacing:1, textTransform:"uppercase" }}>Days Left</div>
-                  <div style={{ fontSize:9, color:B.mid, fontWeight:300, marginTop:2 }}>Ends {m.trialEnd}</div>
+                  <div style={{ fontSize:9, color:B.mid, fontWeight:300, marginTop:4 }}>Ends {m.trialEnd}</div>
+                  <button onClick={async () => {
+                    await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: { email: m.email, paid: true } } });
+                    await supabase.functions.invoke('assign-task', { body: { action: 'update_application', id: m.id, paid: true } });
+                    setTrialList(p => p.filter(x => x.email !== m.email));
+                  }} style={{ marginTop:6, fontSize:8, padding:"3px 8px", background:B.success, border:"none", color:B.white, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Grant Full Access</button>
                 </div>
               </div>
             ))}
