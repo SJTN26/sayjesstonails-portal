@@ -3121,12 +3121,14 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     { id:"feed",      icon:"users",    label:"Community Feed" },
     { id:"resources", icon:"book",     label:"Resources" },
     { id:"audio",     icon:"mic",      label:"Jess's Voice" },
+    { id:"refer",     icon:"link",     label:"Refer a Friend" },
     { id:"upgrade",   icon:"zap",      label:"Level Up" },
   ];
   const TABS_C = [
     { id:"feed",      icon:"users",  label:"Feed" },
     { id:"resources", icon:"book",   label:"Library" },
     { id:"audio",     icon:"mic",    label:"Jess" },
+    { id:"refer",     icon:"link",   label:"Refer" },
     { id:"upgrade",   icon:"zap",    label:"Level Up" },
   ];
 
@@ -3287,6 +3289,38 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
       </Pg>
     ),
 
+    refer: (() => {
+      const refCode = `${(user.firstName||"").toLowerCase().replace(/ +/g,"")}${(user.avatar||"").toLowerCase()}`;
+      const refLink = `https://portal.sayjesstonails.com/?ref=${refCode}`;
+      return (
+        <Pg title="Refer a Friend" sub="Grow the Inner Circle">
+          <p style={{ color:B.mid, fontSize:13, margin:"-12px 0 24px", fontWeight:300 }}>Know a nail tech who needs this community? Send them your link and help them find their people.</p>
+          <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"22px 24px", marginBottom:16 }}>
+            <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:10 }}>Your Referral Link</div>
+            <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+              <div style={{ flex:1, minWidth:0, fontSize:12, color:B.ivory, fontWeight:300, padding:"10px 12px", background:"#1a1a1a", wordBreak:"break-all" }}>{refLink}</div>
+              <button onClick={() => { navigator.clipboard.writeText(refLink); }} style={{ padding:"10px 16px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", flexShrink:0 }}>Copy Link</button>
+            </div>
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr 1fr", gap:2, marginBottom:20 }}>
+            {[
+              ["Share on Instagram", "instagram", B.blush, () => window.open("https://www.instagram.com/","_blank")],
+              ["Share via Text", "send", B.success, () => window.open(`sms:?body=Hey! I've been part of the SayJessToNails Inner Circle and it's been incredible. Check it out: ${refLink}`, "_blank")],
+              ["Copy Link", "link", "#9B6EA0", () => navigator.clipboard.writeText(refLink)],
+            ].map(([label, icon, color, onClick]) => (
+              <button key={label} onClick={onClick} style={{ padding:"14px", border:`1px solid ${B.cloud}`, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", gap:8, cursor:"pointer", fontFamily:FONTS.body, fontSize:11, fontWeight:600, color:B.charcoal }}>
+                <Ic n={icon} size={14} color={color} />{label}
+              </button>
+            ))}
+          </div>
+          <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.amber}`, padding:"16px 18px" }}>
+            <div style={{ fontSize:10, fontWeight:700, color:B.amber, letterSpacing:1.5, textTransform:"uppercase", marginBottom:6 }}>Every referral matters</div>
+            <div style={{ fontSize:12, color:B.charcoal, fontWeight:300, lineHeight:1.7 }}>This community grows because people like you believe in what Jess has built. When you refer someone, you're not just sharing a link — you're giving another nail tech the chance to change their business and their life.</div>
+          </div>
+        </Pg>
+      );
+    })(),
+
     upgrade: (
       <Pg title="Level Up" sub="When You're Ready">
         <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 24px", fontWeight: 300 }}>You've been doing the work. This is what the next level looks like.</p>
@@ -3332,14 +3366,17 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
         <div style={{ width: 220, background: B.white, borderRight: `1px solid ${B.cloud}`, display: "flex", flexDirection: "column", height: "100%", flexShrink: 0 }}>
           <div style={{ padding: "16px 20px 14px", borderBottom: `1px solid ${B.cloud}` }}><Logo height={isMobile ? 50 : 60} /></div>
           <div style={{ padding: "12px 16px", borderBottom: `1px solid ${B.cloud}`, display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 30, height: 30, background: B.success, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, flexShrink: 0 }}>{user.avatar}</div>
-            <div><div style={{ color: B.ink, fontSize: 11, fontWeight: 700, letterSpacing: "0.05em" }}>{user.firstName}</div><div style={{ fontSize: 8, color: B.success, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}>Community Member</div></div>
+            <div style={{ width: 32, height: 32, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: B.white, flexShrink: 0 }}>{user.avatar}</div>
+            <div>
+              <div style={{ color: B.black, fontSize: 12, fontWeight: 700, letterSpacing: "0.02em" }}>{user.firstName}</div>
+              <div style={{ fontSize: 8, color: B.mid, fontWeight: 300, letterSpacing: 1, textTransform: "uppercase" }}>{user.paid || user.graduated ? "Inner Circle" : "Free Trial"}</div>
+            </div>
           </div>
           <nav style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
             {NAV_C.map(({ id, icon, label }) => {
               const on = view === id;
               const isUpgrade = id === "upgrade";
-              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? (isUpgrade ? `${B.blush}15` : B.blushPale) : "transparent", color: on ? (isUpgrade ? B.blush : B.blush) : isUpgrade ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : isUpgrade ? 600 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on || isUpgrade ? B.blush : B.mid} />{label}</button>;
+              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "11px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : isUpgrade ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em" }}><Ic n={icon} size={14} color={on || isUpgrade ? B.blush : B.mid} />{label}</button>;
             })}
           </nav>
           <div style={{ padding: "10px 10px", borderTop: `1px solid ${B.cloud}` }}>
@@ -3352,10 +3389,12 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
         <div style={{ position: "sticky", top: 0, background: B.white, borderBottom: `1px solid ${B.cloud}`, padding: "11px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 50, flexShrink: 0 }}>
           <span style={{ fontSize: 9, color: B.mid, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>{NAV_C.find(n => n.id === view)?.label || "Community"}</span>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button onClick={() => setView("upgrade")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: B.blush, border: "none", color: B.white, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 1.5, textTransform: "uppercase" }}>
-              <Ic n="zap" size={10} color={B.white} />Upgrade
-            </button>
-            <div style={{ width: 26, height: 26, background: B.success, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white }}>{user.avatar}</div>
+            {!user.paid && !user.graduated && (
+              <button onClick={() => window.open("https://buy.stripe.com/6oUfZj5H86GPfoieo67wA06", "_blank")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: B.blush, border: "none", color: B.white, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                <Ic n="zap" size={10} color={B.white} />Upgrade
+              </button>
+            )}
+            <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white }}>{user.avatar}</div>
           </div>
         </div>
         <div style={{ flex: 1, overflowY: "auto" }}>{views[view] || views.feed}</div>
@@ -3366,7 +3405,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
           {TABS_C.map(({ id, icon, label }) => {
             const on = view === id;
             const isUpgrade = id === "upgrade";
-            return <button key={id} onClick={() => setView(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "9px 2px 7px", border: "none", background: "transparent", color: on || isUpgrade ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 7, fontWeight: on ? 700 : isUpgrade ? 600 : 300, letterSpacing: 1, textTransform: "uppercase" }}><Ic n={icon} size={18} color={on || isUpgrade ? B.blush : B.mid} />{label}</button>;
+            return <button key={id} onClick={() => setView(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px 8px", border: "none", background: "transparent", color: on ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 8, fontWeight: on ? 700 : 300, letterSpacing: 1.5, textTransform: "uppercase", borderTop: `2px solid ${on ? B.blush : "transparent"}`, cursor: "pointer" }}><Ic n={icon} size={20} color={on ? B.blush : B.mid} />{label}</button>;
           })}
           <button onClick={onLogout} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "9px 2px 7px", border: "none", background: "transparent", color: B.mid, fontFamily: FONTS.body, fontSize: 7, fontWeight: 300, letterSpacing: 1, textTransform: "uppercase" }}>
             <Ic n="logout" size={18} color={B.mid} />Out
