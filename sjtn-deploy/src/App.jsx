@@ -4870,6 +4870,29 @@ const AdminDashboard = ({ onLogout }) => {
  return () => clearInterval(interval);
 }, [menteeList.length, communityList.length, graduates.length]);
 
+  // Sync all mentees into contacts list so Jess can always initiate messages
+  useEffect(() => {
+    if (menteeList.length === 0 && communityList.length === 0 && graduates.length === 0) return;
+    setContacts(prev => {
+      const existingEmails = new Set(prev.map(c => c.email?.toLowerCase()));
+      const allPeople = [...menteeList, ...communityList, ...graduates];
+      const newContacts = allPeople
+        .filter(m => m.email && !existingEmails.has(m.email.toLowerCase()))
+        .map(m => ({
+          email: m.email,
+          name: m.firstName || m.name || m.email.split("@")[0],
+          preview: "No messages yet — send the first one",
+          unread: 0,
+          tier: m.tierKey || "mentee"
+        }));
+      if (newContacts.length === 0) return prev;
+      const updated = [...prev, ...newContacts];
+      if (prev.length === 0 && updated.length > 0) setSelChat(0);
+      return updated;
+    });
+  }, [menteeList.length, communityList.length, graduates.length]);
+
+
  // Derive unread count from contacts state — already computed in fetchAllMessages
  useEffect(() => {
  if (viewRef.current === "messages") {
