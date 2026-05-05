@@ -5055,7 +5055,7 @@ const AdminDashboard = ({ onLogout }) => {
  await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: { email: m.email, room_url: data.url } } });
  setAdminCall({ name: m.name, roomUrl: data.url, menteeEmail: m.email, isSession: false });
  }}>Start Call</Btn>
- <Btn size="sm" variant="ghost" icon="message" onClick={() => { setSelChat(i); setView("messages"); }}>Message</Btn>
+ <Btn size="sm" variant="ghost" icon="message" onClick={() => { const idx = contacts.findIndex(c => c.email?.toLowerCase() === m.email?.toLowerCase()); setSelChat(idx >= 0 ? idx : null); setView("messages"); }}>Message</Btn>
  </div>
  </Card>
  );
@@ -6523,7 +6523,7 @@ const AdminDashboard = ({ onLogout }) => {
  </button>
  )}
 
- <button onClick={() => { setSelChat(i); setView("messages"); }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.white, border:`1px solid ${B.steel}`, color:B.black, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
+ <button onClick={() => { const idx = contacts.findIndex(c => c.email?.toLowerCase() === m.email?.toLowerCase()); setSelChat(idx >= 0 ? idx : null); setView("messages"); }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.white, border:`1px solid ${B.steel}`, color:B.black, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
  <Ic n="message" size={12} color={B.black} />Message
  </button>
  </div>
