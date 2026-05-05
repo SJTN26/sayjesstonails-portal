@@ -24,7 +24,7 @@ const B = {
   white:   "#FFFFFF",
   ivory:   "#F5F0EB",   /* warm off-white for text on dark backgrounds */
   // Blush — used strategically, never decoratively
-  blush:   "#C4607A",
+  blush:   "#b8667a",
   blushLight: "#E8A0B0",
   blushPale:  "#FDF0F3",
   blushMid:   "#F5D5DF",
@@ -4131,7 +4131,10 @@ const AdminCommunityResources = () => {
 
   useEffect(() => {
     supabase.functions.invoke('assign-task', { body: { action: 'get_all_resources' } })
-      .then(({ data }) => { if (data) setResources(data); });
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : data?.resources || [];
+        setResources(list);
+      });
   }, []);
 
   const upload = async () => {
@@ -4312,7 +4315,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
 
       {/* Sub tabs */}
       <div style={{ display:"flex", gap:2, marginBottom:20 }}>
-        {[["feed","Community Feed"], ["members","Members"], ["wins","Mentee Wins"], ["resources","Resources"]].map(([id, label]) => (
+        {[["feed","Community Feed"], ["members","Members"], ["trial","Trial Members"], ["wins","Mentee Wins"], ["resources","Resources"]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{ padding:"8px 18px", border:`1px solid ${tab===id ? B.blush : B.cloud}`, background: tab===id ? B.blush : B.white, color: tab===id ? B.white : B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>{label}</button>
         ))}
       </div>
@@ -4457,6 +4460,43 @@ const AdminCommunity = ({ menteeList, communityList }) => {
           )}
         </div>
       )}
+
+      {tab === "trial" && (() => {
+        const [trialList, setTrialList] = React.useState([]);
+        React.useEffect(() => {
+          supabase.functions.invoke('assign-task', { body: { action: 'get_applications' } })
+            .then(({ data }) => {
+              const trials = (data?.applications || [])
+                .filter(a => a.status === 'approved' && !a.paid)
+                .map(a => ({
+                  name: a.first_name,
+                  email: a.email,
+                  trialEnd: a.trial_end ? new Date(a.trial_end).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "Unknown",
+                  daysLeft: a.trial_end ? Math.max(0, Math.ceil((new Date(a.trial_end) - Date.now()) / (1000 * 60 * 60 * 24))) : 7,
+                }));
+              setTrialList(trials);
+            });
+        }, []);
+        return (
+          <div>
+            <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{trialList.length} member{trialList.length !== 1 ? "s" : ""} on free trial</div>
+            {trialList.length === 0 && <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No active trial members right now.</div>}
+            {trialList.map((m, i) => (
+              <div key={i} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"14px 18px", marginBottom:2, display:"flex", justifyContent:"space-between", alignItems:"center", borderLeft:`3px solid ${B.amber}` }}>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:700, color:B.black }}>{m.name}</div>
+                  <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{m.email}</div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:16, fontWeight:700, color: m.daysLeft <= 2 ? B.blush : B.amber }}>{m.daysLeft}</div>
+                  <div style={{ fontSize:8, color:B.mid, letterSpacing:1, textTransform:"uppercase" }}>Days Left</div>
+                  <div style={{ fontSize:9, color:B.mid, fontWeight:300, marginTop:2 }}>Ends {m.trialEnd}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {tab === "resources" && (
         <AdminCommunityResources />
