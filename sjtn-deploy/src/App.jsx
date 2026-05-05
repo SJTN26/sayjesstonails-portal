@@ -2926,7 +2926,7 @@ const CommunityPg = ({ title, sub, children }) => {
  <div style={{ padding: isMobile ? "20px 18px 96px" : "28px 32px", maxWidth: 1020, width: "100%" }}>
  {title && <div style={{ marginBottom: 22 }}>
  {sub && <Section style={{ marginBottom: 8 }}>{sub}</Section>}
- <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: 0, lineHeight: 0.95, letterSpacing: "-0.5px" }}>{title}</h1>
+ <h1 style={{ fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif", fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: 0, lineHeight: 0.95, letterSpacing: "-0.5px" }}>{title}</h1>
  </div>}
  {children}
  </div>
