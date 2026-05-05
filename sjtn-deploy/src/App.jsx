@@ -729,6 +729,13 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
         if (gradData?.graduated) { role = "community"; isGraduate = true; }
       }
 
+      // Fetch paid status from profile for community members
+      let isPaid = isGraduate;
+      if (role === "community" && !isGraduate) {
+        const { data: profileData } = await supabase.functions.invoke('assign-task', { body: { action: 'get_profile', email } });
+        isPaid = profileData?.profile?.paid || false;
+      }
+
       const userData = {
         role,
         firstName,
@@ -736,8 +743,8 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
         email: email.toLowerCase(),
         avatar: firstName.slice(0,2).toUpperCase(),
         tier,
-        tierKey: isGraduate ? "graduate" : tier.includes("Elite") ? "elite" : tier.includes("Intensive") ? "intensive" : "hourly",
-        paid: isGraduate ? true : false,
+        tierKey: isGraduate ? "graduate" : role === "community" && isPaid ? "community_paid" : tier.includes("Elite") ? "elite" : tier.includes("Intensive") ? "intensive" : "hourly",
+        paid: isPaid,
         graduated: isGraduate,
         totalDays: tier.includes("Elite") ? 90 : tier.includes("Intensive") ? 30 : 1,
         daysRemaining: calcDaysRemaining(new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }), tier.includes("Elite") ? 90 : tier.includes("Intensive") ? 30 : 1),
@@ -3062,7 +3069,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   }, []);
 
   // Trial detection — graduates and paid members are never on trial
-  const isTrial = !user.paid && !user.graduated && user.tierKey !== "graduate";
+  const isTrial = !user.paid && !user.graduated && user.tierKey !== "graduate" && user.tierKey !== "community_paid";
   const trialDaysLeft = isTrial && trialEndDate
     ? Math.max(0, Math.ceil((new Date(trialEndDate) - Date.now()) / (1000 * 60 * 60 * 24)))
     : isTrial ? 7 : 0;
