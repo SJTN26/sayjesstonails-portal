@@ -2459,7 +2459,7 @@ const MenteePortal = ({ user, onLogout }) => {
               </button>
             ))}
           </div>
-          <textarea value={commPostInput} onChange={e => setCommPostInput(e.target.value)} placeholder="Share a win, ask a question, drop a tip — this community grows because you show up." rows={4} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${B.cloud}`, fontSize: 14, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "vertical", boxSizing: "border-box", fontWeight: 300, minHeight: 100 }} />
+          <textarea value={commPostInput} onChange={e => setCommPostInput(e.target.value)} placeholder="Share a win, ask a question, drop a tip — this community grows because you show up." rows={4} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${B.cloud}`, fontSize: 13, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "vertical", boxSizing: "border-box", fontWeight: 300, minHeight: 100 }} />
           {commPostImage && (
             <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 10px", background:B.off, border:`1px solid ${B.cloud}`, marginTop:6 }}>
               <Ic n="file" size={12} color={B.blush} />
@@ -2504,7 +2504,7 @@ const MenteePortal = ({ user, onLogout }) => {
                   <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginTop: 1 }}>{post.time}</div>
                 </div>
               </div>
-              <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.75, margin: "0 0 14px", fontWeight: 300 }}>{post.text}</p>
+              <p style={{ fontSize: 13, color: B.charcoal, lineHeight: 1.7, margin: "0 0 12px", fontWeight: 300 }}>{post.text}</p>
               {post.audioUrl && (
                 <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"10px 14px", marginBottom:14, display:"flex", alignItems:"center", gap:10 }}>
                   <Ic n="mic" size={13} color={B.blush} />
@@ -3181,7 +3181,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
               </button>
             ))}
           </div>
-          <textarea value={postInput} onChange={e => setPostInput(e.target.value)} placeholder="Share a win, ask a question, drop a tip — this community grows because you show up." rows={4} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${B.cloud}`, fontSize: 14, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "vertical", boxSizing: "border-box", fontWeight: 300, minHeight: 100 }} />
+          <textarea value={postInput} onChange={e => setPostInput(e.target.value)} placeholder="Share a win, ask a question, drop a tip — this community grows because you show up." rows={4} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${B.cloud}`, fontSize: 13, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "vertical", boxSizing: "border-box", fontWeight: 300, minHeight: 100 }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, borderRadius: "50%" }}>{user.avatar}</div>
@@ -3216,7 +3216,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
                   <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginTop: 1 }}>{post.time}</div>
                 </div>
               </div>
-              <p style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.75, margin: "0 0 14px", fontWeight: 300 }}>{post.text}</p>
+              <p style={{ fontSize: 13, color: B.charcoal, lineHeight: 1.7, margin: "0 0 12px", fontWeight: 300 }}>{post.text}</p>
               {post.audioUrl && (
                 <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"12px 14px", marginBottom:14, display:"flex", alignItems:"center", gap:10 }}>
                   <Ic n="mic" size={14} color={B.blush} />
