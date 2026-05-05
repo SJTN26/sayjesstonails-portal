@@ -3079,7 +3079,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
           <span style={{ fontSize:12, color:B.mid, fontWeight:300 }}>/month</span>
         </div>
       </div>
-      <Btn variant="blush" icon="zap" onClick={onUpgrade}>Upgrade to Full Membership</Btn>
+      <Btn variant="blush" icon="zap" onClick={() => window.open("https://buy.stripe.com/6oUfZj5H86GPfoieo67wA06", "_blank")}>Upgrade to Full Membership</Btn>
       <p style={{ color:B.mid, fontSize:11, marginTop:16, fontWeight:300 }}>Cancel anytime. No contracts.</p>
     </div>
   );
@@ -3122,7 +3122,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
               <div style={{ fontSize:9, fontWeight:700, color:B.amber, letterSpacing:2, textTransform:"uppercase", marginBottom:3 }}>Free Trial Active</div>
               <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}><strong style={{ fontWeight:700 }}>Community Feed Access Only.</strong> Resources and audio check-ins unlock with full membership.</div>
             </div>
-            <button onClick={onUpgrade} style={{ padding:"8px 16px", background:B.amber, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap" }}>Upgrade — $27/mo</button>
+            <button onClick={() => window.open("https://buy.stripe.com/6oUfZj5H86GPfoieo67wA06", "_blank")} style={{ padding:"8px 16px", background:B.amber, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap" }}>Upgrade — $27/mo</button>
           </div>
         )}
 
@@ -3242,7 +3242,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
         <div style={{ background: B.black, padding: "24px 24px", borderLeft: `3px solid ${B.blush}` }}>
           <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 8px" }}>Want the full library?</p>
           <p style={{ color: B.ivory, fontSize: 14, fontWeight: 300, lineHeight: 1.7, margin: "0 0 16px" }}>Mentorship members get 20+ premium resources — pricing calculators, client scripts, social media templates, and more.</p>
-          <button onClick={onUpgrade} style={{ display: "flex", alignItems: "center", gap: 7, background: B.blush, border: "none", padding: "10px 20px", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <button onClick={() => window.open("https://buy.stripe.com/6oUfZj5H86GPfoieo67wA06", "_blank")} style={{ display: "flex", alignItems: "center", gap: 7, background: B.blush, border: "none", padding: "10px 20px", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>
             <Ic n="zap" size={13} color={B.white} />Explore Mentorship
           </button>
         </div>
@@ -3288,7 +3288,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
               <div style={{ fontSize: 10, fontWeight: 700, color: B.steel, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>{name}</div>
               <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 36, color: B.black, lineHeight: 1, marginBottom: 10 }}>{price}</div>
               <div style={{ fontSize: 12, color: B.mid, fontWeight: 300, lineHeight: 1.5, marginBottom: 18 }}>{desc}</div>
-              <button onClick={onUpgrade} style={{ width: "100%", padding: "10px", background: B.black, border: "none", color: B.white, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>Book Discovery Call</button>
+              <button onClick={() => window.open("https://buy.stripe.com/6oUfZj5H86GPfoieo67wA06", "_blank")} style={{ width: "100%", padding: "10px", background: B.black, border: "none", color: B.white, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase" }}>Book Discovery Call</button>
             </div>
           ))}
         </div>
@@ -3297,7 +3297,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
             <div style={{ fontSize: 11, fontWeight: 700, color: B.blush, marginBottom: 3 }}>Discovery call is free.</div>
             <div style={{ fontSize: 12, color: B.steel, fontWeight: 300 }}>20 minutes. No pressure. Jess will help you pick the right path.</div>
           </div>
-          <button onClick={onUpgrade} style={{ display: "flex", alignItems: "center", gap: 7, background: B.blush, border: "none", padding: "10px 20px", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+          <button onClick={() => window.open("https://buy.stripe.com/6oUfZj5H86GPfoieo67wA06", "_blank")} style={{ display: "flex", alignItems: "center", gap: 7, background: B.blush, border: "none", padding: "10px 20px", color: B.white, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
             <Ic n="calendar" size={12} color={B.white} />Book Free Call
           </button>
         </div>
@@ -6535,8 +6535,14 @@ export default function App() {
       }
     }
 
-    // Referral tracking — log visit if ?ref= param in URL
+    // Check for ?apply=community param — route straight to application
     const refParams = new URLSearchParams(window.location.search);
+    if (refParams.get('apply') === 'community') {
+      setScreen('apply');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    // Referral tracking — log visit if ?ref= param in URL
     const ref = refParams.get('ref');
     if (ref) {
       try { sessionStorage.setItem('sjtn_ref', ref); } catch {}
@@ -6602,7 +6608,7 @@ export default function App() {
       {screen === "setpassword"  && <SetPassword onDone={() => setScreen("auth")} />}
       {screen === "landing"      && <Landing onSignIn={() => setScreen("auth")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} onApply={() => setScreen("apply")} />}
       {screen === "auth"         && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} />}
-      {screen === "apply"        && <CommunityApply onBack={() => setScreen("landing")} onSubmit={() => {}} />}
+      {screen === "apply"        && <CommunityApply onBack={() => setScreen("landing")} onSubmit={() => setScreen("landing")} />}
       {screen === "booking"      && <Booking onConfirm={f => { setBookedForm(f); setScreen("confirmation"); }} onBack={() => setScreen("landing")} />}
       {screen === "confirmation" && <Confirmation form={bookedForm} onHome={() => setScreen("landing")} onSignIn={() => setScreen("auth")} />}
       {screen === "portal"    && activeUser && sessionValid && <MenteePortal user={activeUser} onLogout={handleLogout} />}
