@@ -2925,7 +2925,7 @@ const CommunityPg = ({ title, sub, children }) => {
  return (
  <div style={{ padding: isMobile ? "20px 18px 96px" : "28px 32px", maxWidth: 1020, width: "100%" }}>
  {title && <div style={{ marginBottom: 22 }}>
- {sub && <p style={{ fontSize: 9, fontWeight: 700, color: B.blush, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 8px" }}>{sub}</p>}
+ {sub && <Section style={{ marginBottom: 8 }}>{sub}</Section>}
  <h1 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, textTransform: "uppercase", color: B.black, margin: 0, lineHeight: 0.95, letterSpacing: "-0.5px" }}>{title}</h1>
  </div>}
  {children}
@@ -3376,7 +3376,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  {NAV_C.map(({ id, icon, label }) => {
  const on = view === id;
  const isUpgrade = id === "upgrade";
- return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", position: "relative", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on ? B.blush : B.mid} />{label}</button>;
+ return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : isUpgrade ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : isUpgrade ? 600 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", position: "relative", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on || isUpgrade ? B.blush : B.mid} />{label}</button>;
  })}
  </nav>
  <div style={{ padding: "10px 10px", borderTop: `1px solid ${B.cloud}` }}>
