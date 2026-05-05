@@ -4259,6 +4259,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
   const inviteCommunityDirect = async () => {
     if (!communityInvite.name.trim() || !communityInvite.email.trim()) return;
     setCommunityInviting(true);
+    // invite-mentee handles both auth invite AND profile creation with paid:true
     await supabase.functions.invoke('invite-mentee', {
       body: {
         email: communityInvite.email.toLowerCase(),
@@ -4268,7 +4269,8 @@ const AdminCommunity = ({ menteeList, communityList }) => {
         paid: true,
       }
     });
-    await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: {
+    // Also directly upsert via SQL to guarantee paid=true is saved
+    await supabase.from('mentee_profiles').upsert({
       email: communityInvite.email.toLowerCase(),
       first_name: communityInvite.name,
       role: "community",
@@ -4276,7 +4278,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
       tier_key: "community",
       paid: true,
       start_date: new Date().toLocaleDateString("en-US", { month:"long", day:"numeric", year:"numeric" }),
-    } } });
+    }, { onConflict: "email" });
     setCommunityInviting(false);
     setCommunityInviteSent(true);
     setCommunityInvite({ name:"", email:"" });
@@ -4368,9 +4370,9 @@ const AdminCommunity = ({ menteeList, communityList }) => {
       <h1 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize: isMobile ? 32 : 44, textTransform:"uppercase", color:B.black, margin:"0 0 20px", letterSpacing:"-0.5px" }}>Inner Circle</h1>
 
       {/* Sub tabs */}
-      <div style={{ display:"flex", gap:2, marginBottom:20 }}>
-        {[["feed","Community Feed"], ["members","Members"], ["trial","Trial Members"], ["wins","Mentee Wins"], ["resources","Resources"]].map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} style={{ padding:"8px 18px", border:`1px solid ${tab===id ? B.blush : B.cloud}`, background: tab===id ? B.blush : B.white, color: tab===id ? B.white : B.steel, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase" }}>{label}</button>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:2, marginBottom:20 }}>
+        {[["feed","Feed"], ["members","Members"], ["trial","Trial"], ["wins","Wins"], ["resources","Resources"]].map(([id, label]) => (
+          <button key={id} onClick={() => setTab(id)} style={{ padding: isMobile ? "7px 10px" : "8px 18px", border:`1px solid ${tab===id ? B.blush : B.cloud}`, background: tab===id ? B.blush : B.white, color: tab===id ? B.white : B.steel, fontSize: isMobile ? 9 : 10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap" }}>{label}</button>
         ))}
       </div>
 
