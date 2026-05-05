@@ -3020,6 +3020,37 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  });
  }, [user.email]);
 
+  // ── Community Messages ─────────────────────────────────────────────
+  const [cMsgs, setCMsgs] = useState([]);
+  const [cMsgInput, setCMsgInput] = useState("");
+  const cMsgEndRef = useRef(null);
+  useEffect(() => {
+    if (!user.email) return;
+    const fetchCMsgs = () => {
+      supabase.functions.invoke("send-message", { body: { action: "get", mentee_email: user.email } })
+        .then(({ data }) => {
+          const msgs = (data?.messages || []).filter(m => !m.text?.startsWith("__GRADUATION__")).map(m => ({
+            from: m.sender === "mentee" ? "You" : "Jess",
+            sender: m.sender,
+            text: m.text,
+            time: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" })
+          }));
+          setCMsgs(msgs);
+        });
+    };
+    fetchCMsgs();
+    const interval = setInterval(fetchCMsgs, 8000);
+    return () => clearInterval(interval);
+  }, [user.email]);
+  useEffect(() => { cMsgEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [cMsgs.length]);
+  const sendCMsg = async () => {
+    if (!cMsgInput.trim()) return;
+    const text = cMsgInput;
+    setCMsgInput("");
+    setCMsgs(p => [...p, { from:"You", sender:"mentee", text, time:"now" }]);
+    await supabase.functions.invoke("send-message", { body: { mentee_email: user.email, sender:"mentee", text } });
+  };
+
  const [resources, setResources] = useState([]);
  useEffect(() => {
  supabase.functions.invoke('assign-task', { body: { action: 'get_all_resources' } })
@@ -3122,6 +3153,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  { id:"resources", icon:"book", label:"Resources" },
  { id:"audio", icon:"mic", label:"Jess's Voice" },
  { id:"refer", icon:"link", label:"Refer a Friend" },
+  { id:"messages",  icon:"message",  label:"Messages" },
  { id:"upgrade", icon:"zap", label:"Level Up" },
  ];
  const TABS_C = [
@@ -3129,6 +3161,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  { id:"resources", icon:"book", label:"Library" },
  { id:"audio", icon:"mic", label:"Jess" },
  { id:"refer", icon:"link", label:"Refer" },
+  { id:"messages",  icon:"message",  label:"Messages" },
  { id:"upgrade", icon:"zap", label:"Level Up" },
  ];
 
@@ -3288,6 +3321,42 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  )}
  </Pg>
  ),
+
+    messages: (
+      <Pg title="Messages" sub="Direct Line to Jess">
+        <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 200px)", minHeight:400 }}>
+          <div style={{ flex:1, overflowY:"auto", padding:"8px 0", display:"flex", flexDirection:"column", gap:8 }}>
+            {cMsgs.length === 0 && (
+              <div style={{ textAlign:"center", padding:"40px 20px", color:B.mid, fontSize:13, fontWeight:300 }}>
+                <Ic n="message" size={32} color={B.cloud} />
+                <p style={{ marginTop:12 }}>No messages yet — send Jess a note and she will get back to you.</p>
+              </div>
+            )}
+            {cMsgs.map((m, i) => {
+              const isMe = m.from === "You";
+              return (
+                <div key={i} style={{ display:"flex", justifyContent: isMe ? "flex-end" : "flex-start" }}>
+                  <div style={{ maxWidth:"75%" }}>
+                    <div style={{ fontSize:9, color:B.mid, fontWeight:700, letterSpacing:1, textTransform:"uppercase", marginBottom:3, textAlign: isMe ? "right" : "left" }}>{isMe ? "You" : "Jess"}</div>
+                    <div style={{ background: isMe ? B.black : B.white, border: isMe ? "none" : `1px solid ${B.cloud}`, padding:"10px 14px" }}>
+                      <p style={{ margin:0, fontSize:12, color: isMe ? B.ivory : B.charcoal, lineHeight:1.55, fontWeight:300 }}>{m.text}</p>
+                    </div>
+                    <div style={{ fontSize:9, color:B.mid, marginTop:3, textAlign: isMe ? "right" : "left", fontWeight:300 }}>{m.time}</div>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={cMsgEndRef} />
+          </div>
+          <div style={{ borderTop:`1px solid ${B.cloud}`, paddingTop:12, display:"flex", gap:8, flexShrink:0 }}>
+            <input value={cMsgInput} onChange={e => setCMsgInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendCMsg()} placeholder="Message Jess..." style={{ flex:1, border:`1px solid ${B.cloud}`, padding:"12px 14px", fontSize:13, color:B.black, outline:"none", fontFamily:FONTS.body, fontWeight:300 }} />
+            <button onClick={sendCMsg} style={{ width:44, height:44, background:B.blush, border:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
+              <Ic n="send" size={14} color={B.white} />
+            </button>
+          </div>
+        </div>
+      </Pg>
+    ),
 
  refer: (() => {
  const refCode = `${(user.firstName||"").toLowerCase().replace(/ +/g,"")}${(user.avatar||"").toLowerCase()}`;
@@ -4875,7 +4944,7 @@ const AdminDashboard = ({ onLogout }) => {
     if (menteeList.length === 0 && communityList.length === 0 && graduates.length === 0) return;
     setContacts(prev => {
       const existingEmails = new Set(prev.map(c => c.email?.toLowerCase()));
-      const allPeople = [...menteeList]; // Only active mentees — community members have no messages tab
+      const allPeople = [...menteeList, ...communityList]; // Mentees and community members
       const newContacts = allPeople
         .filter(m => m.email && !existingEmails.has(m.email.toLowerCase()))
         .map(m => ({
