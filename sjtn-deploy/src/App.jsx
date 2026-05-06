@@ -3324,7 +3324,13 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  </Pg>
  ),
 
-    messages: (
+    messages: (() => {
+      // Mark messages as read when view opens
+      if (cMsgs.some(m => m.unread)) {
+        setCMsgs(p => p.map(m => ({ ...m, unread: false })));
+        supabase.functions.invoke("send-message", { body: { action: "mark_read", mentee_email: user.email, role: "mentee" } });
+      }
+      return (
       <Pg title="Messages" sub="Direct Line to Jess">
         <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 200px)", minHeight:400 }}>
           <div style={{ flex:1, overflowY:"auto", padding:"8px 0", display:"flex", flexDirection:"column", gap:8 }}>
@@ -3358,7 +3364,8 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
           </div>
         </div>
       </Pg>
-    ),
+      );
+    })(),
 
  refer: (() => {
  const refCode = `${(user.firstName||"").toLowerCase().replace(/ +/g,"")}${(user.avatar||"").toLowerCase()}`;
