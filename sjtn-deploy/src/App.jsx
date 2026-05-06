@@ -4913,7 +4913,7 @@ const AdminDashboard = ({ onLogout }) => {
  email, name,
  preview: msgs[msgs.length - 1]?.text || "",
  unread: isCurrentlyViewed ? 0 : msgs.filter(m => !m.read && m.sender === "mentee").length,
- tier: mentee?.tierKey || "mentee"
+              tier: communityList.some(c => c.email?.toLowerCase() === email?.toLowerCase()) ? "community" : (mentee?.tierKey || "mentee")
  };
  });
  // Also include mentees with no messages yet
