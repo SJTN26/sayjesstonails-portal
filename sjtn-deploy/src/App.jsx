@@ -3033,7 +3033,8 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
             from: m.sender === "mentee" ? "You" : "Jess",
             sender: m.sender,
             text: m.text,
-            time: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" })
+            time: new Date(m.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+            unread: !m.read && m.sender === "jess"
           }));
           setCMsgs(msgs);
         });
@@ -3441,12 +3442,14 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  <div style={{ color: B.black, fontSize: 12, fontWeight: 700, letterSpacing: "0.02em" }}>{user.firstName}</div>
  <div style={{ fontSize: 8, color: B.mid, fontWeight: 300, letterSpacing: 1, textTransform: "uppercase" }}>{user.paid || user.graduated ? "Inner Circle" : "Free Trial"}</div>
  </div>
+          const cUnread = view === "messages" ? 0 : cMsgs.filter(m => m.from !== "You" && m.unread).length;
  </div>
  <nav style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
  {NAV_C.map(({ id, icon, label }) => {
  const on = view === id;
  const isUpgrade = id === "upgrade";
- return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : isUpgrade ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : isUpgrade ? 600 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", position: "relative", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on || isUpgrade ? B.blush : B.mid} />{label}</button>;
+ const cBadge = id === "messages" && cUnread > 0;
+              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : isUpgrade ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : isUpgrade ? 600 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", position: "relative", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on || isUpgrade ? B.blush : B.mid} />{label}{cBadge && <span style={{ marginLeft:"auto", background:B.blush, color:B.white, fontSize:7, fontWeight:700, padding:"2px 6px", borderRadius:10 }}>{cUnread}</span>}</button>;
  })}
  </nav>
  <div style={{ padding: "10px 10px", borderTop: `1px solid ${B.cloud}` }}>
@@ -4912,7 +4915,7 @@ const AdminDashboard = ({ onLogout }) => {
  const allPeople = [...menteeList];
  const noMsgContacts = allPeople
    .filter(m => m.email && !existingEmails.has(m.email.toLowerCase()))
-   .map(m => ({ email: m.email, name: m.firstName || m.name || m.email.split("@")[0], preview: "No messages yet — send the first one", unread: 0, tier: m.tierKey || "mentee" }));
+   .map(m => ({ email: m.email, name: m.firstName || m.name || m.email.split("@")[0], preview: "No messages yet — send the first one", unread: 0, tier: m.tierKey || (m.role === "community" ? "community" : "mentee") }));
  const fullContactList = [...contactList, ...noMsgContacts];
  setContacts(fullContactList);
  if (fullContactList.length > 0 && selChatRef.current === null) setSelChat(0);
@@ -4952,7 +4955,7 @@ const AdminDashboard = ({ onLogout }) => {
           name: m.firstName || m.name || m.email.split("@")[0],
           preview: "No messages yet — send the first one",
           unread: 0,
-          tier: m.tierKey || "mentee"
+          tier: m.tierKey || (m.role === "community" ? "community" : "mentee")
         }));
       if (newContacts.length === 0) return prev;
       const updated = [...prev, ...newContacts];
@@ -6044,7 +6047,7 @@ const AdminDashboard = ({ onLogout }) => {
  <div style={{ flex:1, minWidth:0 }}>
  <div style={{ fontSize:16, fontWeight:700, color:B.ivory, letterSpacing:"0.02em" }}>{contacts[selChat]?.name}</div>
  <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:2 }}>
- <span style={{ fontSize:9, fontWeight:700, color:B.blush, border:`1px solid ${B.blush}`, padding:"1px 8px", letterSpacing:1.5, textTransform:"uppercase" }}>{contacts[selChat]?.tier === "elite" ? "3-Month Elite" : "30-Day Intensive"}</span>
+ <span style={{ fontSize:9, fontWeight:700, color:B.blush, border:`1px solid ${B.blush}`, padding:"1px 8px", letterSpacing:1.5, textTransform:"uppercase" }}>{contacts[selChat]?.tier === "elite" ? "3-Month Elite" : contacts[selChat]?.tier === "intensive" ? "30-Day Intensive" : contacts[selChat]?.tier === "hourly" ? "Hourly Session" : contacts[selChat]?.tier === "community" ? "Community Member" : contacts[selChat]?.tier || "Member"}</span>
  <span style={{ fontSize:10, color:"#666", fontWeight:300 }}>{contacts[selChat]?.email}</span>
  </div>
  </div>
