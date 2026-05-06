@@ -4921,7 +4921,7 @@ const AdminDashboard = ({ onLogout }) => {
     const allPeople = [...menteeList, ...communityList];
  const noMsgContacts = allPeople
    .filter(m => m.email && !existingEmails.has(m.email.toLowerCase()))
-   .map(m => ({ email: m.email, name: m.firstName || m.name || m.email.split("@")[0], preview: "No messages yet — send the first one", unread: 0, tier: m.tierKey || (m.role === "community" ? "community" : "mentee") }));
+   .map(m => ({ email: m.email, name: m.firstName || m.name || m.email.split("@")[0], preview: "No messages yet — send the first one", unread: 0, tier: communityList.some(c => c.email?.toLowerCase() === m.email?.toLowerCase()) ? "community" : (m.tierKey || "mentee") }));
  const fullContactList = [...contactList, ...noMsgContacts];
  setContacts(fullContactList);
  if (fullContactList.length > 0 && selChatRef.current === null) setSelChat(0);
@@ -4961,7 +4961,7 @@ const AdminDashboard = ({ onLogout }) => {
           name: m.firstName || m.name || m.email.split("@")[0],
           preview: "No messages yet — send the first one",
           unread: 0,
-          tier: m.tierKey || (m.role === "community" ? "community" : "mentee")
+          tier: communityList.some(c => c.email?.toLowerCase() === m.email?.toLowerCase()) ? "community" : (m.tierKey || "mentee")
         }));
       if (newContacts.length === 0) return prev;
       const updated = [...prev, ...newContacts];
