@@ -3363,7 +3363,6 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
             </button>
           </div>
         </div>
-      </Pg>
       );
     ),
 
