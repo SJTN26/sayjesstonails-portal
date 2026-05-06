@@ -3105,6 +3105,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  const trialDaysLeft = isTrial && trialEndDate
  ? Math.max(0, Math.ceil((new Date(trialEndDate) - Date.now()) / (1000 * 60 * 60 * 24)))
  : isTrial ? 7 : 0;
+  const cUnread = view === "messages" ? 0 : cMsgs.filter(m => m.from !== "You" && m.unread).length;
 
  // Lock gate component for trial users
  const LockedGate = ({ section }) => (
@@ -3442,14 +3443,13 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  <div style={{ color: B.black, fontSize: 12, fontWeight: 700, letterSpacing: "0.02em" }}>{user.firstName}</div>
  <div style={{ fontSize: 8, color: B.mid, fontWeight: 300, letterSpacing: 1, textTransform: "uppercase" }}>{user.paid || user.graduated ? "Inner Circle" : "Free Trial"}</div>
  </div>
-          const cUnread = view === "messages" ? 0 : cMsgs.filter(m => m.from !== "You" && m.unread).length;
+
  </div>
  <nav style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
  {NAV_C.map(({ id, icon, label }) => {
  const on = view === id;
  const isUpgrade = id === "upgrade";
- const cBadge = id === "messages" && cUnread > 0;
-              return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : isUpgrade ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : isUpgrade ? 600 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", position: "relative", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on || isUpgrade ? B.blush : B.mid} />{label}{cBadge && <span style={{ marginLeft:"auto", background:B.blush, color:B.white, fontSize:7, fontWeight:700, padding:"2px 6px", borderRadius:10 }}>{cUnread}</span>}</button>;
+ const cBadge = id === "messages" && cUnread > 0; return <button key={id} onClick={() => setView(id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", border: "none", background: on ? B.blushPale : "transparent", color: on ? B.blush : isUpgrade ? B.blush : B.steel, marginBottom: 2, fontFamily: FONTS.body, fontSize: 12, fontWeight: on ? 700 : isUpgrade ? 600 : 400, textAlign: "left", cursor: "pointer", borderLeft: `3px solid ${on ? B.blush : "transparent"}`, transition: "all .15s", letterSpacing: "0.03em", position: "relative", borderRadius: "0 6px 6px 0" }}><Ic n={icon} size={14} color={on || isUpgrade ? B.blush : B.mid} />{label}{cBadge && <span style={{ marginLeft:"auto", background:B.blush, color:B.white, fontSize:7, fontWeight:700, padding:"2px 6px", borderRadius:10 }}>{cUnread}</span>}</button>;
  })}
  </nav>
  <div style={{ padding: "10px 10px", borderTop: `1px solid ${B.cloud}` }}>
@@ -4912,7 +4912,7 @@ const AdminDashboard = ({ onLogout }) => {
  });
  // Also include mentees with no messages yet
  const existingEmails = new Set(contactList.map(c => c.email.toLowerCase()));
- const allPeople = [...menteeList];
+    const allPeople = [...menteeList, ...communityList];
  const noMsgContacts = allPeople
    .filter(m => m.email && !existingEmails.has(m.email.toLowerCase()))
    .map(m => ({ email: m.email, name: m.firstName || m.name || m.email.split("@")[0], preview: "No messages yet — send the first one", unread: 0, tier: m.tierKey || (m.role === "community" ? "community" : "mentee") }));
