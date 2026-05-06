@@ -3106,6 +3106,12 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  ? Math.max(0, Math.ceil((new Date(trialEndDate) - Date.now()) / (1000 * 60 * 60 * 24)))
  : isTrial ? 7 : 0;
   const cUnread = view === "messages" ? 0 : cMsgs.filter(m => m.from !== "You" && m.unread).length;
+  useEffect(() => {
+    if (view === "messages" && cMsgs.some(m => m.unread)) {
+      setCMsgs(p => p.map(m => ({ ...m, unread: false })));
+      supabase.functions.invoke("send-message", { body: { action: "mark_read", mentee_email: user.email, role: "mentee" } });
+    }
+  }, [view]);
 
  // Lock gate component for trial users
  const LockedGate = ({ section }) => (
@@ -3324,13 +3330,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  </Pg>
  ),
 
-    messages: (() => {
-      // Mark messages as read when view opens
-      if (cMsgs.some(m => m.unread)) {
-        setCMsgs(p => p.map(m => ({ ...m, unread: false })));
-        supabase.functions.invoke("send-message", { body: { action: "mark_read", mentee_email: user.email, role: "mentee" } });
-      }
-      return (
+    messages: (
       <Pg title="Messages" sub="Direct Line to Jess">
         <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 200px)", minHeight:400 }}>
           <div style={{ flex:1, overflowY:"auto", padding:"8px 0", display:"flex", flexDirection:"column", gap:8 }}>
@@ -3365,7 +3365,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
         </div>
       </Pg>
       );
-    })(),
+    ),
 
  refer: (() => {
  const refCode = `${(user.firstName||"").toLowerCase().replace(/ +/g,"")}${(user.avatar||"").toLowerCase()}`;
@@ -6024,7 +6024,7 @@ const AdminDashboard = ({ onLogout }) => {
  <span style={{ fontSize:13, fontWeight:700, color: isActive ? B.blush : B.black }}>{c.name}</span>
  {c.unread > 0 && <span style={{ background:B.blush, color:B.white, fontSize:8, fontWeight:700, padding:"2px 6px", borderRadius:10 }}>{c.unread}</span>}
  </div>
- <div style={{ fontSize:10, color:B.mid, fontWeight:300, letterSpacing:0.5, textTransform:"uppercase" }}>{c.tier === "elite" ? "3-Month Elite" : c.tier === "intensive" ? "30-Day Intensive" : c.tier === "hourly" ? "Hourly Session" : c.tier || "Mentee"}</div>
+ <div style={{ fontSize:10, color:B.mid, fontWeight:300, letterSpacing:0.5, textTransform:"uppercase" }}>{c.tier === "elite" ? "3-Month Elite" : c.tier === "intensive" ? "30-Day Intensive" : c.tier === "hourly" ? "Hourly Session" : c.tier === "community" || c.tier === "community_paid" || c.tier === "graduate" ? "Inner Circle" : c.tier === "mentee" || !c.tier ? "Mentee" : c.tier}</div>
  <p style={{ fontSize:11, color:B.mid, margin:"4px 0 0", overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", fontWeight:300 }}>{c.preview}</p>
  </div>
  </div>
