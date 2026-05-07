@@ -3273,7 +3273,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  {post.likes + (likedPosts.includes(post.id) ? 1 : 0)}
  </button>
               <button onClick={() => setReplyingTo(replyingTo === post.id ? null : post.id)} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
-                <Ic n="message" size={13} color={B.mid} />{(post.replies||[]).length > 0 ? `${(post.replies||[]).length} ${(post.replies||[]).length === 1 ? "reply" : "replies"}` : "Reply"}
+                 <Ic n="message" size={13} color={B.mid} />{(post.replies||[]).length > 0 ? ((post.replies||[]).length + ((post.replies||[]).length === 1 ? " reply" : " replies")) : "Reply"}
               </button>
             </div>
             {/* Replies */}
@@ -4614,7 +4614,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
                 <Ic n="heart" size={13} color={B.blush} sw={1.8} />{post.likes || 0}
               </button>
               <button onClick={() => setAdminReplyTo(adminReplyTo === post.id ? null : post.id)} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
-                 <Ic n="message" size={13} color={B.mid} />{(post.replies||[]).length > 0 ? `${(post.replies||[]).length} ${(post.replies||[]).length === 1 ? "reply" : "replies"}` : "Reply"}
+                 <Ic n="message" size={13} color={B.mid} />{(post.replies||[]).length > 0 ? ((post.replies||[]).length + ((post.replies||[]).length === 1 ? " reply" : " replies")) : "Reply"}
               </button>
             </div>
             {(post.replies || []).length > 0 && (
