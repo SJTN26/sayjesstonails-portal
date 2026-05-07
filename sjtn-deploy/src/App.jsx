@@ -1579,7 +1579,7 @@ const MenteePortal = ({ user, onLogout }) => {
  const newPost = { author: user.firstName, avatar: user.avatar, text: commPostInput, likes: 0, comments: [], isJess: false, cat: commPostCat, time: "Just now", id: Date.now(), isGraduate: isGrad, imageUrl };
  setCommunityPosts(p => [newPost,...p]);
  setCommPostInput("");
- await supabase.functions.invoke("community-post", { body: { action: "insert", author: user.firstName, avatar: user.avatar, text: commPostInput || "📷", cat: commPostCat, is_jess: false, is_graduate: isGrad, audio_url: imageUrl ? `__POSTIMAGE__${imageUrl}` : null } });
+ await supabase.functions.invoke("community-post", { body: { action: "insert", author: user.firstName, avatar: user.avatar, text: commPostInput || "📷", cat: commPostCat, is_jess: false, is_graduate: isGrad, audio_url: imageUrl ? `__POSTIMAGE__${imageUrl}` : null, author_email: user.email } });
  };
 
  const [sessionPrep, setSessionPrep] = useState({ win:"", challenge:"", need:"", submitted:false });
@@ -3153,7 +3153,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  const newPost = { id: Date.now(), author: user.firstName, avatar: user.avatar, time: "Just now", text: postInput, likes: 0, isJess: false, cat: postCat, isGraduate: isGraduate };
  setPosts(p => [newPost,...p]);
  setPostInput("");
- await supabase.functions.invoke("community-post", { body: { action: "insert", author: user.firstName, avatar: user.avatar, text: postInput, cat: postCat, is_jess: false, is_graduate: isGraduate } });
+ await supabase.functions.invoke("community-post", { body: { action: "insert", author: user.firstName, avatar: user.avatar, text: postInput, cat: postCat, is_jess: false, is_graduate: isGraduate, author_email: user.email } });
  };
 
  const NAV_C = [
@@ -4369,6 +4369,8 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  const [postInput, setCommunityPostInput] = useState("");
  const [postCat, setCommunityPostCat] = useState("tip");
  const [tab, setTab] = useState("feed");
+  const [adminReplyTo, setAdminReplyTo] = useState(null);
+  const [adminReplyText, setAdminReplyText] = useState("");
  const [trialList, setTrialList] = useState([]);
  const [communityInvite, setCommunityInvite] = useState({ name:"", email:"" });
  const [communityInviting, setCommunityInviting] = useState(false);
@@ -4434,7 +4436,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  if (posts.length > 0) setCommunityPosts(posts.map(p => ({
  id: p.id, author: p.author, avatar: p.avatar,
  time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
- text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, pinned: p.pinned,
+ text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, pinned: p.pinned, authorEmail: p.author_email || p.mentee_email,
  audioUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? null : (p.audio_url || null),
  imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
  isGraduate: p.is_graduate || false
@@ -4584,9 +4586,23 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginBottom:14 }} />
  )}
  <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:10 }}>
- <Ic n="heart" size={12} color={B.mid} />
- <span style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{post.likes} likes</span>
- </div>
+              <button onClick={() => {
+                supabase.functions.invoke('community-post', { body: { action:'like', id:post.id } });
+                setCommunityPosts(p => p.map(x => x.id === post.id ? {...x, likes:(x.likes||0)+1} : x));
+              }} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
+                <Ic n="heart" size={13} color={B.blush} sw={1.8} />{post.likes || 0}
+              </button>
+              <button onClick={() => setAdminReplyTo(adminReplyTo === post.id ? null : post.id)} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
+                <Ic n="message" size={13} color={B.mid} />Reply to {post.author}
+              </button>
+            </div>
+            {adminReplyTo === post.id && (
+              <div style={{ marginTop:8, display:"flex", gap:6 }}>
+                <input value={adminReplyText} onChange={e => setAdminReplyText(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && adminReplyText.trim()) { supabase.functions.invoke("send-message", { body: { mentee_email: post.authorEmail || ([...communityList, ...menteeList].find(m => (m.firstName||m.name) === post.author)?.email) || post.author, sender:"jess", text:adminReplyText } }); setAdminReplyTo(null); setAdminReplyText(""); }}} placeholder={`Message ${post.author}...`} style={{ flex:1, border:`1px solid ${B.cloud}`, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
+                <button onClick={() => { if (!adminReplyText.trim()) return; supabase.functions.invoke("send-message", { body: { mentee_email: post.authorEmail || ([...communityList, ...menteeList].find(m => (m.firstName||m.name) === post.author)?.email) || post.author, sender:"jess", text:adminReplyText } }); setAdminReplyTo(null); setAdminReplyText(""); }} style={{ padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Send</button>
+              </div>
+            )}
+
  </div>
  ))}
  </div>
