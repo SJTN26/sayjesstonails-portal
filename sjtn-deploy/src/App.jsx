@@ -3085,7 +3085,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  setPosts(posts.map(p => ({
  id: p.id, author: p.author, avatar: p.avatar,
  time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
- text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat,
+ text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, replies: p.replies || [],
  audioUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? null : (p.audio_url || null),
  imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
  isGraduate: p.is_graduate || false
@@ -3268,13 +3268,34 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginBottom:14 }} />
  )}
  <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: `1px solid ${B.cloud}`, paddingTop: 12 }}>
- <button onClick={() => setLikedPosts(p => p.includes(post.id) ? p.filter(x => x !== post.id) : [...p, post.id])} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: likedPosts.includes(post.id) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: likedPosts.includes(post.id) ? 700 : 300, padding: 0, transition: "color.15s" }}>
+ <button onClick={() => { if (!likedPosts.includes(post.id)) supabase.functions.invoke('community-post', { body: { action:'like', id:post.id } }); setLikedPosts(p => p.includes(post.id) ? p.filter(x => x !== post.id) : [...p, post.id]}); } style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: likedPosts.includes(post.id) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: likedPosts.includes(post.id) ? 700 : 300, padding: 0, transition: "color.15s" }}>
  <Ic n="heart" size={14} color={likedPosts.includes(post.id) ? B.blush : B.mid} sw={likedPosts.includes(post.id) ? 0 : 1.8} />
  {post.likes + (likedPosts.includes(post.id) ? 1 : 0)}
  </button>
- <span style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>Reply coming soon</span>
- </div>
- </div>
+              <button onClick={() => setReplyingTo(replyingTo === post.id ? null : post.id)} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
+                <Ic n="message" size={13} color={B.mid} />{(post.replies||[]).length > 0 ? `${(post.replies||[]).length} ${(post.replies||[]).length === 1 ? "reply" : "replies"}` : "Reply"}
+              </button>
+            </div>
+            {/* Replies */}
+            {(post.replies || []).length > 0 && (
+              <div style={{ borderTop:`1px solid ${B.cloud}`, marginTop:10, paddingTop:10, display:"flex", flexDirection:"column", gap:8 }}>
+                {(post.replies || []).map((r, ri) => (
+                  <div key={ri} style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
+                    <div style={{ width:26, height:26, background: r.is_jess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:B.white, flexShrink:0 }}>{r.avatar || (r.author||"?").slice(0,2).toUpperCase()}</div>
+                    <div style={{ flex:1, background:B.off, padding:"8px 12px" }}>
+                      <div style={{ fontSize:10, fontWeight:700, color: r.is_jess ? B.blush : B.black, marginBottom:2 }}>{r.author}{r.is_jess && <span style={{ fontSize:8, color:B.blush, marginLeft:6, letterSpacing:1 }}>JESS</span>}</div>
+                      <div style={{ fontSize:12, color:B.charcoal, fontWeight:300, lineHeight:1.5 }}>{r.text}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {replyingTo === post.id && (
+              <div style={{ marginTop:8, display:"flex", gap:6 }}>
+                <input value={replyText} onChange={e => setReplyText(e.target.value)} onKeyDown={async e => { if (e.key === "Enter" && replyText.trim()) { const r = { post_id: post.id, author: user.firstName, avatar: user.avatar, text: replyText, is_jess: false, author_email: user.email }; await supabase.functions.invoke("community-post", { body: { action:"reply", ...r } }); setCommunityPosts(p => p.map(x => x.id === post.id ? {...x, replies:[...(x.replies||[]), {...r, id:Date.now()}]} : x)); setReplyText(""); setReplyingTo(null); }}} placeholder="Write a reply..." style={{ flex:1, border:`1px solid ${B.cloud}`, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
+                <button onClick={async () => { if (!replyText.trim()) return; const r = { post_id: post.id, author: user.firstName, avatar: user.avatar, text: replyText, is_jess: false, author_email: user.email }; await supabase.functions.invoke("community-post", { body: { action:"reply", ...r } }); setCommunityPosts(p => p.map(x => x.id === post.id ? {...x, replies:[...(x.replies||[]), {...r, id:Date.now()}]} : x)); setReplyText(""); setReplyingTo(null); }} style={{ padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
+              </div>
+            )}
  ))}
  </div>
  </Pg>
@@ -4436,7 +4457,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  if (posts.length > 0) setCommunityPosts(posts.map(p => ({
  id: p.id, author: p.author, avatar: p.avatar,
  time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
- text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, pinned: p.pinned, authorEmail: p.author_email || p.mentee_email,
+ text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, replies: p.replies || [], pinned: p.pinned, authorEmail: p.author_email || p.mentee_email,
  audioUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? null : (p.audio_url || null),
  imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
  isGraduate: p.is_graduate || false
@@ -4593,13 +4614,26 @@ const AdminCommunity = ({ menteeList, communityList }) => {
                 <Ic n="heart" size={13} color={B.blush} sw={1.8} />{post.likes || 0}
               </button>
               <button onClick={() => setAdminReplyTo(adminReplyTo === post.id ? null : post.id)} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
-                <Ic n="message" size={13} color={B.mid} />Reply to {post.author}
+                 <Ic n="message" size={13} color={B.mid} />{(post.replies||[]).length > 0 ? `${(post.replies||[]).length} ${(post.replies||[]).length === 1 ? "reply" : "replies"}` : "Reply"}
               </button>
             </div>
+            {(post.replies || []).length > 0 && (
+              <div style={{ borderTop:`1px solid ${B.cloud}`, marginTop:10, paddingTop:10, display:"flex", flexDirection:"column", gap:8 }}>
+                {(post.replies || []).map((r, ri) => (
+                  <div key={ri} style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
+                    <div style={{ width:26, height:26, background: r.is_jess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:B.white, flexShrink:0 }}>{r.avatar || (r.author||"?").slice(0,2).toUpperCase()}</div>
+                    <div style={{ flex:1, background:B.off, padding:"8px 12px" }}>
+                      <div style={{ fontSize:10, fontWeight:700, color: r.is_jess ? B.blush : B.black, marginBottom:2 }}>{r.author}{r.is_jess && <span style={{ fontSize:8, color:B.blush, marginLeft:6, letterSpacing:1 }}>JESS</span>}</div>
+                      <div style={{ fontSize:12, color:B.charcoal, fontWeight:300, lineHeight:1.5 }}>{r.text}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {adminReplyTo === post.id && (
               <div style={{ marginTop:8, display:"flex", gap:6 }}>
                 <input value={adminReplyText} onChange={e => setAdminReplyText(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && adminReplyText.trim()) { supabase.functions.invoke("send-message", { body: { mentee_email: post.authorEmail || ([...communityList, ...menteeList].find(m => (m.firstName||m.name) === post.author)?.email) || post.author, sender:"jess", text:adminReplyText } }); setAdminReplyTo(null); setAdminReplyText(""); }}} placeholder={`Message ${post.author}...`} style={{ flex:1, border:`1px solid ${B.cloud}`, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
-                <button onClick={() => { if (!adminReplyText.trim()) return; supabase.functions.invoke("send-message", { body: { mentee_email: post.authorEmail || ([...communityList, ...menteeList].find(m => (m.firstName||m.name) === post.author)?.email) || post.author, sender:"jess", text:adminReplyText } }); setAdminReplyTo(null); setAdminReplyText(""); }} style={{ padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Send</button>
+                <button onClick={async () => { if (!adminReplyText.trim()) return; const r = { post_id: post.id, author: "Jess", avatar: "J", text: adminReplyText, is_jess: true }; await supabase.functions.invoke("community-post", { body: { action:"reply", ...r } }); setCommunityPosts(p => p.map(x => x.id === post.id ? {...x, replies:[...(x.replies||[]), {...r, id:Date.now()}]} : x)); setAdminReplyTo(null); setAdminReplyText(""); }} style={{ padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
               </div>
             )}
 
