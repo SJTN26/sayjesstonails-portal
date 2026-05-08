@@ -4482,8 +4482,8 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  const { data, error } = await supabase.functions.invoke('community-post', {
  body: { action:'insert', author:"Jess", avatar:"J", text:postInput || "📷", cat:postCat, is_jess:true, pinned:false, audio_url: imageUrl ? `__POSTIMAGE__${imageUrl}` : null }
  });
- if (error) { alert(`Post error: ${error.message}`); return; }
- if (data?.error) { alert(`Post error: ${data.error}`); return; }
+ if (error) { alert("Post error: " + error.message); return; }
+ if (data?.error) { alert("Post error: " + data.error); return; }
  if (data?.post) setCommunityPosts(p => [{ id:data.post.id, author:"Jess", avatar:"J", time:"Just now", text:postInput || "", likes:0, isJess:true, cat:postCat, pinned:false, audioUrl:null, imageUrl },...p]);
  setCommunityPostInput("");
  };
