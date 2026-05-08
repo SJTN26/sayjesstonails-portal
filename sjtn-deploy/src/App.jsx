@@ -3267,13 +3267,50 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  {post.imageUrl && (
  <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginBottom:14 }} />
  )}
- <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: "1px solid " + B.cloud, paddingTop: 12 }}>
- <button onClick={() => { if (!likedPosts.includes(post.id)) supabase.functions.invoke('community-post', { body: { action:'like', id:post.id } }); setLikedPosts(p => p.includes(post.id) ? p.filter(x => x !== post.id) : [...p, post.id]); }} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: likedPosts.includes(post.id) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: likedPosts.includes(post.id) ? 700 : 300, padding: 0, transition: "color.15s" }}>
- <Ic n="heart" size={14} color={likedPosts.includes(post.id) ? B.blush : B.mid} sw={likedPosts.includes(post.id) ? 0 : 1.8} />
- {post.likes + (likedPosts.includes(post.id) ? 1 : 0)}
- </button>
+          <div style={{ borderTop:"1px solid " + B.cloud, paddingTop:12, marginTop:4, display:"flex", alignItems:"center", gap:14 }}>
+            <button onClick={() => {
+              const alreadyLiked = likedPosts.includes(post.id);
+              if (!alreadyLiked) {
+                supabase.functions.invoke("community-post", { body: { action:"like", id:post.id } });
+                setLikedPosts(p => [...p, post.id]);
+              } else {
+                setLikedPosts(p => p.filter(x => x !== post.id));
+              }
+            }} style={{ display:"flex", alignItems:"center", gap:6, background:"none", border:"none", cursor:"pointer", padding:0, fontFamily:FONTS.body }}>
+              <Ic n="heart" size={16} color={likedPosts.includes(post.id) ? B.blush : B.mid} sw={likedPosts.includes(post.id) ? 0 : 1.8} />
+              <span style={{ fontSize:12, color:likedPosts.includes(post.id) ? B.blush : B.mid, fontWeight:likedPosts.includes(post.id) ? 700 : 300 }}>
+                {post.likes + (likedPosts.includes(post.id) ? 1 : 0)}
+              </span>
+            </button>
+            <button onClick={() => { setReplyingTo(replyingTo === post.id ? null : post.id); setReplyText(""); }} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
+              <Ic n="message" size={14} color={B.mid} />
+              <span>{(post.replies||[]).length > 0 ? (post.replies||[]).length + " repl" + ((post.replies||[]).length === 1 ? "y" : "ies") : "Reply"}</span>
+            </button>
+          </div>
+          {(post.replies||[]).length > 0 && (
+            <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:6 }}>
+              {(post.replies||[]).map((r, ri) => (
+                <div key={ri} style={{ display:"flex", gap:8 }}>
+                  <div style={{ width:24, height:24, background:r.is_jess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:8, fontWeight:700, color:"white", flexShrink:0 }}>{(r.avatar||"?").slice(0,2).toUpperCase()}</div>
+                  <div style={{ flex:1, background:B.off, padding:"6px 10px" }}>
+                    <div style={{ fontSize:10, fontWeight:700, color:r.is_jess ? B.blush : B.black, marginBottom:2 }}>{r.author}{r.is_jess && <span style={{ fontSize:8, color:B.blush, marginLeft:6, letterSpacing:1 }}>JESS</span>}</div>
+                    <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}>{r.text}</div>
+                  </div>
+                </div>
+              ))}
             </div>
- </div>
+          )}
+          {replyingTo === post.id && (
+            <div style={{ marginTop:8, display:"flex", gap:6 }}>
+              <input value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Write a reply..." style={{ flex:1, border:"1px solid " + B.cloud, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
+              <button onClick={() => {
+                if (!replyText.trim()) return;
+                supabase.functions.invoke("community-post", { body: { action:"reply", post_id:post.id, author:user.firstName, avatar:user.avatar, text:replyText, is_jess:false, author_email:user.email } });
+                setCommunityPosts(p => p.map(x => x.id === post.id ? {...x, replies:[...(x.replies||[]), {author:user.firstName, avatar:user.avatar, text:replyText, is_jess:false, id:Date.now()}]} : x));
+                setReplyText(""); setReplyingTo(null);
+              }} style={{ padding:"8px 14px", background:B.blush, border:"none", color:"white", fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
+            </div>
+          )}
  ))}
  </div>
  </Pg>
@@ -4370,6 +4407,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  const [tab, setTab] = useState("feed");
   const [adminReplyTo, setAdminReplyTo] = useState(null);
   const [adminReplyText, setAdminReplyText] = useState("");
+  const [adminLikedPosts, setAdminLikedPosts] = useState([]);
  const [trialList, setTrialList] = useState([]);
  const [communityInvite, setCommunityInvite] = useState({ name:"", email:"" });
  const [communityInviting, setCommunityInviting] = useState(false);
@@ -4584,15 +4622,48 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  {post.imageUrl && (
  <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginBottom:14 }} />
  )}
- <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:10 }}>
-              <button onClick={() => {
-                supabase.functions.invoke('community-post', { body: { action:'like', id:post.id } });
-                setCommunityPosts(p => p.map(x => x.id === post.id ? {...x, likes:(x.likes||0)+1} : x));
-              }} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
-                <Ic n="heart" size={13} color={B.blush} sw={1.8} />{post.likes || 0}
-              </button>
+          <div style={{ borderTop:"1px solid " + B.cloud, paddingTop:10, marginTop:10, display:"flex", alignItems:"center", gap:14 }}>
+            <button onClick={() => {
+              const alreadyLiked = adminLikedPosts.includes(post.id);
+              if (!alreadyLiked) {
+                supabase.functions.invoke("community-post", { body: { action:"like", id:post.id } });
+                setAdminLikedPosts(p => [...p, post.id]);
+              } else {
+                setAdminLikedPosts(p => p.filter(x => x !== post.id));
+              }
+            }} style={{ display:"flex", alignItems:"center", gap:6, background:"none", border:"none", cursor:"pointer", padding:0, fontFamily:FONTS.body }}>
+              <Ic n="heart" size={16} color={adminLikedPosts.includes(post.id) ? B.blush : B.mid} sw={adminLikedPosts.includes(post.id) ? 0 : 1.8} />
+              <span style={{ fontSize:12, color:adminLikedPosts.includes(post.id) ? B.blush : B.mid, fontWeight:adminLikedPosts.includes(post.id) ? 700 : 300 }}>{post.likes + (adminLikedPosts.includes(post.id) ? 1 : 0)}</span>
+            </button>
+            <button onClick={() => { setAdminReplyTo(adminReplyTo === post.id ? null : post.id); setAdminReplyText(""); }} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
+              <Ic n="message" size={14} color={B.mid} />
+              <span>{(post.replies||[]).length > 0 ? (post.replies||[]).length + " repl" + ((post.replies||[]).length === 1 ? "y" : "ies") : "Reply"}</span>
+            </button>
+          </div>
+          {(post.replies||[]).length > 0 && (
+            <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:6 }}>
+              {(post.replies||[]).map((r, ri) => (
+                <div key={ri} style={{ display:"flex", gap:8 }}>
+                  <div style={{ width:24, height:24, background:r.is_jess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:8, fontWeight:700, color:"white", flexShrink:0 }}>{(r.avatar||"J").slice(0,2).toUpperCase()}</div>
+                  <div style={{ flex:1, background:B.off, padding:"6px 10px" }}>
+                    <div style={{ fontSize:10, fontWeight:700, color:r.is_jess ? B.blush : B.black, marginBottom:2 }}>{r.author}{r.is_jess && <span style={{ fontSize:8, color:B.blush, marginLeft:6, letterSpacing:1 }}>JESS</span>}</div>
+                    <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}>{r.text}</div>
+                  </div>
+                </div>
+              ))}
             </div>
- </div>
+          )}
+          {adminReplyTo === post.id && (
+            <div style={{ marginTop:8, display:"flex", gap:6 }}>
+              <input value={adminReplyText} onChange={e => setAdminReplyText(e.target.value)} placeholder="Reply to this post..." style={{ flex:1, border:"1px solid " + B.cloud, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
+              <button onClick={() => {
+                if (!adminReplyText.trim()) return;
+                supabase.functions.invoke("community-post", { body: { action:"reply", post_id:post.id, author:"Jess", avatar:"J", text:adminReplyText, is_jess:true } });
+                setCommunityPosts(p => p.map(x => x.id === post.id ? {...x, replies:[...(x.replies||[]), {author:"Jess", avatar:"J", text:adminReplyText, is_jess:true, id:Date.now()}]} : x));
+                setAdminReplyText(""); setAdminReplyTo(null);
+              }} style={{ padding:"8px 14px", background:B.blush, border:"none", color:"white", fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
+            </div>
+          )}
  ))}
  </div>
  )}
