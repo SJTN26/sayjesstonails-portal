@@ -2998,6 +2998,8 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  const [postCat, setPostCat] = useState("win");
  const [posts, setPosts] = useState([]);
  const [likedPosts, setLikedPosts] = useState([]);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
  const [audioPlaying, setAudioPlaying] = useState(false);
  const [showUpgrade, setShowUpgrade] = useState(false);
  const [isGraduate, setIsGraduate] = useState(false);
