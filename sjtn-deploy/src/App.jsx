@@ -3045,6 +3045,18 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   }, [user.email]);
   useEffect(() => { cMsgEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [cMsgs.length]);
 
+  const handleCommunityLike = (postId) => {
+    if (likedPosts.includes(postId)) {
+      setLikedPosts(p => p.filter(x => x !== postId));
+    } else {
+      supabase.functions.invoke("community-post", { body: { action: "like", id: postId } });
+      setLikedPosts(p => [...p, postId]);
+    }
+  };
+  const handleCommunityReplyToggle = (postId) => {
+    setReplyingTo(replyingTo === postId ? null : postId);
+    setReplyText("");
+  };
   const submitCommunityReply = (postId) => {
     if (!replyText.trim()) return;
     supabase.functions.invoke("community-post", { body: { action:"reply", post_id:postId, author:user.firstName, avatar:user.avatar, text:replyText, is_jess:false, author_email:user.email } });
@@ -3182,142 +3194,89 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  ];
 
  const views = {
- feed: (
- <Pg title="Community Feed" sub="The Inner Circle">
- <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 20px", fontWeight: 300 }}>Real nail techs. Real growth. All in one place.</p>
-
- {/* Trial banner */}
- {isTrial && (
- <div style={{ background:`${B.amber}12`, border:`1px solid ${B.amber}40`, borderLeft:`3px solid ${B.amber}`, padding:"14px 18px", marginBottom:16, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10 }}>
- <div>
- <div style={{ fontSize:9, fontWeight:700, color:B.amber, letterSpacing:2, textTransform:"uppercase", marginBottom:3 }}>Free Trial Active — {trialDaysLeft} Day{trialDaysLeft !== 1 ? "s" : ""} Left</div>
- <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}><strong style={{ fontWeight:700 }}>Community Feed Access Only.</strong> Resources and audio check-ins unlock with full membership.</div>
- </div>
- <button onClick={() => window.open("https://buy.stripe.com/6oUfZj5H86GPfoieo67wA06", "_blank")} style={{ padding:"8px 16px", background:B.amber, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap" }}>Upgrade — $27/mo</button>
- </div>
- )}
-
- {/* Audio check-in teaser */}
- {jessVoice ? (
- <div style={{ background: B.black, borderLeft: `3px solid ${B.blush}`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => setView("audio")}>
- <div style={{ width: 40, height: 40, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
- <Ic n="mic" size={18} color={B.white} />
- </div>
- <div style={{ flex: 1, minWidth: 0 }}>
- <p style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 3, textTransform: "uppercase", margin: "0 0 3px" }}>Jess's Voice — This Week</p>
- <div style={{ color: B.ivory, fontSize: 13, fontWeight: 300 }}>"{jessVoice.text}"</div>
- </div>
- <div style={{ fontSize: 9, color: "#9a8880", flexShrink: 0 }}>Tap to listen →</div>
- </div>
- ) : (
- <div style={{ background: B.black, borderLeft: `3px solid #333`, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14 }}>
- <div style={{ width: 40, height: 40, background: "#222", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, borderRadius: "50%" }}>
- <Ic n="mic" size={18} color={B.mid} />
- </div>
- <div style={{ flex: 1, minWidth: 0 }}>
- <p style={{ fontSize: 9, fontWeight: 700, color: "#666", letterSpacing: 3, textTransform: "uppercase", margin: "0 0 3px" }}>Jess's Voice — This Week</p>
- <div style={{ color: "#9a8880", fontSize: 12, fontWeight: 300, fontStyle: "italic" }}>Jess hasn't posted this week's note yet — check back soon.</div>
- </div>
- </div>
- )}
-
- {/* Post composer */}
- <div style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "18px 20px", marginBottom: 16, borderTop: `3px solid ${B.blush}` }}>
- <div style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "nowrap", overflowX: "auto" }}>
- {Object.entries(catLabels).map(([k, v]) => (
- <button key={k} onClick={() => setPostCat(k)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, padding: "5px 9px", border: `1px solid ${postCat === k ? catColors[k] : B.cloud}`, background: postCat === k ? `${catColors[k]}12` : "transparent", color: postCat === k ? catColors[k] : B.mid, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 0.5, transition: "all.15s", whiteSpace: "nowrap", flexShrink: 0 }}>
- <Ic n={catIcons[k]} size={10} color={postCat === k ? catColors[k] : B.mid} sw={1.5} />{v}
- </button>
- ))}
- </div>
- <textarea value={postInput} onChange={e => setPostInput(e.target.value)} placeholder="Share a win, ask a question, drop a tip — this community grows because you show up." rows={4} style={{ width: "100%", padding: "12px 14px", border: `1px solid ${B.cloud}`, fontSize: 13, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "vertical", boxSizing: "border-box", fontWeight: 300, minHeight: 100 }} />
- <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
- <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
- <div style={{ width: 26, height: 26, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: B.white, borderRadius: "50%" }}>{user.avatar}</div>
- <span style={{ fontSize: 11, color: B.mid, fontWeight: 300 }}>Posting as {user.firstName}</span>
- </div>
- <button onClick={submitPost} disabled={!postInput.trim()} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: postInput.trim() ? B.blush : B.cloud, border: "none", color: B.white, fontSize: 11, fontWeight: 700, cursor: postInput.trim() ? "pointer" : "default", fontFamily: FONTS.body, letterSpacing: "0.08em", textTransform: "uppercase", transition: "background.2s" }}>
- <Ic n="send" size={12} color={B.white} />Post
- </button>
- </div>
- </div>
-
- {/* Feed */}
- <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
- {posts.length === 0 && (
- <div style={{ padding: "32px 20px", textAlign: "center", color: B.mid, fontSize: 13, fontWeight: 300, border: `1px solid ${B.cloud}`, background: B.white }}>
- The community feed is getting started — be the first to post! 
- </div>
- )}
- {posts.map((post, i) => (
- <div key={post.id} style={{ background: B.white, border: `1px solid ${B.cloud}`, padding: "20px 22px", borderTop: post.isJess ? `3px solid ${B.blush}` : `1px solid ${B.cloud}` }}>
- <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
- <div style={{ width: 36, height: 36, background: post.isJess ? B.blush : B.off, border: post.isJess ? "none" : `1px solid ${B.cloud}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: post.isJess ? B.white : B.steel, flexShrink: 0, borderRadius: "50%" }}>{post.avatar}</div>
- <div style={{ flex: 1, minWidth: 0 }}>
- <div style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 7 }}>
- {post.author}
- {post.isJess && <span style={{ fontSize: 8, background: B.blush, color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>JESS</span>}
- {post.isGraduate && !post.isJess && <span style={{ fontSize: 7, background: "#2D7D4E", color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>GRAD GRAD</span>}
- <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 8, background: `${catColors[post.cat]}15`, color: catColors[post.cat], padding: "2px 8px", fontWeight: 700, letterSpacing: 1 }}>
- <Ic n={catIcons[post.cat]} size={9} color={catColors[post.cat]} sw={1.5} />{catLabels[post.cat]}
- </span>
- </div>
- <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginTop: 1 }}>{post.time}</div>
- </div>
- </div>
- <p style={{ fontSize: 13, color: B.charcoal, lineHeight: 1.7, margin: "0 0 12px", fontWeight: 300 }}>{post.text}</p>
- {post.audioUrl && (
- <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"12px 14px", marginBottom:14, display:"flex", alignItems:"center", gap:10 }}>
- <Ic n="mic" size={14} color={B.blush} />
- <audio controls src={post.audioUrl} style={{ flex:1, height:32, outline:"none" }} controlsList="nodownload" />
- </div>
- )}
- {post.imageUrl && (
- <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginBottom:14 }} />
- )}
-          <div style={{ borderTop:"1px solid " + B.cloud, paddingTop:12, marginTop:4, display:"flex", alignItems:"center", gap:14 }}>
-            <button onClick={() => {
-              const alreadyLiked = likedPosts.includes(post.id);
-              if (!alreadyLiked) {
-                supabase.functions.invoke("community-post", { body: { action:"like", id:post.id } });
-                setLikedPosts(p => [...p, post.id]);
-              } else {
-                setLikedPosts(p => p.filter(x => x !== post.id));
-              }
-            }} style={{ display:"flex", alignItems:"center", gap:6, background:"none", border:"none", cursor:"pointer", padding:0, fontFamily:FONTS.body }}>
-              <Ic n="heart" size={16} color={likedPosts.includes(post.id) ? B.blush : B.mid} sw={likedPosts.includes(post.id) ? 0 : 1.8} />
-              <span style={{ fontSize:12, color:likedPosts.includes(post.id) ? B.blush : B.mid, fontWeight:likedPosts.includes(post.id) ? 700 : 300 }}>
-                {post.likes + (likedPosts.includes(post.id) ? 1 : 0)}
-              </span>
-            </button>
-            <button onClick={() => { setReplyingTo(replyingTo === post.id ? null : post.id); setReplyText(""); }} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
-              <Ic n="message" size={14} color={B.mid} />
-              <span>{(post.replies||[]).length > 0 ? (post.replies||[]).length + " repl" + ((post.replies||[]).length === 1 ? "y" : "ies") : "Reply"}</span>
-            </button>
+    feed: (
+      <Pg title="Community Feed" sub="The Inner Circle">
+        <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 20px", fontWeight: 300 }}>Real nail techs. Real growth. All in one place.</p>
+        <div style={{ background: B.white, border: "1px solid " + B.cloud, padding: "18px 20px", marginBottom: 16, borderTop: "3px solid " + B.blush }}>
+          <div style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "nowrap", overflowX: "auto" }}>
+            {["win","tip","question","resource","intro"].map(k => (
+              <button key={k} onClick={() => setPostCat(k)} style={{ padding: "5px 12px", background: postCat === k ? catColors[k] : "transparent", border: "1px solid " + (postCat === k ? catColors[k] : B.cloud), color: postCat === k ? B.white : B.steel, fontSize: 9, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 1, textTransform: "uppercase", flexShrink: 0 }}>{catLabels[k]}</button>
+            ))}
           </div>
-          {(post.replies||[]).length > 0 && (
-            <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:6 }}>
-              {(post.replies||[]).map((r, ri) => (
-                <div key={ri} style={{ display:"flex", gap:8 }}>
-                  <div style={{ width:24, height:24, background:r.is_jess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:8, fontWeight:700, color:"white", flexShrink:0 }}>{(r.avatar||"?").slice(0,2).toUpperCase()}</div>
-                  <div style={{ flex:1, background:B.off, padding:"6px 10px" }}>
-                    <div style={{ fontSize:10, fontWeight:700, color:r.is_jess ? B.blush : B.black, marginBottom:2 }}>{r.author}{r.is_jess && <span style={{ fontSize:8, color:B.blush, marginLeft:6, letterSpacing:1 }}>JESS</span>}</div>
-                    <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}>{r.text}</div>
-                  </div>
+          <textarea value={postInput} onChange={e => setPostInput(e.target.value)} placeholder="Share a win, ask a question, drop a tip — this community grows because you show up." style={{ width: "100%", padding: "12px 14px", border: "1px solid " + B.cloud, fontSize: 13, color: B.black, fontFamily: FONTS.body, outline: "none", resize: "vertical", boxSizing: "border-box", fontWeight: 300, minHeight: 100 }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 28, height: 28, background: B.blush, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: B.white }}>{user.avatar}</div>
+              <span style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>Posting as {user.firstName}</span>
+            </div>
+            <Btn variant="blush" onClick={submitPost} disabled={!postInput.trim()}>Post</Btn>
+          </div>
+        </div>
+        {communityPosts.length === 0 && (
+          <div style={{ padding: "32px 20px", textAlign: "center", color: B.mid, fontSize: 13, fontWeight: 300, border: "1px solid " + B.cloud }}>
+            The community feed is getting started — be the first to post!
+          </div>
+        )}
+        {communityPosts.map((post, i) => (
+          <div key={post.id} style={{ background: B.white, border: "1px solid " + B.cloud, padding: "20px 22px", marginBottom: 2 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <div style={{ width: 36, height: 36, background: post.isJess ? B.blush : B.off, border: post.isJess ? "none" : "1px solid " + B.cloud, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: post.isJess ? B.white : B.steel, flexShrink: 0 }}>{post.avatar}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: B.black, letterSpacing: "0.02em", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  {post.author}
+                  {post.isJess && <span style={{ fontSize: 8, background: B.blush, color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>JESS</span>}
+                  {post.isGraduate && !post.isJess && <span style={{ fontSize: 7, background: "#2D7D4E", color: B.white, padding: "1px 6px", fontWeight: 700, letterSpacing: 1 }}>GRAD</span>}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 8, background: catColors[post.cat] + "15", color: catColors[post.cat], padding: "2px 8px", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+                    <Ic n={catIcons[post.cat]} size={9} color={catColors[post.cat]} sw={1.5} />{catLabels[post.cat]}
+                  </span>
                 </div>
-              ))}
+                <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginTop: 1 }}>{post.time}</div>
+              </div>
             </div>
-          )}
-          {replyingTo === post.id && (
-            <div style={{ marginTop:8, display:"flex", gap:6 }}>
-              <input value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Write a reply..." style={{ flex:1, border:"1px solid " + B.cloud, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
-              <button onClick={() => submitCommunityReply(post.id)} style={{ padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
+            <p style={{ fontSize: 13, color: B.charcoal, lineHeight: 1.7, margin: "0 0 12px", fontWeight: 300 }}>{post.text}</p>
+            {post.audioUrl && (
+              <div style={{ background: B.off, border: "1px solid " + B.cloud, borderLeft: "3px solid " + B.blush, padding: "12px 14px", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+                <Ic n="mic" size={14} color={B.blush} />
+                <audio controls src={post.audioUrl} style={{ flex: 1, height: 32, outline: "none" }} controlsList="nodownload" />
+              </div>
+            )}
+            {post.imageUrl && (
+              <img src={post.imageUrl} alt="Post image" style={{ maxWidth: "100%", maxHeight: 300, display: "block", borderRadius: 2, marginBottom: 14 }} />
+            )}
+            <div style={{ borderTop: "1px solid " + B.cloud, paddingTop: 12, display: "flex", alignItems: "center", gap: 14 }}>
+              <button onClick={() => handleCommunityLike(post.id)} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: FONTS.body }}>
+                <Ic n="heart" size={16} color={likedPosts.includes(post.id) ? B.blush : B.mid} sw={likedPosts.includes(post.id) ? 0 : 1.8} />
+                <span style={{ fontSize: 12, color: likedPosts.includes(post.id) ? B.blush : B.mid, fontWeight: likedPosts.includes(post.id) ? 700 : 300 }}>{post.likes + (likedPosts.includes(post.id) ? 1 : 0)}</span>
+              </button>
+              <button onClick={() => handleCommunityReplyToggle(post.id)} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: 300, padding: 0 }}>
+                <Ic n="message" size={14} color={B.mid} />
+                <span>{(post.replies || []).length > 0 ? (post.replies.length + (post.replies.length === 1 ? " reply" : " replies")) : "Reply"}</span>
+              </button>
             </div>
-          )}
- ))}
- </div>
- </Pg>
- ),
+            {(post.replies || []).length > 0 && (
+              <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+                {(post.replies || []).map((r, ri) => (
+                  <div key={ri} style={{ display: "flex", gap: 8 }}>
+                    <div style={{ width: 24, height: 24, background: r.is_jess ? B.blush : B.steel, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: B.white, flexShrink: 0 }}>{(r.avatar || "?").slice(0, 2).toUpperCase()}</div>
+                    <div style={{ flex: 1, background: B.off, padding: "6px 10px" }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: r.is_jess ? B.blush : B.black, marginBottom: 2 }}>{r.author}{r.is_jess && <span style={{ fontSize: 8, color: B.blush, marginLeft: 6, letterSpacing: 1 }}>JESS</span>}</div>
+                      <div style={{ fontSize: 12, color: B.charcoal, fontWeight: 300 }}>{r.text}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {replyingTo === post.id && (
+              <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+                <input value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Write a reply..." style={{ flex: 1, border: "1px solid " + B.cloud, padding: "8px 12px", fontSize: 12, color: B.black, outline: "none", fontFamily: FONTS.body }} />
+                <button onClick={() => submitCommunityReply(post.id)} style={{ padding: "8px 14px", background: B.blush, border: "none", color: B.white, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body }}>Reply</button>
+              </div>
+            )}
+          </div>
+        ))}
+      </Pg>
+    ),
+
 
  resources: isTrial ? <LockedGate section="Resource Library" /> : (
  <Pg title="Resources" sub="Free for Members">
