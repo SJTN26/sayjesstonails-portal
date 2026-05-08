@@ -4147,7 +4147,7 @@ const InviteGraduateForm = () => {
  setDone(true);
  setTimeout(() => setDone(false), 4000);
  } catch (e) {
- alert(`Error: ${e.message}`);
+ alert("Error: " + e.message);
  }
  setBusy(false);
  };
@@ -4209,7 +4209,7 @@ const InviteForm = ({ isMobile }) => {
  setSent(true);
  setTimeout(() => setSent(false), 4000);
  } catch (e) {
- alert(`Error: ${e.message}`);
+ alert("Error: " + e.message);
  }
  setBusy(false);
  };
@@ -4281,7 +4281,7 @@ const AdminCommunityResources = () => {
  setForm({ title:"", description:"", category:"", file:null });
  setCustomCat(false);
  if (fileRef.current) fileRef.current.value = "";
- } catch(e) { alert(`Error: ${e.message}`); }
+ } catch(e) { alert("Error: " + e.message); }
  setBusy(false);
  };
 
@@ -4480,7 +4480,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  if (postImageRef.current) postImageRef.current.value = "";
  }
  const { data, error } = await supabase.functions.invoke('community-post', {
- body: { action:'insert', author:"Jess", avatar:"J", text:postInput || "📷", cat:postCat, is_jess:true, pinned:false, audio_url: imageUrl ? `__POSTIMAGE__${imageUrl}` : null }
+ body: { action:'insert', author:"Jess", avatar:"J", text:postInput || "📷", cat:postCat, is_jess:true, pinned:false, audio_url: imageUrl ? "__POSTIMAGE__" + imageUrl : null }
  });
  if (error) { alert("Post error: " + error.message); return; }
  if (data?.error) { alert("Post error: " + data.error); return; }
@@ -4515,7 +4515,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
       {/* Sub tabs */}
       <div style={{ display:"flex", flexWrap:"wrap", gap:2, marginBottom:20 }}>
         {[["feed","Feed"], ["members","Members"], ["trial","Trial"], ["wins","Wins"], ["resources","Resources"]].map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} style={{ padding: isMobile ? "7px 12px" : "8px 18px", border:`1px solid ${tab===id ? B.blush : B.cloud}`, background: tab===id ? B.blush : B.white, color: tab===id ? B.white : B.steel, fontSize: isMobile ? 9 : 10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1.5, textTransform:"uppercase", whiteSpace:"nowrap" }}>{label}</button>
+          <button key={id} onClick={() => setTab(id)} style={{ padding: isMobile ? "7px 12px" : "8px 18px", border:"1px solid " + (tab===id ? B.blush : B.cloud), background: tab===id ? B.blush : B.white, color: tab===id ? B.white : B.steel, fontSize: isMobile ? 9 : 10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1.5, textTransform:"uppercase", whiteSpace:"nowrap" }}>{label}</button>
         ))}
       </div>
 
@@ -4525,7 +4525,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  const { data, error } = await supabase.functions.invoke('jess-voice', {
  body: { action:'post', title, audio_url: audioUrl }
  });
- if (error) { alert(`Error: ${error.message}`); return; }
+ if (error) { alert("Error: " + error.message); return; }
  if (data?.voice) setJessVoiceAdmin({ title: data.voice.title, audio_url: data.voice.audio_url });
  }} />
 
@@ -4850,9 +4850,9 @@ const AdminDashboard = ({ onLogout }) => {
  if (data?.error) throw new Error(data.error);
  setLeads(p => p.map(l => l.id === lead.id ? {...l, invited: true, invitedAt: "Just now" } : l));
  if (selLead?.id === lead.id) setSelLead(p => ({...p, invited: true, invitedAt: "Just now" }));
- alert(`Invite sent to ${firstName} at ${lead.email}. They will receive an email to set their password and access their portal.`);
+ alert("Invite sent to " + firstName + " at " + lead.email + ". They will receive an email to set their password and access their portal.");
  } catch (e) {
- alert(`Error sending invite: ${e.message}`);
+ alert("Error sending invite: " + e.message);
  }
  setInvitingLead(null);
  };
@@ -5827,7 +5827,7 @@ const AdminDashboard = ({ onLogout }) => {
  setTaskForm({ title:"", due_date:"", jess_notes:"" });
  setAssignTask(null);
  } catch (e) {
- alert(`Error: ${e.message}`);
+ alert("Error: " + e.message);
  }
  setTaskBusy(false);
  }}>{taskBusy ? "Assigning…" : "Assign Task"}</Btn>
@@ -5897,7 +5897,7 @@ const AdminDashboard = ({ onLogout }) => {
  setAddResource(null);
  setResourceForm({ title:"", description:"", file:null });
  alert("Resource added successfully!");
- } catch(e) { alert(`Error: ${e.message}`); }
+ } catch(e) { alert("Error: " + e.message); }
  setResourceUploading(false);
  }} disabled={resourceUploading}>{resourceUploading ? "Uploading…" : "Upload Resource"}</Btn>
  </div>
@@ -5953,7 +5953,7 @@ const AdminDashboard = ({ onLogout }) => {
  setScheduleSession(null);
  setSessionForm({ type:"", date:"", time:"", notes:"" });
  } catch (e) {
- alert(`Error: ${e.message}`);
+ alert("Error: " + e.message);
  }
  setSessionBusy(false);
  }} style={{ padding: "8px 14px", background: "none", border: `1px solid ${B.amber}`, color: B.amber, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body, letterSpacing: 1, textTransform: "uppercase" }}>
@@ -6033,7 +6033,7 @@ const AdminDashboard = ({ onLogout }) => {
  setScheduleSession(null);
  setSessionForm({ type:"", date:"", time:"", notes:"" });
  } catch (e) {
- alert(`Error: ${e.message}`);
+ alert("Error: " + e.message);
  }
  setSessionBusy(false);
  }}>{sessionBusy ? "Saving…" : hasExistingSession ? "Reschedule Session" : "Schedule & Save"}</Btn>
@@ -6703,7 +6703,7 @@ const AdminDashboard = ({ onLogout }) => {
  const { error } = await supabase.functions.invoke('invite-mentee', {
  body: { email: m.email, action: 'graduate' }
  });
- if (error) { alert(`Error: ${error.message}`); return; }
+ if (error) { alert("Error: " + error.message); return; }
  // Send graduation portal message trigger
  await supabase.functions.invoke('send-message', {
  body: { mentee_email: m.email, sender: "jess", text: `__GRADUATION__${firstName}` }
@@ -6726,7 +6726,7 @@ const AdminDashboard = ({ onLogout }) => {
  });
  setMenteeList(p => p.filter(x => x.email !== m.email));
  fetchGraduates();
- alert(`${firstName}'s program is complete. They now have 1 year of community access.`);
+ alert(firstName + "'s program is complete. They now have 1 year of community access.");
  }} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 8px", background:B.success, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:0.5, textTransform:"uppercase" }}>
  <Ic n="check" size={12} color={B.white} />Complete Program
  </button>
