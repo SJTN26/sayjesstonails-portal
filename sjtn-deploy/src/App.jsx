@@ -3193,6 +3193,8 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  { id:"upgrade", icon:"zap", label:"Level Up" },
  ];
 
+  const refCode = (user.firstName||"").toLowerCase().replace(/ +/g,"") + (user.avatar||"").toLowerCase();
+  const refLink = "https://portal.sayjesstonails.com/?ref=" + (user.firstName||"").toLowerCase().replace(/ +/g,"") + (user.avatar||"").toLowerCase();
  const views = {
     feed: (
       <Pg title="Community Feed" sub="The Inner Circle">
@@ -3344,7 +3346,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
                 <div key={i} style={{ display:"flex", justifyContent: isMe ? "flex-end" : "flex-start" }}>
                   <div style={{ maxWidth:"75%" }}>
                     <div style={{ fontSize:9, color:B.mid, fontWeight:700, letterSpacing:1, textTransform:"uppercase", marginBottom:3, textAlign: isMe ? "right" : "left" }}>{isMe ? "You" : "Jess"}</div>
-                    <div style={{ background: isMe ? B.black : B.white, border: isMe ? "none" : `1px solid ${B.cloud}`, padding:"10px 14px" }}>
+                    <div style={{ background: isMe ? B.black : B.white, border: isMe ? "none" : "1px solid " + B.cloud, padding:"10px 14px" }}>
                       <p style={{ margin:0, fontSize:12, color: isMe ? B.ivory : B.charcoal, lineHeight:1.55, fontWeight:300 }}>{m.text}</p>
                     </div>
                     <div style={{ fontSize:9, color:B.mid, marginTop:3, textAlign: isMe ? "right" : "left", fontWeight:300 }}>{m.time}</div>
@@ -3354,8 +3356,8 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
             })}
             <div ref={cMsgEndRef} />
           </div>
-          <div style={{ borderTop:`1px solid ${B.cloud}`, paddingTop:12, display:"flex", gap:8, flexShrink:0 }}>
-            <input value={cMsgInput} onChange={e => setCMsgInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendCMsg()} placeholder="Message Jess..." style={{ flex:1, border:`1px solid ${B.cloud}`, padding:"12px 14px", fontSize:13, color:B.black, outline:"none", fontFamily:FONTS.body, fontWeight:300 }} />
+          <div style={{ borderTop:"1px solid " + B.cloud, paddingTop:12, display:"flex", gap:8, flexShrink:0 }}>
+            <input value={cMsgInput} onChange={e => setCMsgInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendCMsg()} placeholder="Message Jess..." style={{ flex:1, border:"1px solid " + B.cloud, padding:"12px 14px", fontSize:13, color:B.black, outline:"none", fontFamily:FONTS.body, fontWeight:300 }} />
             <button onClick={sendCMsg} style={{ width:44, height:44, background:B.blush, border:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0 }}>
               <Ic n="send" size={14} color={B.white} />
             </button>
@@ -3364,13 +3366,10 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
       </Pg>
     ),
 
- refer: (() => {
- const refCode = `${(user.firstName||"").toLowerCase().replace(/ +/g,"")}${(user.avatar||"").toLowerCase()}`;
- const refLink = `https://portal.sayjesstonails.com/?ref=${refCode}`;
- return (
+    refer: (
  <Pg title="Refer a Friend" sub="Grow the Inner Circle">
  <p style={{ color:B.mid, fontSize:13, margin:"-12px 0 24px", fontWeight:300 }}>Know a nail tech who needs this community? Send them your link and help them find their people.</p>
- <div style={{ background:B.black, borderLeft:`3px solid ${B.blush}`, padding:"22px 24px", marginBottom:16 }}>
+ <div style={{ background:B.black, borderLeft:"3px solid " + B.blush, padding:"22px 24px", marginBottom:16 }}>
  <div style={{ fontSize:9, fontWeight:700, color:B.blushLight, letterSpacing:2, textTransform:"uppercase", marginBottom:10 }}>Your Referral Link</div>
  <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
  <div style={{ flex:1, minWidth:0, fontSize:12, color:B.ivory, fontWeight:300, padding:"10px 12px", background:"#1a1a1a", wordBreak:"break-all" }}>{refLink}</div>
@@ -3380,21 +3379,20 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr 1fr", gap:2, marginBottom:20 }}>
  {[
  ["Share on Instagram", "instagram", B.blush, () => window.open("https://www.instagram.com/","_blank")],
- ["Share via Text", "send", B.success, () => window.open(`sms:?body=Hey! I've been part of the SayJessToNails Inner Circle and it's been incredible. Check it out: ${refLink}`, "_blank")],
+ ["Share via Text", "send", B.success, () => window.open("sms:?body=Hey! I've been part of the SayJessToNails Inner Circle and it's been incredible. Check it out: " + refLink, "_blank")],
  ["Copy Link", "link", "#9B6EA0", () => navigator.clipboard.writeText(refLink)],
  ].map(([label, icon, color, onClick]) => (
- <button key={label} onClick={onClick} style={{ padding:"14px", border:`1px solid ${B.cloud}`, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", gap:8, cursor:"pointer", fontFamily:FONTS.body, fontSize:11, fontWeight:600, color:B.charcoal }}>
+ <button key={label} onClick={onClick} style={{ padding:"14px", border:"1px solid " + B.cloud, background:B.white, display:"flex", alignItems:"center", justifyContent:"center", gap:8, cursor:"pointer", fontFamily:FONTS.body, fontSize:11, fontWeight:600, color:B.charcoal }}>
  <Ic n={icon} size={14} color={color} />{label}
  </button>
  ))}
  </div>
- <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.amber}`, padding:"16px 18px" }}>
+ <div style={{ background:B.off, border:"1px solid " + B.cloud, borderLeft:"3px solid " + B.amber, padding:"16px 18px" }}>
  <div style={{ fontSize:10, fontWeight:700, color:B.amber, letterSpacing:1.5, textTransform:"uppercase", marginBottom:6 }}>Every referral matters</div>
  <div style={{ fontSize:12, color:B.charcoal, fontWeight:300, lineHeight:1.7 }}>This community grows because people like you believe in what Jess has built. When you refer someone, you're not just sharing a link — you're giving another nail tech the chance to change their business and their life.</div>
  </div>
  </Pg>
- );
- })(),
+    ),
 
  upgrade: (
  <Pg title="Level Up" sub="When You're Ready">
