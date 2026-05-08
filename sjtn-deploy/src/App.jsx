@@ -3060,7 +3060,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const submitCommunityReply = (postId) => {
     if (!replyText.trim()) return;
     supabase.functions.invoke("community-post", { body: { action:"reply", post_id:postId, author:user.firstName, avatar:user.avatar, text:replyText, is_jess:false, author_email:user.email } });
-    setCommunityPosts(p => p.map(x => x.id === postId ? {...x, replies:[...(x.replies||[]), {author:user.firstName, avatar:user.avatar, text:replyText, is_jess:false, id:Date.now()}]} : x));
+    setPosts(p => p.map(x => x.id === postId ? {...x, replies:[...(x.replies||[]), {author:user.firstName, avatar:user.avatar, text:replyText, is_jess:false, id:Date.now()}]} : x));
     setReplyText(""); setReplyingTo(null);
   };
 
@@ -3212,12 +3212,12 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
             <Btn variant="blush" onClick={submitPost} disabled={!postInput.trim()}>Post</Btn>
           </div>
         </div>
-        {communityPosts.length === 0 && (
+        {posts.length === 0 && (
           <div style={{ padding: "32px 20px", textAlign: "center", color: B.mid, fontSize: 13, fontWeight: 300, border: "1px solid " + B.cloud }}>
             The community feed is getting started — be the first to post!
           </div>
         )}
-        {communityPosts.map((post, i) => (
+        {posts.map((post, i) => (
           <div key={post.id} style={{ background: B.white, border: "1px solid " + B.cloud, padding: "20px 22px", marginBottom: 2 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <div style={{ width: 36, height: 36, background: post.isJess ? B.blush : B.off, border: post.isJess ? "none" : "1px solid " + B.cloud, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: post.isJess ? B.white : B.steel, flexShrink: 0 }}>{post.avatar}</div>
