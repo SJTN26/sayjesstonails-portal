@@ -3054,6 +3054,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     if (likedPosts.includes(postId)) {
       setLikedPosts(p => p.filter(x => x !== postId));
       setPosts(p => p.map(x => x.id === postId ? {...x, likes: Math.max(0, (x.likes||0) - 1)} : x));
+      supabase.functions.invoke("community-post", { body: { action: "unlike", id: postId } });
     } else {
       supabase.functions.invoke("community-post", { body: { action: "like", id: postId } });
       setLikedPosts(p => [...p, postId]);
@@ -4380,6 +4381,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
     if (adminLikedPosts.includes(postId)) {
       setAdminLikedPosts(p => p.filter(x => x !== postId));
       setCommunityPosts(p => p.map(x => x.id === postId ? {...x, likes: Math.max(0, (x.likes||0) - 1)} : x));
+      supabase.functions.invoke("community-post", { body: { action: "unlike", id: postId } });
     } else {
       supabase.functions.invoke("community-post", { body: { action: "like", id: postId } });
       setAdminLikedPosts(p => [...p, postId]);
