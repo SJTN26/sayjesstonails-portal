@@ -4370,6 +4370,18 @@ const AdminCommunity = ({ menteeList, communityList }) => {
   const [adminReplyTo, setAdminReplyTo] = useState(null);
   const [adminReplyText, setAdminReplyText] = useState("");
   const [adminLikedPosts, setAdminLikedPosts] = useState([]);
+  const handleAdminLike = (postId) => {
+    if (adminLikedPosts.includes(postId)) {
+      setAdminLikedPosts(p => p.filter(x => x !== postId));
+    } else {
+      supabase.functions.invoke("community-post", { body: { action: "like", id: postId } });
+      setAdminLikedPosts(p => [...p, postId]);
+    }
+  };
+  const handleAdminReplyToggle = (postId) => {
+    setAdminReplyTo(adminReplyTo === postId ? null : postId);
+    setAdminReplyText("");
+  };
   const submitAdminReply = (postId) => {
     if (!adminReplyText.trim()) return;
     supabase.functions.invoke("community-post", { body: { action:"reply", post_id:postId, author:"Jess", avatar:"J", text:adminReplyText, is_jess:true } });
@@ -4561,72 +4573,65 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  </div>
  )}
  {posts.map(post => (
- <div key={post.id} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"16px 20px", marginBottom:2, borderLeft:`3px solid ${post.pinned ? B.amber : post.isJess ? B.blush : B.cloud}` }}>
+ <div key={post.id} style={{ background:B.white, border:"1px solid " + B.cloud, padding:"16px 20px", marginBottom:2 }}>
  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:10 }}>
  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
- <div style={{ width:32, height:32, background: post.isJess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:B.white, borderRadius:"50%", flexShrink:0 }}>{post.avatar}</div>
+ <div style={{ width:32, height:32, background: post.isJess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:B.white, flexShrink:0 }}>{post.avatar}</div>
  <div>
  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
  <span style={{ fontSize:12, fontWeight:700, color: post.isJess ? B.blush : B.black }}>{post.author}</span>
  {post.isJess && <span style={{ fontSize:7, background:B.blush, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>JESS</span>}
- {post.isGraduate && !post.isJess && <span style={{ fontSize:7, background:"#2D7D4E", color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>GRAD GRAD</span>}
+ {post.isGraduate && !post.isJess && <span style={{ fontSize:7, background:"#2D7D4E", color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>GRAD</span>}
  {post.pinned && <span style={{ fontSize:7, background:B.amber, color:B.white, padding:"1px 5px", fontWeight:700, letterSpacing:1 }}>PINNED</span>}
  </div>
- <div style={{ fontSize:9, color:B.mid, marginTop:1 }}>{post.time} · <span style={{ color: catColors[post.cat], fontWeight:700, fontSize:8, textTransform:"uppercase", letterSpacing:1 }}>{catLabels[post.cat]}</span></div>
+ <div style={{ fontSize:9, color:B.mid, marginTop:1 }}>{post.time} · <span style={{ color: catColors[post.cat], fontWeight:700 }}>{catLabels[post.cat]}</span></div>
  </div>
  </div>
  <div style={{ display:"flex", gap:4, flexShrink:0 }}>
- <button onClick={() => pinPost(post)} style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${post.pinned ? B.amber : B.cloud}`, background: post.pinned ? `${B.amber}15` : "none", color: post.pinned ? B.amber : B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>{post.pinned ? "Unpin" : "Pin"}</button>
- <button onClick={() => removePost(post.id)} style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
+ <button onClick={() => pinPost(post)} style={{ fontSize:8, padding:"3px 8px", border:"1px solid " + (post.pinned ? B.amber : B.cloud), background: post.pinned ? B.amber : B.white, color: post.pinned ? B.white : B.steel, cursor:"pointer", fontFamily:FONTS.body }}>{post.pinned ? "Unpin" : "Pin"}</button>
+ <button onClick={() => removePost(post.id)} style={{ fontSize:8, padding:"3px 8px", border:"1px solid " + B.cloud, background:B.white, color:B.steel, cursor:"pointer", fontFamily:FONTS.body }}>Remove</button>
  </div>
  </div>
  <p style={{ fontSize:13, color:B.charcoal, lineHeight:1.7, margin:0, fontWeight:300 }}>{post.text}</p>
  {post.audioUrl && (
- <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"12px 14px", marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
+ <div style={{ background:B.off, border:"1px solid " + B.cloud, borderLeft:"3px solid " + B.blush, padding:"12px 14px", marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
  <Ic n="mic" size={14} color={B.blush} />
  <audio controls src={post.audioUrl} style={{ flex:1, height:32, outline:"none" }} controlsList="nodownload" />
  </div>
  )}
  {post.imageUrl && (
- <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginBottom:14 }} />
+ <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginTop:10 }} />
  )}
-          <div style={{ borderTop:"1px solid " + B.cloud, paddingTop:10, marginTop:10, display:"flex", alignItems:"center", gap:14 }}>
-            <button onClick={() => {
-              const alreadyLiked = adminLikedPosts.includes(post.id);
-              if (!alreadyLiked) {
-                supabase.functions.invoke("community-post", { body: { action:"like", id:post.id } });
-                setAdminLikedPosts(p => [...p, post.id]);
-              } else {
-                setAdminLikedPosts(p => p.filter(x => x !== post.id));
-              }
-            }} style={{ display:"flex", alignItems:"center", gap:6, background:"none", border:"none", cursor:"pointer", padding:0, fontFamily:FONTS.body }}>
-              <Ic n="heart" size={16} color={adminLikedPosts.includes(post.id) ? B.blush : B.mid} sw={adminLikedPosts.includes(post.id) ? 0 : 1.8} />
-              <span style={{ fontSize:12, color:adminLikedPosts.includes(post.id) ? B.blush : B.mid, fontWeight:adminLikedPosts.includes(post.id) ? 700 : 300 }}>{post.likes + (adminLikedPosts.includes(post.id) ? 1 : 0)}</span>
-            </button>
-            <button onClick={() => { setAdminReplyTo(adminReplyTo === post.id ? null : post.id); setAdminReplyText(""); }} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
-              <Ic n="message" size={14} color={B.mid} />
-              <span>{(post.replies||[]).length > 0 ? (post.replies||[]).length + " repl" + ((post.replies||[]).length === 1 ? "y" : "ies") : "Reply"}</span>
-            </button>
-          </div>
-          {(post.replies||[]).length > 0 && (
-            <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:6 }}>
-              {(post.replies||[]).map((r, ri) => (
-                <div key={ri} style={{ display:"flex", gap:8 }}>
-                  <div style={{ width:24, height:24, background:r.is_jess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:8, fontWeight:700, color:"white", flexShrink:0 }}>{(r.avatar||"J").slice(0,2).toUpperCase()}</div>
-                  <div style={{ flex:1, background:B.off, padding:"6px 10px" }}>
-                    <div style={{ fontSize:10, fontWeight:700, color:r.is_jess ? B.blush : B.black, marginBottom:2 }}>{r.author}{r.is_jess && <span style={{ fontSize:8, color:B.blush, marginLeft:6, letterSpacing:1 }}>JESS</span>}</div>
-                    <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}>{r.text}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {adminReplyTo === post.id && (
-            <div style={{ marginTop:8, display:"flex", gap:6 }}>
-              <input value={adminReplyText} onChange={e => setAdminReplyText(e.target.value)} placeholder="Reply to this post..." style={{ flex:1, border:"1px solid " + B.cloud, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
-              <button onClick={() => submitAdminReply(post.id)} style={{ padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
-            </div>
-          )}
+ <div style={{ borderTop:"1px solid " + B.cloud, paddingTop:10, marginTop:10, display:"flex", alignItems:"center", gap:14 }}>
+ <button onClick={() => handleAdminLike(post.id)} style={{ display:"flex", alignItems:"center", gap:6, background:"none", border:"none", cursor:"pointer", padding:0, fontFamily:FONTS.body }}>
+ <Ic n="heart" size={16} color={adminLikedPosts.includes(post.id) ? B.blush : B.mid} sw={adminLikedPosts.includes(post.id) ? 0 : 1.8} />
+ <span style={{ fontSize:12, color:adminLikedPosts.includes(post.id) ? B.blush : B.mid, fontWeight:adminLikedPosts.includes(post.id) ? 700 : 300 }}>{post.likes + (adminLikedPosts.includes(post.id) ? 1 : 0)}</span>
+ </button>
+ <button onClick={() => handleAdminReplyToggle(post.id)} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
+ <Ic n="message" size={14} color={B.mid} />
+ <span>{(post.replies||[]).length > 0 ? (post.replies.length + (post.replies.length === 1 ? " reply" : " replies")) : "Reply"}</span>
+ </button>
+ </div>
+ {(post.replies||[]).length > 0 && (
+ <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:6 }}>
+ {(post.replies||[]).map((r, ri) => (
+ <div key={ri} style={{ display:"flex", gap:8 }}>
+ <div style={{ width:24, height:24, background:r.is_jess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:8, fontWeight:700, color:B.white, flexShrink:0 }}>{(r.avatar||"J").slice(0,2).toUpperCase()}</div>
+ <div style={{ flex:1, background:B.off, padding:"6px 10px" }}>
+ <div style={{ fontSize:10, fontWeight:700, color:r.is_jess ? B.blush : B.black, marginBottom:2 }}>{r.author}{r.is_jess && <span style={{ fontSize:8, color:B.blush, marginLeft:6, letterSpacing:1 }}>JESS</span>}</div>
+ <div style={{ fontSize:12, color:B.charcoal, fontWeight:300 }}>{r.text}</div>
+ </div>
+ </div>
+ ))}
+ </div>
+ )}
+ {adminReplyTo === post.id && (
+ <div style={{ marginTop:8, display:"flex", gap:6 }}>
+ <input value={adminReplyText} onChange={e => setAdminReplyText(e.target.value)} placeholder="Reply to this post..." style={{ flex:1, border:"1px solid " + B.cloud, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
+ <button onClick={() => submitAdminReply(post.id)} style={{ padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
+ </div>
+ )}
+ </div>
  ))}
  </div>
  )}
