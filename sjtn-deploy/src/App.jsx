@@ -3118,11 +3118,11 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
  isGraduate: p.is_graduate || false
  })));
-  setLikedPosts(prev => prev.length > 0 ? prev : posts.filter(p => (p.liked_by||[]).includes(user.email)).map(p => p.id));
+  setLikedPosts(posts.filter(p => (p.liked_by||[]).includes(user.email)).map(p => p.id));
  } else {
  setPosts([]);
   // Initialize liked state once from server on first load
-  setLikedPosts(prev => prev.length > 0 ? prev : (data?.posts || []).filter(p => (p.liked_by||[]).includes(user.email)).map(p => p.id));
+  setLikedPosts((data?.posts || []).filter(p => (p.liked_by||[]).includes(user.email)).map(p => p.id));
  }
  });
  };
@@ -4383,9 +4383,9 @@ const AdminCommunity = ({ menteeList, communityList }) => {
     if (adminLikedPosts.includes(postId)) {
       setAdminLikedPosts(p => p.filter(x => x !== postId));
       setCommunityPosts(p => p.map(x => x.id === postId ? {...x, likes: Math.max(0, (x.likes||0) - 1)} : x));
-      supabase.functions.invoke("community-post", { body: { action: "unlike", id: postId, user_email: user.email } });
+      supabase.functions.invoke("community-post", { body: { action: "unlike", id: postId, user_email: "jess@sayjesstonails.com" } });
     } else {
-      supabase.functions.invoke("community-post", { body: { action: "like", id: postId, user_email: user.email } });
+      supabase.functions.invoke("community-post", { body: { action: "like", id: postId, user_email: "jess@sayjesstonails.com" } });
       setAdminLikedPosts(p => [...p, postId]);
       setCommunityPosts(p => p.map(x => x.id === postId ? {...x, likes: (x.likes||0) + 1} : x));
     }
@@ -4472,7 +4472,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
          isGraduate: p.is_graduate || false
        })));
        // Initialize admin liked state from server on first load only
-       setAdminLikedPosts(prev => prev.length > 0 ? prev : (posts || []).filter(p => (p.liked_by||[]).includes("jess@sayjesstonails.com")).map(p => p.id));
+       setAdminLikedPosts((posts || []).filter(p => (p.liked_by||[]).includes("jess@sayjesstonails.com")).map(p => p.id));
      });
    };
    fetchAdminPosts();
