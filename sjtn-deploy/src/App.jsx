@@ -4676,8 +4676,8 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  </div>
  </div>
  <div style={{ display:"flex", gap:6, alignItems:"center" }}>
- <span style={{ fontSize:8, fontWeight:700, color:B.steel, border:`1px solid ${B.cloud}`, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>{m.paid ? "Member" : "Trial"}</span>
- {m.graduated && <span style={{ fontSize:7, background:"#2D7D4E", color:B.white, padding:"2px 8px", fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>GRAD Grad</span>}
+ <span style={{ fontSize:8, fontWeight:700, color:B.steel, border:`1px solid ${B.cloud}`, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>{m.paid || m.graduated ? "Member" : "Trial"}</span>
+ {m.graduated && <span style={{ fontSize:7, background:"#2D7D4E", color:B.white, padding:"2px 8px", fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Grad</span>}
  <button style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
  </div>
  </div>
