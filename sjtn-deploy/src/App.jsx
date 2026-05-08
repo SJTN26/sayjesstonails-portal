@@ -3050,9 +3050,11 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const handleCommunityLike = (postId) => {
     if (likedPosts.includes(postId)) {
       setLikedPosts(p => p.filter(x => x !== postId));
+      setPosts(p => p.map(x => x.id === postId ? {...x, likes: Math.max(0, (x.likes||0) - 1)} : x));
     } else {
       supabase.functions.invoke("community-post", { body: { action: "like", id: postId } });
       setLikedPosts(p => [...p, postId]);
+      setPosts(p => p.map(x => x.id === postId ? {...x, likes: (x.likes||0) + 1} : x));
     }
   };
   const handleCommunityReplyToggle = (postId) => {
@@ -3249,8 +3251,8 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
             )}
             <div style={{ borderTop: "1px solid " + B.cloud, paddingTop: 12, display: "flex", alignItems: "center", gap: 14 }}>
               <button onClick={() => handleCommunityLike(post.id)} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: FONTS.body }}>
-                <Ic n="heart" size={16} color={likedPosts.includes(post.id) ? B.blush : B.mid} sw={likedPosts.includes(post.id) ? 0 : 1.8} />
-                <span style={{ fontSize: 12, color: likedPosts.includes(post.id) ? B.blush : B.mid, fontWeight: likedPosts.includes(post.id) ? 700 : 300 }}>{post.likes + (likedPosts.includes(post.id) ? 1 : 0)}</span>
+                <svg width={16} height={16} viewBox="0 0 24 24" fill={likedPosts.includes(post.id) ? B.blush : "none"} stroke={likedPosts.includes(post.id) ? B.blush : B.mid} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" /></svg>
+                <span style={{ fontSize: 12, color: likedPosts.includes(post.id) ? B.blush : B.mid, fontWeight: likedPosts.includes(post.id) ? 700 : 300 }}>{post.likes}</span>
               </button>
               <button onClick={() => handleCommunityReplyToggle(post.id)} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: 300, padding: 0 }}>
                 <Ic n="message" size={14} color={B.mid} />
@@ -4373,9 +4375,11 @@ const AdminCommunity = ({ menteeList, communityList }) => {
   const handleAdminLike = (postId) => {
     if (adminLikedPosts.includes(postId)) {
       setAdminLikedPosts(p => p.filter(x => x !== postId));
+      setCommunityPosts(p => p.map(x => x.id === postId ? {...x, likes: Math.max(0, (x.likes||0) - 1)} : x));
     } else {
       supabase.functions.invoke("community-post", { body: { action: "like", id: postId } });
       setAdminLikedPosts(p => [...p, postId]);
+      setCommunityPosts(p => p.map(x => x.id === postId ? {...x, likes: (x.likes||0) + 1} : x));
     }
   };
   const handleAdminReplyToggle = (postId) => {
@@ -4604,8 +4608,8 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  )}
  <div style={{ borderTop:"1px solid " + B.cloud, paddingTop:10, marginTop:10, display:"flex", alignItems:"center", gap:14 }}>
  <button onClick={() => handleAdminLike(post.id)} style={{ display:"flex", alignItems:"center", gap:6, background:"none", border:"none", cursor:"pointer", padding:0, fontFamily:FONTS.body }}>
- <Ic n="heart" size={16} color={adminLikedPosts.includes(post.id) ? B.blush : B.mid} sw={adminLikedPosts.includes(post.id) ? 0 : 1.8} />
- <span style={{ fontSize:12, color:adminLikedPosts.includes(post.id) ? B.blush : B.mid, fontWeight:adminLikedPosts.includes(post.id) ? 700 : 300 }}>{post.likes + (adminLikedPosts.includes(post.id) ? 1 : 0)}</span>
+ <svg width={16} height={16} viewBox="0 0 24 24" fill={adminLikedPosts.includes(post.id) ? B.blush : "none"} stroke={adminLikedPosts.includes(post.id) ? B.blush : B.mid} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" /></svg>
+ <span style={{ fontSize:12, color:adminLikedPosts.includes(post.id) ? B.blush : B.mid, fontWeight:adminLikedPosts.includes(post.id) ? 700 : 300 }}>{post.likes}</span>
  </button>
  <button onClick={() => handleAdminReplyToggle(post.id)} style={{ display:"flex", alignItems:"center", gap:5, background:"none", border:"none", cursor:"pointer", color:B.mid, fontFamily:FONTS.body, fontSize:12, fontWeight:300, padding:0 }}>
  <Ic n="message" size={14} color={B.mid} />
