@@ -3054,9 +3054,9 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     if (likedPosts.includes(postId)) {
       setLikedPosts(p => p.filter(x => x !== postId));
       setPosts(p => p.map(x => x.id === postId ? {...x, likes: Math.max(0, (x.likes||0) - 1)} : x));
-      supabase.functions.invoke("community-post", { body: { action: "unlike", id: postId } });
+      supabase.functions.invoke("community-post", { body: { action: "unlike", id: postId, user_email: user.email } });
     } else {
-      supabase.functions.invoke("community-post", { body: { action: "like", id: postId } });
+      supabase.functions.invoke("community-post", { body: { action: "like", id: postId, user_email: user.email } });
       setLikedPosts(p => [...p, postId]);
       setPosts(p => p.map(x => x.id === postId ? {...x, likes: (x.likes||0) + 1} : x));
     }
@@ -3113,7 +3113,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  setPosts(posts.map(p => ({
  id: p.id, author: p.author, avatar: p.avatar,
  time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
- text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, replies: p.replies || [],
+ text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, replies: p.replies || [], likedBy: p.liked_by || [],
  audioUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? null : (p.audio_url || null),
  imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
  isGraduate: p.is_graduate || false
@@ -3196,8 +3196,8 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  { id:"feed", icon:"users", label:"Feed" },
  { id:"resources", icon:"book", label:"Library" },
  { id:"audio", icon:"mic", label:"Jess" },
+ { id:"messages", icon:"message", label:"Inbox" },
  { id:"refer", icon:"link", label:"Refer" },
-  { id:"messages",  icon:"message",  label:"Messages" },
  { id:"upgrade", icon:"zap", label:"Level Up" },
  ];
 
@@ -3277,7 +3277,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
               </div>
             )}
             {replyingTo === post.id && (
-              <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+              <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
                 <input value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Write a reply..." style={{ flex: 1, border: "1px solid " + B.cloud, padding: "8px 12px", fontSize: 12, color: B.black, outline: "none", fontFamily: FONTS.body }} />
                 <button onClick={() => submitCommunityReply(post.id)} style={{ padding: "8px 14px", background: B.blush, border: "none", color: B.white, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: FONTS.body }}>Reply</button>
               </div>
@@ -3488,7 +3488,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  {TABS_C.map(({ id, icon, label }) => {
  const on = view === id;
  const isUpgrade = id === "upgrade";
- return <button key={id} onClick={() => setView(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px 8px", border: "none", background: on ? `${B.blush}08` : "transparent", color: on ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 8, fontWeight: on ? 700 : 300, letterSpacing: 1.5, textTransform: "uppercase", borderTop: `2px solid ${on ? B.blush : "transparent"}`, cursor: "pointer" }}><Ic n={icon} size={20} color={on ? B.blush : B.mid} />{label}</button>;
+ return <button key={id} onClick={() => setView(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "8px 2px 6px", border: "none", background: on ? `${B.blush}08` : "transparent", color: on ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 7, fontWeight: on ? 700 : 300, letterSpacing: 1.5, textTransform: "uppercase", borderTop: `2px solid ${on ? B.blush : "transparent"}`, cursor: "pointer" }}><Ic n={icon} size={20} color={on ? B.blush : B.mid} />{label}</button>;
  })}
  <button onClick={onLogout} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "9px 2px 7px", border: "none", background: "transparent", color: B.mid, fontFamily: FONTS.body, fontSize: 7, fontWeight: 300, letterSpacing: 1, textTransform: "uppercase" }}>
  <Ic n="logout" size={18} color={B.mid} />Out
@@ -4375,15 +4375,14 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  const [tab, setTab] = useState("feed");
   const [adminReplyTo, setAdminReplyTo] = useState(null);
   const [adminReplyText, setAdminReplyText] = useState("");
-  const [adminLikedPosts, setAdminLikedPosts] = useState(() => { try { return JSON.parse(localStorage.getItem("sjtn_admin_liked") || "[]"); } catch { return []; } });
-  useEffect(() => { try { localStorage.setItem("sjtn_admin_liked", JSON.stringify(adminLikedPosts)); } catch {} }, [adminLikedPosts.length]);
+  const [adminLikedPosts, setAdminLikedPosts] = useState([]);
   const handleAdminLike = (postId) => {
     if (adminLikedPosts.includes(postId)) {
       setAdminLikedPosts(p => p.filter(x => x !== postId));
       setCommunityPosts(p => p.map(x => x.id === postId ? {...x, likes: Math.max(0, (x.likes||0) - 1)} : x));
-      supabase.functions.invoke("community-post", { body: { action: "unlike", id: postId } });
+      supabase.functions.invoke("community-post", { body: { action: "unlike", id: postId, user_email: user.email } });
     } else {
-      supabase.functions.invoke("community-post", { body: { action: "like", id: postId } });
+      supabase.functions.invoke("community-post", { body: { action: "like", id: postId, user_email: user.email } });
       setAdminLikedPosts(p => [...p, postId]);
       setCommunityPosts(p => p.map(x => x.id === postId ? {...x, likes: (x.likes||0) + 1} : x));
     }
@@ -4464,11 +4463,14 @@ const AdminCommunity = ({ menteeList, communityList }) => {
        if (posts.length > 0) setCommunityPosts(posts.map(p => ({
          id: p.id, author: p.author, avatar: p.avatar,
          time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
-         text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, replies: p.replies || [], pinned: p.pinned, authorEmail: p.author_email || p.mentee_email,
+         text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, replies: p.replies || [], pinned: p.pinned, authorEmail: p.author_email || p.mentee_email, likedBy: p.liked_by || [],
          audioUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? null : (p.audio_url || null),
          imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
          isGraduate: p.is_graduate || false
        })));
+       // Initialize admin liked state from server
+       const adminLiked = (posts || []).filter(p => (p.liked_by||[]).includes("jess@sayjesstonails.com")).map(p => p.id);
+       setAdminLikedPosts(adminLiked);
      });
    };
    fetchAdminPosts();
