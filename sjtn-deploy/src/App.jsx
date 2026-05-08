@@ -4374,7 +4374,8 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  const [tab, setTab] = useState("feed");
   const [adminReplyTo, setAdminReplyTo] = useState(null);
   const [adminReplyText, setAdminReplyText] = useState("");
-  const [adminLikedPosts, setAdminLikedPosts] = useState([]);
+  const [adminLikedPosts, setAdminLikedPosts] = useState(() => { try { return JSON.parse(localStorage.getItem("sjtn_admin_liked") || "[]"); } catch { return []; } });
+  useEffect(() => { try { localStorage.setItem("sjtn_admin_liked", JSON.stringify(adminLikedPosts)); } catch {} }, [adminLikedPosts.length]);
   const handleAdminLike = (postId) => {
     if (adminLikedPosts.includes(postId)) {
       setAdminLikedPosts(p => p.filter(x => x !== postId));
