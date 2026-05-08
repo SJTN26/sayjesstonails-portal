@@ -3044,6 +3044,14 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     return () => clearInterval(interval);
   }, [user.email]);
   useEffect(() => { cMsgEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [cMsgs.length]);
+
+  const submitCommunityReply = (postId) => {
+    if (!replyText.trim()) return;
+    supabase.functions.invoke("community-post", { body: { action:"reply", post_id:postId, author:user.firstName, avatar:user.avatar, text:replyText, is_jess:false, author_email:user.email } });
+    setCommunityPosts(p => p.map(x => x.id === postId ? {...x, replies:[...(x.replies||[]), {author:user.firstName, avatar:user.avatar, text:replyText, is_jess:false, id:Date.now()}]} : x));
+    setReplyText(""); setReplyingTo(null);
+  };
+
   const sendCMsg = async () => {
     if (!cMsgInput.trim()) return;
     const text = cMsgInput;
@@ -3303,7 +3311,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
           {replyingTo === post.id && (
             <div style={{ marginTop:8, display:"flex", gap:6 }}>
               <input value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Write a reply..." style={{ flex:1, border:"1px solid " + B.cloud, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
-              <button onClick={() => { if (!replyText.trim()) return; supabase.functions.invoke("community-post", { body: { action:"reply", post_id:post.id, author:user.firstName, avatar:user.avatar, text:replyText, is_jess:false, author_email:user.email } }); setCommunityPosts(p => p.map(x => x.id === post.id ? {...x, replies:[...(x.replies||[]), {author:user.firstName, avatar:user.avatar, text:replyText, is_jess:false, id:Date.now()}]} : x)); setReplyText(""); setReplyingTo(null); }} style={{ padding:"8px 14px", background:B.blush, border:"none", color:"white", fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
+              <button onClick={() => submitCommunityReply(post.id)} style={{ padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
             </div>
           )}
  ))}
@@ -4403,6 +4411,12 @@ const AdminCommunity = ({ menteeList, communityList }) => {
   const [adminReplyTo, setAdminReplyTo] = useState(null);
   const [adminReplyText, setAdminReplyText] = useState("");
   const [adminLikedPosts, setAdminLikedPosts] = useState([]);
+  const submitAdminReply = (postId) => {
+    if (!adminReplyText.trim()) return;
+    supabase.functions.invoke("community-post", { body: { action:"reply", post_id:postId, author:"Jess", avatar:"J", text:adminReplyText, is_jess:true } });
+    setCommunityPosts(p => p.map(x => x.id === postId ? {...x, replies:[...(x.replies||[]), {author:"Jess", avatar:"J", text:adminReplyText, is_jess:true, id:Date.now()}]} : x));
+    setAdminReplyText(""); setAdminReplyTo(null);
+  };
  const [trialList, setTrialList] = useState([]);
  const [communityInvite, setCommunityInvite] = useState({ name:"", email:"" });
  const [communityInviting, setCommunityInviting] = useState(false);
@@ -4651,7 +4665,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
           {adminReplyTo === post.id && (
             <div style={{ marginTop:8, display:"flex", gap:6 }}>
               <input value={adminReplyText} onChange={e => setAdminReplyText(e.target.value)} placeholder="Reply to this post..." style={{ flex:1, border:"1px solid " + B.cloud, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
-              <button onClick={() => { if (!adminReplyText.trim()) return; supabase.functions.invoke("community-post", { body: { action:"reply", post_id:post.id, author:"Jess", avatar:"J", text:adminReplyText, is_jess:true } }); setCommunityPosts(p => p.map(x => x.id === post.id ? {...x, replies:[...(x.replies||[]), {author:"Jess", avatar:"J", text:adminReplyText, is_jess:true, id:Date.now()}]} : x)); setAdminReplyText(""); setAdminReplyTo(null); }} style={{ padding:"8px 14px", background:B.blush, border:"none", color:"white", fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
+              <button onClick={() => submitAdminReply(post.id)} style={{ padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
             </div>
           )}
  ))}
