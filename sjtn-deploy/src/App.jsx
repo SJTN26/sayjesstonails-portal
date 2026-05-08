@@ -3012,7 +3012,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  // Fetch trial end date from community_applications
  const [trialEndDate, setTrialEndDate] = useState(null);
  useEffect(() => {
- if (!isTrial) return;
+  if (user.paid || user.graduated) return;
  supabase.functions.invoke('assign-task', { body: { action: 'get_applications' } })
 .then(({ data }) => {
  const app = data?.applications?.find(a => a.email?.toLowerCase() === user.email?.toLowerCase());
