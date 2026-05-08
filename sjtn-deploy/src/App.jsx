@@ -2997,7 +2997,10 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  const [postInput, setPostInput] = useState("");
  const [postCat, setPostCat] = useState("win");
  const [posts, setPosts] = useState([]);
- const [likedPosts, setLikedPosts] = useState([]);
+  const [likedPosts, setLikedPosts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("sjtn_liked_" + user.email) || "[]"); } catch { return []; }
+  });
+  useEffect(() => { try { localStorage.setItem("sjtn_liked_" + user.email, JSON.stringify(likedPosts)); } catch {} }, [likedPosts.length]);
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
  const [audioPlaying, setAudioPlaying] = useState(false);
@@ -4451,27 +4454,24 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  }, []);
 
  useEffect(() => {
- supabase.functions.invoke("community-post", { body: { action: "fetch" } })
-.then(({ data }) => {
- const posts = data?.posts || [];
- if (posts.length > 0) setCommunityPosts(posts.map(p => ({
- id: p.id, author: p.author, avatar: p.avatar,
- time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
- text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, replies: p.replies || [], pinned: p.pinned, authorEmail: p.author_email || p.mentee_email,
- audioUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? null : (p.audio_url || null),
- imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
- isGraduate: p.is_graduate || false
- })));
- });
- }, []);
-
- const submitPost = async () => {
- if (!postInput.trim() && !postImage) return;
- let imageUrl = null;
- if (postImage) {
- const ext = postImage.name.split('.').pop();
- const fileName = `post-${Date.now()}.${ext}`;
- const { error: uploadError } = await supabase.storage.from("images").upload(fileName, postImage, { contentType: postImage.type });
+   const fetchAdminPosts = () => {
+     supabase.functions.invoke("community-post", { body: { action: "fetch" } })
+     .then(({ data }) => {
+       const posts = data?.posts || [];
+       if (posts.length > 0) setCommunityPosts(posts.map(p => ({
+         id: p.id, author: p.author, avatar: p.avatar,
+         time: new Date(p.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+         text: p.text, likes: p.likes || 0, isJess: p.is_jess, cat: p.cat, replies: p.replies || [], pinned: p.pinned, authorEmail: p.author_email || p.mentee_email,
+         audioUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? null : (p.audio_url || null),
+         imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
+         isGraduate: p.is_graduate || false
+       })));
+     });
+   };
+   fetchAdminPosts();
+   const interval = setInterval(fetchAdminPosts, 10000);
+   return () => clearInterval(interval);
+  }, []);
  if (!uploadError) {
  const { data: urlData } = supabase.storage.from("images").getPublicUrl(fileName);
  imageUrl = urlData.publicUrl;
