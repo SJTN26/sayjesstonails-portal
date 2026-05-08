@@ -3267,16 +3267,13 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  {post.imageUrl && (
  <img src={post.imageUrl} alt="Post image" style={{ maxWidth:"100%", maxHeight:300, display:"block", borderRadius:2, marginBottom:14 }} />
  )}
- <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: `1px solid ${B.cloud}`, paddingTop: 12 }}>
+ <div style={{ display: "flex", alignItems: "center", gap: 16, borderTop: "1px solid " + B.cloud, paddingTop: 12 }}>
  <button onClick={() => { if (!likedPosts.includes(post.id)) supabase.functions.invoke('community-post', { body: { action:'like', id:post.id } }); setLikedPosts(p => p.includes(post.id) ? p.filter(x => x !== post.id) : [...p, post.id]); }} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: likedPosts.includes(post.id) ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 12, fontWeight: likedPosts.includes(post.id) ? 700 : 300, padding: 0, transition: "color.15s" }}>
  <Ic n="heart" size={14} color={likedPosts.includes(post.id) ? B.blush : B.mid} sw={likedPosts.includes(post.id) ? 0 : 1.8} />
  {post.likes + (likedPosts.includes(post.id) ? 1 : 0)}
  </button>
-              <span style={{ fontSize:12, color:B.mid, fontWeight:300 }}>{(post.replies||[]).length > 0 ? ((post.replies||[]).length + " replies") : ""}</span>
-                 <Ic n="message" size={13} color={B.mid} />{(post.replies||[]).length > 0 ? ((post.replies||[]).length + ((post.replies||[]).length === 1 ? " reply" : " replies")) : "Reply"}
-              </button>
             </div>
-            {/* Replies */}
+ </div>
  ))}
  </div>
  </Pg>
