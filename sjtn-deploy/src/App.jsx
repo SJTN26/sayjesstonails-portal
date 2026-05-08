@@ -1579,7 +1579,7 @@ const MenteePortal = ({ user, onLogout }) => {
  const newPost = { author: user.firstName, avatar: user.avatar, text: commPostInput, likes: 0, comments: [], isJess: false, cat: commPostCat, time: "Just now", id: Date.now(), isGraduate: isGrad, imageUrl };
  setCommunityPosts(p => [newPost,...p]);
  setCommPostInput("");
- await supabase.functions.invoke("community-post", { body: { action: "insert", author: user.firstName, avatar: user.avatar, text: commPostInput || "📷", cat: commPostCat, is_jess: false, is_graduate: isGrad, audio_url: imageUrl ? `__POSTIMAGE__${imageUrl}` : null, author_email: user.email } });
+ await supabase.functions.invoke("community-post", { body: { action: "insert", author: user.firstName, avatar: user.avatar, text: commPostInput || "", cat: commPostCat, is_jess: false, is_graduate: isGrad, audio_url: imageUrl ? `__POSTIMAGE__${imageUrl}` : null, author_email: user.email } });
  };
 
  const [sessionPrep, setSessionPrep] = useState({ win:"", challenge:"", need:"", submitted:false });
@@ -4480,7 +4480,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  if (postImageRef.current) postImageRef.current.value = "";
  }
  const { data, error } = await supabase.functions.invoke('community-post', {
- body: { action:'insert', author:"Jess", avatar:"J", text:postInput || "📷", cat:postCat, is_jess:true, pinned:false, audio_url: imageUrl ? "__POSTIMAGE__" + imageUrl : null }
+ body: { action:'insert', author:"Jess", avatar:"J", text:postInput || "", cat:postCat, is_jess:true, pinned:false, audio_url: imageUrl ? "__POSTIMAGE__" + imageUrl : null }
  });
  if (error) { alert("Post error: " + error.message); return; }
  if (data?.error) { alert("Post error: " + data.error); return; }
@@ -5064,7 +5064,7 @@ const AdminDashboard = ({ onLogout }) => {
  if (chatImageRef.current) chatImageRef.current.value = "";
  }
 
- setChatMsgs(p => ({...p, [selChat]: [...(p[selChat] || []), { from: "Jess", text: text || "📷", t: "now", imageUrl }] }));
+ setChatMsgs(p => ({...p, [selChat]: [...(p[selChat] || []), { from: "Jess", text: text || "", t: "now", imageUrl }] }));
  setChatInput("");
  await supabase.functions.invoke('send-message', {
  body: {
