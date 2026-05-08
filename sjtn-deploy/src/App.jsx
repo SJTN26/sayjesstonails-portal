@@ -2997,9 +2997,9 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  const [postInput, setPostInput] = useState("");
  const [postCat, setPostCat] = useState("win");
  const [posts, setPosts] = useState([]);
-  const [likedPosts, setLikedPosts] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("sjtn_liked_" + user.email) || "[]"); } catch { return []; }
-  });
+  const [likedPosts, setLikedPosts] = useState([]);
+
+
   useEffect(() => { try { localStorage.setItem("sjtn_liked_" + user.email, JSON.stringify(likedPosts)); } catch {} }, [likedPosts.length]);
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
@@ -3118,8 +3118,11 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
  isGraduate: p.is_graduate || false
  })));
+  setLikedPosts(prev => prev.length > 0 ? prev : posts.filter(p => (p.liked_by||[]).includes(user.email)).map(p => p.id));
  } else {
  setPosts([]);
+  // Initialize liked state once from server on first load
+  setLikedPosts(prev => prev.length > 0 ? prev : (data?.posts || []).filter(p => (p.liked_by||[]).includes(user.email)).map(p => p.id));
  }
  });
  };
@@ -4468,9 +4471,8 @@ const AdminCommunity = ({ menteeList, communityList }) => {
          imageUrl: p.audio_url?.startsWith("__POSTIMAGE__") ? p.audio_url.replace("__POSTIMAGE__", "") : null,
          isGraduate: p.is_graduate || false
        })));
-       // Initialize admin liked state from server
-       const adminLiked = (posts || []).filter(p => (p.liked_by||[]).includes("jess@sayjesstonails.com")).map(p => p.id);
-       setAdminLikedPosts(adminLiked);
+       // Initialize admin liked state from server on first load only
+       setAdminLikedPosts(prev => prev.length > 0 ? prev : (posts || []).filter(p => (p.liked_by||[]).includes("jess@sayjesstonails.com")).map(p => p.id));
      });
    };
    fetchAdminPosts();
