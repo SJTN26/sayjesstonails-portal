@@ -4472,6 +4472,14 @@ const AdminCommunity = ({ menteeList, communityList }) => {
    const interval = setInterval(fetchAdminPosts, 10000);
    return () => clearInterval(interval);
   }, []);
+
+ const submitPost = async () => {
+   if (!postInput.trim() && !postImage) return;
+   let imageUrl = null;
+   if (postImage) {
+     const ext = postImage.name.split(".").pop();
+     const fileName = Date.now() + "." + ext;
+     const { error: uploadError } = await supabase.storage.from("images").upload(fileName, postImage, { contentType: postImage.type });
  if (!uploadError) {
  const { data: urlData } = supabase.storage.from("images").getPublicUrl(fileName);
  imageUrl = urlData.publicUrl;
