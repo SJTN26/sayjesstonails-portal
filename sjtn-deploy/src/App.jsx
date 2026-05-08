@@ -4618,7 +4618,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
               </button>
             </div>
             {(post.replies || []).length > 0 && (
-              <div style={{ borderTop:`1px solid ${B.cloud}`, marginTop:10, paddingTop:10, display:"flex", flexDirection:"column", gap:8 }}>
+              <div style={{ borderTop:"1px solid " + B.cloud, marginTop:10, paddingTop:10, display:"flex", flexDirection:"column", gap:8 }}>
                 {(post.replies || []).map((r, ri) => (
                   <div key={ri} style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
                     <div style={{ width:26, height:26, background: r.is_jess ? B.blush : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, fontWeight:700, color:B.white, flexShrink:0 }}>{r.avatar || (r.author||"?").slice(0,2).toUpperCase()}</div>
@@ -4632,7 +4632,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
             )}
             {adminReplyTo === post.id && (
               <div style={{ marginTop:8, display:"flex", gap:6 }}>
-                <input value={adminReplyText} onChange={e => setAdminReplyText(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && adminReplyText.trim()) { supabase.functions.invoke("send-message", { body: { mentee_email: post.authorEmail || ([...communityList, ...menteeList].find(m => (m.firstName||m.name) === post.author)?.email) || post.author, sender:"jess", text:adminReplyText } }); setAdminReplyTo(null); setAdminReplyText(""); }}} placeholder={`Message ${post.author}...`} style={{ flex:1, border:"1px solid " + B.cloud, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
+                <input value={adminReplyText} onChange={e => setAdminReplyText(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && adminReplyText.trim()) { supabase.functions.invoke("send-message", { body: { mentee_email: post.authorEmail || ([...communityList, ...menteeList].find(m => (m.firstName||m.name) === post.author)?.email) || post.author, sender:"jess", text:adminReplyText } }); setAdminReplyTo(null); setAdminReplyText(""); }}} placeholder={"Message " + (post.author || "") + "..."} style={{ flex:1, border:"1px solid " + B.cloud, padding:"8px 12px", fontSize:12, color:B.black, outline:"none", fontFamily:FONTS.body }} />
                 <button onClick={async () => { if (!adminReplyText.trim()) return; const r = { post_id: post.id, author: "Jess", avatar: "J", text: adminReplyText, is_jess: true }; await supabase.functions.invoke("community-post", { body: { action:"reply", ...r } }); setCommunityPosts(p => p.map(x => x.id === post.id ? {...x, replies:[...(x.replies||[]), {...r, id:Date.now()}]} : x)); setAdminReplyTo(null); setAdminReplyText(""); }} style={{ padding:"8px 14px", background:B.blush, border:"none", color:B.white, fontSize:10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body }}>Reply</button>
               </div>
             )}
