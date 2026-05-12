@@ -3010,7 +3010,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  const gradWelcomeKey = `sjtn_grad_welcome_${user.email}`;
  const [jessVoice, setJessVoice] = useState(null);
  useEffect(() => {
- supabase.functions.invoke('assign-task', { body: { action: 'get_voice' } })
+ supabase.functions.invoke('jess-voice', { body: { action: 'get' } })
 .then(({ data }) => { if (data?.voice) setJessVoice({ text: data.voice.title, audioUrl: data.voice.audio_url }); });
  }, []);
 
