@@ -796,7 +796,7 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
  <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 40, textTransform: "uppercase", color: B.ivory, margin: "0 0 10px", letterSpacing: "-0.5px" }}>Reset Password.</h2>
  <p style={{ color: "#9a8880", fontSize: 13, lineHeight: 1.7, margin: "0 0 28px", fontWeight: 300 }}>Enter the email tied to your account.</p>
  <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} type="email" placeholder="your@email.com" style={{...inp(false), marginBottom: 16 }} />
- <Btn full variant="blush" onClick={() => { setBusy(true); setTimeout(() => { setForgotSent(true); setBusy(false); }, 900); }} disabled={busy || !forgotEmail.includes("@")}>{busy ? "Sending…" : "Send Reset Link"}</Btn>
+ <Btn full variant="blush" onClick={() => { setBusy(true); supabase.auth.resetPasswordForEmail(forgotEmail, { redirectTo: "https://portal.sayjesstonails.com" }).then(() => { setForgotSent(true); setBusy(false); }); }} disabled={busy || !forgotEmail.includes("@")}>{busy ? "Sending…" : "Send Reset Link"}</Btn>
  </>
  )}
  </div>
@@ -6866,7 +6866,7 @@ export default function App() {
 
  // Check for invite/recovery token in URL hash
  const hash = window.location.hash;
- if (hash && hash.includes("type=invite") || hash.includes("type=recovery")) {
+ if (hash && (hash.includes("type=invite") || hash.includes("type=recovery"))) {
  const params = new URLSearchParams(hash.replace("#", ""));
  const accessToken = params.get("access_token");
  const refreshToken = params.get("refresh_token");
