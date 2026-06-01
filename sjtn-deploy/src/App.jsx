@@ -5274,25 +5274,31 @@ const AdminDashboard = ({ onLogout }) => {
  return (
  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 2 }}>
  {todaySessions.map((s, i) => (
- <div key={i} style={{ background: B.black, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: `3px solid ${B.blush}` }}>
- <div>
- <div style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{s.nextSession.time}</div>
- <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 16, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em" }}>{s.name}</div>
- <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300 }}>{s.nextSession.type}</div>
- </div>
- <Btn size="sm" variant="blush" icon="video" onClick={async () => {
- const { data, error } = await supabase.functions.invoke('create-video-room', {
- body: { sessionName: s.nextSession.type, participantName: s.name }
- });
- if (error || data?.error) { alert("Could not create video room."); return; }
- await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: { email: s.email, room_url: data.url } } });
- await supabase.functions.invoke('send-message', {
- body: { mentee_email: s.email, sender: "jess", text: `Hi ${s.firstName || s.name.split(" ")[0]}! Your session is live — "${s.nextSession.type}". Join whenever you're ready! ` }
- });
- setAdminCall({ name: s.name, roomUrl: data.url, menteeEmail: s.email, isSession: true, sessionType: s.nextSession.type });
-            }}>Start</Btn>
-              <Btn size="sm" variant="ghostDark" onClick={async () => { if (!window.confirm("Mark session complete for " + s.name + "?")) return; await supabase.functions.invoke("assign-task", { body: { action: "insert_session", mentee_email: s.email, session_type: s.nextSession.type } }); const mentee = menteeList.find(m => m.email === s.email); const newCount = (mentee?.sessionsCompleted || 0) + 1; await supabase.functions.invoke("assign-task", { body: { action: "upsert_profile", profile: { email: s.email, sessions_completed: newCount, next_session_date: null, next_session_time: null, next_session_type: null } } }); setMenteeList(p => p.map(m => m.email === s.email ? {...m, sessionsCompleted: newCount, nextSession: null} : m)); await supabase.functions.invoke("send-message", { body: { mentee_email: s.email, sender: "jess", text: "Great session today! Keep that momentum going!" } }); }}>Done</Btn>
- </div>
+              <div key={i} style={{ background: B.black, padding: "18px 20px", borderLeft: "3px solid " + B.blush, display: "flex", flexDirection: "column", gap: 14 }}>
+                <div>
+                  <div style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{s.nextSession.time}</div>
+                  <div style={{ color: B.ivory, fontFamily: FONTS.display, fontSize: 16, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em" }}>{s.name}</div>
+                  <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300 }}>{s.nextSession.type}</div>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <Btn size="sm" variant="blush" icon="video" onClick={async () => {
+                    const { data, error } = await supabase.functions.invoke("create-video-room", { body: { sessionName: s.nextSession.type, participantName: s.name } });
+                    if (error || data?.error) { alert("Could not create video room."); return; }
+                    await supabase.functions.invoke("assign-task", { body: { action: "upsert_profile", profile: { email: s.email, room_url: data.url } } });
+                    await supabase.functions.invoke("send-message", { body: { mentee_email: s.email, sender: "jess", text: "Hi " + (s.firstName || s.name.split(" ")[0]) + "! Your session is live. Join whenever you are ready!" } });
+                    setAdminCall({ name: s.name, roomUrl: data.url, menteeEmail: s.email, isSession: true, sessionType: s.nextSession.type });
+                  }}>Start Session</Btn>
+                  <Btn size="sm" variant="ghostDark" icon="check" onClick={async () => {
+                    if (!window.confirm("Mark this session as completed for " + s.name + "?")) return;
+                    await supabase.functions.invoke("assign-task", { body: { action: "insert_session", mentee_email: s.email, session_type: s.nextSession.type } });
+                    const mentee = menteeList.find(m => m.email === s.email);
+                    const newCount = (mentee?.sessionsCompleted || 0) + 1;
+                    await supabase.functions.invoke("assign-task", { body: { action: "upsert_profile", profile: { email: s.email, sessions_completed: newCount, next_session_date: null, next_session_time: null, next_session_type: null } } });
+                    setMenteeList(p => p.map(m => m.email === s.email ? {...m, sessionsCompleted: newCount, nextSession: null} : m));
+                    await supabase.functions.invoke("send-message", { body: { mentee_email: s.email, sender: "jess", text: "Great session today! Keep that momentum going!" } });
+                  }}>Session Completed</Btn>
+                </div>
+              </div>
  ))}
  </div>
  );
