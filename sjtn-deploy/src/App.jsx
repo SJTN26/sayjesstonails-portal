@@ -5290,7 +5290,8 @@ const AdminDashboard = ({ onLogout }) => {
  body: { mentee_email: s.email, sender: "jess", text: `Hi ${s.firstName || s.name.split(" ")[0]}! Your session is live — "${s.nextSession.type}". Join whenever you're ready! ` }
  });
  setAdminCall({ name: s.name, roomUrl: data.url, menteeEmail: s.email, isSession: true, sessionType: s.nextSession.type });
- }}>Start</Btn>
+            }}>Start</Btn>
+              <Btn size="sm" variant="ghost" onClick={async () => { if (!window.confirm("Mark session complete for " + s.name + "?")) return; await supabase.functions.invoke("assign-task", { body: { action: "insert_session", mentee_email: s.email, session_type: s.nextSession.type } }); const mentee = menteeList.find(m => m.email === s.email); const newCount = (mentee?.sessionsCompleted || 0) + 1; await supabase.functions.invoke("assign-task", { body: { action: "upsert_profile", profile: { email: s.email, sessions_completed: newCount, next_session_date: null, next_session_time: null, next_session_type: null } } }); setMenteeList(p => p.map(m => m.email === s.email ? {...m, sessionsCompleted: newCount, nextSession: null} : m)); await supabase.functions.invoke("send-message", { body: { mentee_email: s.email, sender: "jess", text: "Great session today! Keep that momentum going!" } }); }}>Done</Btn>
  </div>
  ))}
  </div>
