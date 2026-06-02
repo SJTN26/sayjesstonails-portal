@@ -6854,7 +6854,7 @@ const SetPassword = ({ onDone }) => {
  ROOT
 ════════════════════════════════════════════════════════════════════════ */
 export default function App() {
- const [screen, setScreen] = useState("landing");
+ const [screen, setScreen] = useState(() => { try { const p = new URLSearchParams(window.location.search); if (p.get("signin") === "true") { window.history.replaceState({}, "", window.location.pathname); return "portal"; } } catch {} return "landing"; });
  const [activeUser, setActiveUser] = useState(null);
  const [activeSession, setActiveSession] = useState(null);
  const [bookedForm, setBookedForm] = useState(null);
@@ -6892,7 +6892,7 @@ export default function App() {
  if (refParams.get('apply') === 'community') {
  setScreen('apply');
  window.history.replaceState({}, '', window.location.pathname);
-    if (refParams.get('signin') === 'true') { setScreen('portal'); window.history.replaceState({}, '', window.location.pathname); }
+
  }
 
  // Referral tracking — log visit if ?ref= param in URL
