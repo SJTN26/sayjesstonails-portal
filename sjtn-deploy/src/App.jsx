@@ -6854,7 +6854,7 @@ const SetPassword = ({ onDone }) => {
  ROOT
 ════════════════════════════════════════════════════════════════════════ */
 export default function App() {
- const [screen, setScreen] = useState(() => { try { const p = new URLSearchParams(window.location.search); if (p.get("signin") === "true") { window.history.replaceState({}, "", window.location.pathname); return "portal"; } } catch {} return "landing"; });
+ const [screen, setScreen] = useState(() => { try { const p = new URLSearchParams(window.location.search); if (p.get("signin") === "true") { window.history.replaceState({}, "", window.location.pathname); return "portal"; } if (window.location.hash === "#signin") { return "portal"; } } catch {} return "landing"; });
  const [activeUser, setActiveUser] = useState(null);
  const [activeSession, setActiveSession] = useState(null);
  const [bookedForm, setBookedForm] = useState(null);
