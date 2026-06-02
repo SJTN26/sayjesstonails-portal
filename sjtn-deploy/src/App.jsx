@@ -825,8 +825,8 @@ const AuthPortal = ({ onLogin, onBack, onBook }) => {
  {/* Desktop: About drawer trigger — text only, no logo */}
  {!isMobile && (
  <button onClick={() => setDrawerOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", fontFamily: FONTS.body, padding: 0 }}>
- <Ic n="menu" size={16} color={drawerOpen ? B.blush : "#666"} />
- <span style={{ fontSize: 10, color: drawerOpen ? B.blush : "#666", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", transition: "color.2s" }}>{drawerOpen ? "Close" : "About"}</span>
+ <Ic n="menu" size={16} color={drawerOpen ? B.blush : B.ivory} />
+ <span style={{ fontSize: 10, color: drawerOpen ? B.blush : B.ivory, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", transition: "color.2s" }}>{drawerOpen ? "Close" : "About"}</span>
  </button>
  )}
  {/* Mobile: empty left side so Homepage sits right */}
@@ -6892,6 +6892,7 @@ export default function App() {
  if (refParams.get('apply') === 'community') {
  setScreen('apply');
  window.history.replaceState({}, '', window.location.pathname);
+    if (refParams.get('signin') === 'true') { setScreen('portal'); window.history.replaceState({}, '', window.location.pathname); }
  }
 
  // Referral tracking — log visit if ?ref= param in URL
