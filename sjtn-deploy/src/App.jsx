@@ -5157,7 +5157,7 @@ const AdminDashboard = ({ onLogout }) => {
  const stageLabel = { pending: "Waiting on Me", accepted: "Call Confirmed", happened: "Call Happened", enrolled: "Enrolled", declined: "Not a Fit", followup: "Follow Up Later" };
 
  const ADMIN_NAV = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"applications",icon:"clipBoard",label:"Applications" }, { id:"invoices",icon:"send",label:"Invoices" }, { id:"messages",icon:"message",label:"Messages" }, { id:"community",icon:"users",label:"Community" }, { id:"settings",icon:"settings",label:"Settings" }];
- const ADMIN_TABS = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"messages",icon:"message",label:"Messages" }, { id:"community",icon:"users",label:"Community" }, { id:"settings",icon:"settings",label:"Settings" }];
+ const ADMIN_TABS = [{ id:"overview",icon:"grid",label:"Overview" }, { id:"leads",icon:"zap",label:"Leads" }, { id:"mentees",icon:"users",label:"Mentees" }, { id:"applications",icon:"clipBoard",label:"Apps" }, { id:"messages",icon:"message",label:"Messages" }, { id:"community",icon:"users",label:"Community" }];
 
  const Pg = ({ title, sub, children, action }) => (
  <div style={{ padding: isMobile ? "20px 18px 40px" : "28px 32px", maxWidth: 1020, width: "100%" }}>
@@ -6780,6 +6780,7 @@ const AdminDashboard = ({ onLogout }) => {
  const badge = id === "leads" ? pending.length : id === "messages" ? adminUnread : 0;
  return <button key={id} onClick={() => setView(id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px 8px", border: "none", background: "transparent", color: on ? B.blush : B.mid, fontFamily: FONTS.body, fontSize: 7, fontWeight: on ? 700 : 300, position: "relative", letterSpacing: 1.5, textTransform: "uppercase" }}><Ic n={icon} size={20} color={on ? B.blush : B.mid} />{label}{badge > 0 && <div style={{ position: "absolute", top: 8, right: "calc(50% - 13px)", width: 12, height: 12, background: B.blush, fontSize: 6, color: B.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{badge}</div>}</button>;
  })}
+        <button onClick={() => setView("settings")} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 4px 8px", border: "none", background: "transparent", cursor: "pointer" }}><div style={{ width: 26, height: 26, background: view === "settings" ? B.blush : B.steel, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: B.white }}>JR</div><span style={{ fontSize: 7, color: view === "settings" ? B.blush : B.mid, fontWeight: view === "settings" ? 700 : 300, letterSpacing: 1.5, textTransform: "uppercase", fontFamily: FONTS.body }}>More</span></button>
  </nav>
  )}
  </div>
@@ -6855,6 +6856,15 @@ const SetPassword = ({ onDone }) => {
 ════════════════════════════════════════════════════════════════════════ */
 export default function App() {
  const [screen, setScreen] = useState(() => { try { const p = new URLSearchParams(window.location.search); if (p.get("signin") === "true") { window.history.replaceState({}, "", window.location.pathname); return "portal"; } if (window.location.hash === "#signin") { return "portal"; } } catch {} return "landing"; });
+  const [connError, setConnError] = useState(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      fetch("https://eytysuurxsfsbimgpion.supabase.co/rest/v1/", { method: "HEAD" })
+        .then(() => setConnError(false))
+        .catch(() => setConnError(true));
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, []);
  const [activeUser, setActiveUser] = useState(null);
  const [activeSession, setActiveSession] = useState(null);
  const [bookedForm, setBookedForm] = useState(null);
@@ -6958,6 +6968,7 @@ export default function App() {
 
  return (
  <>
+    {connError && (<div style={{ position:"fixed", top:0, left:0, right:0, zIndex:9999, background:"#b8667a", color:"white", padding:"12px 20px", textAlign:"center", fontSize:13, fontWeight:300, fontFamily:"DM Sans, sans-serif" }}>We are experiencing a brief connection issue. Your data is safe — please refresh in a few minutes.</div>)}
  {screen === "setpassword" && <SetPassword onDone={() => setScreen("auth")} />}
  {screen === "landing" && <Landing onSignIn={() => setScreen("auth")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} onApply={() => setScreen("apply")} />}
  {screen === "auth" && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} />}
