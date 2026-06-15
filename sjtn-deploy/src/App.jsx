@@ -5586,6 +5586,7 @@ const AdminDashboard = ({ onLogout }) => {
  )}
  {colLeads.map(lead => (
  <div key={lead.id} onClick={() => { setSelLead(lead); setShowDetail(true); }} style={{ background: B.white, border: `1px solid ${B.cloud}`, borderLeft: `3px solid ${col.color}`, padding: "12px 14px", cursor: "pointer" }}>
+ <div style={{ background: B.black, padding: "10px 14px", marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}><div><div style={{ fontSize: 9, color: col.color, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>{lead.slot.date}</div><div style={{ fontSize: 16, color: B.ivory, fontWeight: 900, fontFamily: FONTS.display, letterSpacing: "-0.5px" }}>{lead.slot.time}</div></div>{(() => { if (!lead.scheduledAt) return null; const days = Math.ceil((new Date(lead.scheduledAt) - Date.now()) / (1000 * 60 * 60 * 24)); if (days < 0) return <div style={{ fontSize: 8, color: B.silver, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Past</div>; if (days === 0) return <div style={{ fontSize: 8, color: col.color, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", background: "rgba(255,255,255,0.1)", padding: "3px 8px" }}>Today</div>; if (days === 1) return <div style={{ fontSize: 8, color: col.color, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", background: "rgba(255,255,255,0.1)", padding: "3px 8px" }}>Tomorrow</div>; return <div style={{ fontSize: 8, color: B.ivory, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", opacity: 0.7 }}>In {days} days</div>; })()}</div>
  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
  <div style={{ width: 26, height: 26, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: B.white, flexShrink: 0 }}>{lead.name.split(" ").map(w => w[0]).join("")}</div>
  <div style={{ minWidth: 0 }}>
@@ -5595,7 +5596,6 @@ const AdminDashboard = ({ onLogout }) => {
  </div>
  <div style={{ fontSize: 9, fontWeight: 700, color: B.black, background: B.off, padding: "3px 8px", marginBottom: 8, display: "inline-block" }}>{lead.tier}</div>
  <p style={{ fontSize: 10, color: B.mid, margin: "0 0 8px", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", fontWeight: 300 }}>{lead.goal}</p>
- <div style={{ fontSize: 9, color: B.mid, fontWeight: 300, marginBottom: 10 }}>{lead.slot.date} · {lead.slot.time}</div>
 
  {/* Actions per stage */}
  {col.key === "pending" && (
@@ -5629,7 +5629,6 @@ const AdminDashboard = ({ onLogout }) => {
  <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
  </div>
  )}
-          </div>
  </div>
  ))}
  </div>
