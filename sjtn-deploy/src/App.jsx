@@ -4224,7 +4224,9 @@ const InviteGraduateForm = () => {
  email: email.toLowerCase(),
  first_name: name,
  tier: "Community Graduate",
+ role: "graduate",
  graduated: true,
+ paid: true,
  start_date: new Date().toISOString().split("T")[0], // ISO format for reliable date math
  sessions_completed: 0, sessions_total: 0, days_remaining: 0, total_days: 0
  } } });
