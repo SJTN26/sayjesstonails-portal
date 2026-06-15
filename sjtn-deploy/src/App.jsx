@@ -4913,7 +4913,38 @@ const AdminDashboard = ({ onLogout }) => {
  }
  });
  }, []);
- const [leads, setLeads] = useState(DB.leads);
+  const [leads, setLeads] = useState([]);
+  const [leadsLoading, setLeadsLoading] = useState(true);
+  useEffect(() => {
+    const fetchLeads = () => {
+      supabase.functions.invoke("assign-task", { body: { action: "get_leads" } }).then(({ data }) => {
+        if (data?.leads) {
+          setLeads(data.leads.map(l => ({
+            id: l.id,
+            name: l.name || "Unknown",
+            firstName: (l.name || "").split(" ")[0] || "Unknown",
+            email: l.email || "",
+            scheduledAt: l.scheduled_at,
+            date: l.scheduled_at ? new Date(l.scheduled_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }) : "",
+            time: l.scheduled_at ? new Date(l.scheduled_at).toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" }) : "",
+            challenge: l.challenge || "",
+            goal: l.goal || "",
+            licensed: l.licensed || "",
+            tier: l.interested_in || "Just exploring",
+            status: l.status || "pending",
+            notes: l.notes || "",
+            outcome: l.outcome || "",
+            source: l.source || "calendly",
+            avatar: ((l.name || "").split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2)) || "?",
+          })));
+        }
+        setLeadsLoading(false);
+      });
+    };
+    fetchLeads();
+    const interval = setInterval(fetchLeads, 30000);
+    return () => clearInterval(interval);
+  }, []);
  const [selLead, setSelLead] = useState(null);
  const [showDetail, setShowDetail] = useState(false);
  const [leadFilter, setLeadFilter] = useState("all");
@@ -4933,12 +4964,16 @@ const AdminDashboard = ({ onLogout }) => {
  const archivedLeads = leads.filter(l => l.status === "declined" || l.status === "followup");
  const filtered = leadFilter === "all" ? mainLeads : mainLeads.filter(l => l.status === leadFilter);
  const [showArchive, setShowArchive] = useState(false);
- const accept = id => setLeads(p => p.map(l => l.id === id ? {...l, status: "accepted", acceptedAt: "Just now" } : l));
- const markHappened = id => setLeads(p => p.map(l => l.id === id ? {...l, status: "happened" } : l));
- const enroll = id => setLeads(p => p.map(l => l.id === id ? {...l, status: "enrolled" } : l));
- const decline = id => { setLeads(p => p.map(l => l.id === id ? {...l, status: "declined" } : l)); setSelLead(null); setShowDetail(false); };
- const followup = id => { setLeads(p => p.map(l => l.id === id ? {...l, status: "followup" } : l)); setSelLead(null); setShowDetail(false); };
- const undoLead = id => { setLeads(p => p.map(l => l.id === id ? {...l, status: "pending" } : l)); setSelLead(null); setShowDetail(false); };
+ const updateLeadStatus = async (id, status) => {
+   setLeads(p => p.map(l => l.id === id ? {...l, status } : l));
+   await supabase.functions.invoke("assign-task", { body: { action: "update_lead", id, updates: { status } } });
+ };
+ const accept = id => updateLeadStatus(id, "accepted");
+ const markHappened = id => updateLeadStatus(id, "happened");
+ const enroll = id => updateLeadStatus(id, "enrolled");
+ const decline = id => { updateLeadStatus(id, "declined"); setSelLead(null); setShowDetail(false); };
+ const followup = id => { updateLeadStatus(id, "followup"); setSelLead(null); setShowDetail(false); };
+ const undoLead = id => { updateLeadStatus(id, "pending"); setSelLead(null); setShowDetail(false); };
 
  const [invitingLead, setInvitingLead] = useState(null);
  const inviteMenteeFromLead = async (lead) => {
