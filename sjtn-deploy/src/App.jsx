@@ -3013,17 +3013,16 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const [communityStats, setCommunityStats] = useState({ active: 0, graduates: 0, members: [], graduateList: [] });
   useEffect(() => {
     const fetchStats = () => {
-      supabase.functions.invoke("assign-task", { body: { action: "get_applications" } }).then(({ data }) => {
-        const approved = (data?.applications || []).filter(a => a.status === "approved");
-        supabase.functions.invoke("assign-task", { body: { action: "fetch_all" } }).then(({ data: menteeData }) => {
-          const allMentees = menteeData?.mentees || [];
-          const grads = allMentees.filter(m => m.graduated);
-          setCommunityStats({
-            active: approved.length + grads.length,
-            graduates: grads.length,
-            members: approved.map(a => ({ name: a.first_name, email: a.email })),
-            graduateList: grads.map(m => ({ name: m.first_name || m.name, email: m.email }))
-          });
+      supabase.functions.invoke("assign-task", { body: { action: "get_all_profiles" } }).then(({ data }) => {
+        const profiles = data?.profiles || [];
+        const communityMembers = profiles.filter(p => p.role === "community" || p.graduated);
+        const grads = profiles.filter(p => p.graduated);
+        const nonGradMembers = communityMembers.filter(p => !p.graduated);
+        setCommunityStats({
+          active: communityMembers.length,
+          graduates: grads.length,
+          members: nonGradMembers.map(p => ({ name: p.first_name || p.email.split("@")[0], email: p.email })),
+          graduateList: grads.map(p => ({ name: p.first_name || p.email.split("@")[0], email: p.email }))
         });
       });
     };
