@@ -5526,11 +5526,11 @@ const AdminDashboard = ({ onLogout }) => {
  <div style={{ background: B.blushPale, borderLeft: `3px solid ${B.blush}`, padding: "12px 14px", marginBottom: 8 }}><div style={{ fontSize: 8, fontWeight: 700, color: B.blush, letterSpacing: 1.5, marginBottom: 5 }}>CHALLENGE</div><p style={{ fontSize: 12, color: B.charcoal, margin: 0, lineHeight: 1.6, fontWeight: 300 }}>{selLead.challenge}</p></div>
  <div style={{ background: B.off, padding: "12px 14px" }}><div style={{ fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1.5, marginBottom: 5 }}>GOAL</div><p style={{ fontSize: 12, color: B.charcoal, margin: 0, lineHeight: 1.6, fontWeight: 300 }}>{selLead.goal}</p></div>
  </div>
- <div style={{ background: B.black, padding: "14px 16px", marginBottom: 16, borderLeft: `3px solid ${B.blush}` }}>
- <div style={{ fontSize: 8, fontWeight: 700, color: B.blushLight, letterSpacing: 1.5, marginBottom: 6 }}>REQUESTED TIME</div>
- <div style={{ color: B.ivory, fontSize: 13, fontWeight: 700, letterSpacing: "0.03em" }}>{selLead.slot.day}, {selLead.slot.date}</div>
- <div style={{ color: "#9a8880", fontSize: 11, fontWeight: 300 }}>{selLead.slot.time} EST · 20 min · Google Meet</div>
- {selLead.status === "accepted" && <div style={{ marginTop: 6, fontSize: 9, color: B.success, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>Done Confirmed · email sent</div>}
+ <div style={{ background: B.black, padding: "16px 18px", marginBottom: 16, borderLeft: `3px solid ${B.blush}` }}>
+ <div style={{ fontSize: 9, fontWeight: 700, color: B.blushLight, letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Scheduled For</div>
+ <div style={{ color: B.ivory, fontSize: 20, fontWeight: 900, fontFamily: FONTS.display, letterSpacing: "-0.5px", lineHeight: 1.1 }}>{selLead.slot.date}</div>
+ <div style={{ color: B.ivory, fontSize: 16, fontWeight: 700, letterSpacing: "0.02em", marginTop: 4 }}>{selLead.slot.time} EST</div>
+ <div style={{ color: B.ivory, fontSize: 10, fontWeight: 300, marginTop: 6, opacity: 0.7 }}>20 min · Google Meet</div>
  </div>
  {selLead.status === "pending" && (
  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
