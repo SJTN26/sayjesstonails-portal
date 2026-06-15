@@ -5578,41 +5578,37 @@ const AdminDashboard = ({ onLogout }) => {
  { key: "accepted", label: "Upcoming", color: B.success, pale: B.successPale, desc: "Calls scheduled — plan your day" },
  { key: "happened", label: "Needs Decision", color: "#7B5EA7", pale: "#F3EEF9", desc: "Call done — decide the outcome" },
  { key: "enrolled", label: "Enrolled", color: B.blush, pale: B.blushPale, desc: "They said yes — ready to invite" },
+ { key: "archived", label: "Archived", color: B.steel, pale: B.off, desc: "Declined or follow up later" },
  ];
 
  const BoardView = (
  <>
- {crmIsMobile && (
-   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 14 }}>
-     {boardCols.map(col => {
-       const count = mainLeads.filter(l => l.status === col.key).length;
-       const active = activeBoardTab === col.key;
-       return (
-         <button key={col.key} onClick={() => setActiveBoardTab(col.key)} style={{ background: active ? col.color : col.pale, border: "2px solid " + col.color, padding: "12px 10px", cursor: "pointer", fontFamily: FONTS.body, textAlign: "left", display: "flex", flexDirection: "column", gap: 4 }}>
-           <div style={{ fontSize: 9, fontWeight: 700, color: active ? B.white : col.color, letterSpacing: 1.5, textTransform: "uppercase" }}>{col.label}</div>
-           <div style={{ fontSize: 24, fontWeight: 900, color: active ? B.white : col.color, fontFamily: FONTS.display, lineHeight: 1 }}>{count}</div>
-         </button>
-       );
-     })}
-   </div>
- )}
- <div style={{ display: "flex", flexDirection: crmIsMobile ? "column" : "row", gap: crmIsMobile ? 12 : 2, overflowX: crmIsMobile ? "visible" : "auto", paddingBottom: 16, minHeight: crmIsMobile ? "auto" : 400 }}>
- {boardCols.filter(col => crmIsMobile ? col.key === activeBoardTab : true).map(col => {
- const colLeads = mainLeads.filter(l => l.status === col.key).sort((a, b) => {
+ <div style={{ display: "grid", gridTemplateColumns: crmIsMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 8, marginBottom: 20 }}>
+   {boardCols.map(col => {
+     const count = col.key === "archived" ? archivedLeads.length : mainLeads.filter(l => l.status === col.key).length;
+     const active = activeBoardTab === col.key;
+     return (
+       <button key={col.key} onClick={() => setActiveBoardTab(col.key)} style={{ background: active ? col.color : col.pale, border: "2px solid " + col.color, padding: "14px 12px", cursor: "pointer", fontFamily: FONTS.body, textAlign: "left", display: "flex", flexDirection: "column", gap: 4 }}>
+         <div style={{ fontSize: 10, fontWeight: 700, color: active ? B.white : col.color, letterSpacing: 1.5, textTransform: "uppercase" }}>{col.label}</div>
+         <div style={{ fontSize: 26, fontWeight: 900, color: active ? B.white : col.color, fontFamily: FONTS.display, lineHeight: 1 }}>{count}</div>
+       </button>
+     );
+   })}
+ </div>
+ <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: 16 }}>
+ {boardCols.filter(col => col.key === activeBoardTab).map(col => {
+ const sourceList = col.key === "archived" ? archivedLeads : mainLeads.filter(l => l.status === col.key);
+ const colLeads = [...sourceList].sort((a, b) => {
    const aDate = a.scheduledAt ? new Date(a.scheduledAt).getTime() : Infinity;
    const bDate = b.scheduledAt ? new Date(b.scheduledAt).getTime() : Infinity;
    return aDate - bDate;
  });
  return (
- <div key={col.key} style={{ flex: crmIsMobile ? "1 1 100%" : "0 0 260px", width: crmIsMobile ? "100%" : "auto", display: "flex", flexDirection: "column" }}>
- <div style={{ padding: "10px 14px", background: col.pale, borderTop: `3px solid ${col.color}`, marginBottom: 2 }}>
- <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
- <span style={{ fontSize: 9, fontWeight: 700, color: col.color, letterSpacing: 2, textTransform: "uppercase" }}>{col.label}</span>
- <span style={{ fontSize: 11, fontWeight: 700, color: col.color, background: col.color + "22", padding: "2px 8px" }}>{colLeads.length}</span>
+ <div key={col.key} style={{ width: "100%", display: "flex", flexDirection: "column" }}>
+ <div style={{ padding: "0 0 10px", marginBottom: 2 }}>
+ <div style={{ fontSize: 10, color: B.mid, fontWeight: 300 }}>{col.desc}</div>
  </div>
- <div style={{ fontSize: 9, color: col.color, fontWeight: 300, opacity: 0.8 }}>{col.desc}</div>
- </div>
- <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+ <div style={{ display: "grid", gridTemplateColumns: crmIsMobile ? "1fr" : "repeat(auto-fill, minmax(280px, 1fr))", gap: 10, flex: 1 }}>
  {colLeads.length === 0 && (
  <div style={{ padding: "24px 14px", textAlign: "center", color: B.silver, fontSize: 11, fontWeight: 300, border: `1px dashed ${B.cloud}` }}>None here yet</div>
  )}
@@ -5661,6 +5657,7 @@ const AdminDashboard = ({ onLogout }) => {
  <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
  </div>
  )}
+              {col.key === "archived" && (<div style={{ display: "flex", flexDirection: "column", gap: 2 }}><div style={{ fontSize: 9, color: B.mid, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{lead.status === "declined" ? "Not a Fit" : "Follow Up Later"}</div><Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back to Active</Btn></div>)}
  </div>
  ))}
  </div>
@@ -5761,7 +5758,7 @@ const AdminDashboard = ({ onLogout }) => {
  {crmView === "board" ? BoardView : ListView}
 
  {/* Archive */}
- {archivedLeads.length > 0 && (
+ {false && archivedLeads.length > 0 && (
  <div style={{ marginTop: 32 }}>
  <button onClick={() => setShowArchive(p => !p)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 12 }}>
  <span style={{ fontSize: 9, fontWeight: 700, color: B.mid, letterSpacing: 2, textTransform: "uppercase" }}>{showArchive ? "▼" : "▶"} Archive · {archivedLeads.length} {archivedLeads.length === 1 ? "lead" : "leads"}</span>
