@@ -4979,6 +4979,7 @@ const AdminDashboard = ({ onLogout }) => {
  const { isMobile: crmIsMobile } = useLayout();
  const [crmView, setCrmView] = useState("board");
  const [activeBoardTab, setActiveBoardTab] = useState("accepted");
+ const [expandedListSection, setExpandedListSection] = useState("accepted");
  const [selChat, setSelChat] = useState(null);
  const [showChatList, setShowChatList] = useState(true);
  const [contacts, setContacts] = useState([]);
@@ -5668,54 +5669,58 @@ const AdminDashboard = ({ onLogout }) => {
 
  // ── List View ────────────────────────────────────────────────────────────
  const ListView = (
- <div style={{ overflowX: "auto" }}>
- <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontFamily: FONTS.body }}>
- <thead>
- <tr style={{ borderBottom: `2px solid ${B.cloud}` }}>
- {["Name", "Tier", "Call Slot", "Found Via", "Submitted", "Stage", "Actions"].map(h => (
- <th key={h} style={{ padding: "10px 12px", textAlign: "left", fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1.5, textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
- ))}
- </tr>
- </thead>
- <tbody>
- {mainLeads.map(lead => {
- const [sc] = scMap[lead.status] || [B.mid];
- return (
- <tr key={lead.id} onClick={() => { setSelLead(lead); setShowDetail(true); }} style={{ borderBottom: `1px solid ${B.cloud}`, cursor: "pointer", background: selLead?.id === lead.id ? B.blushPale : "transparent" }}>
- <td style={{ padding: "12px 12px" }}>
- <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
- <div style={{ width: 26, height: 26, background: B.black, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: B.white, flexShrink: 0 }}>{lead.name.split(" ").map(w => w[0]).join("")}</div>
- <div>
- <div style={{ fontWeight: 700, color: B.black, letterSpacing: "0.02em" }}>{lead.name}</div>
- <div style={{ fontSize: 9, color: B.mid, fontWeight: 300 }}>{lead.ig}</div>
- </div>
- </div>
- </td>
- <td style={{ padding: "12px 12px", color: B.charcoal, fontWeight: 400, whiteSpace: "nowrap" }}>{lead.tier}</td>
- <td style={{ padding: "12px 12px", color: B.charcoal, whiteSpace: "nowrap" }}>{lead.slot.date} · {lead.slot.time}</td>
- <td style={{ padding: "12px 12px", color: B.mid, fontWeight: 300 }}>{lead.how}</td>
- <td style={{ padding: "12px 12px", color: B.mid, fontWeight: 300, whiteSpace: "nowrap" }}>{lead.submitted}</td>
- <td style={{ padding: "12px 12px" }}>
- <span style={{ fontSize: 8, fontWeight: 700, color: sc, letterSpacing: 1.5, textTransform: "uppercase", background: sc + "18", padding: "3px 8px" }}>{stageLabel[lead.status] || lead.status}</span>
- </td>
- <td style={{ padding: "12px 12px" }} onClick={e => e.stopPropagation()}>
- <div style={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
- {lead.status === "pending" && <><Btn size="sm" variant="blush" onClick={() => accept(lead.id)}>Confirm</Btn><Btn size="sm" variant="ghost" onClick={() => followup(lead.id)}>Later</Btn><Btn size="sm" variant="ghost" onClick={() => decline(lead.id)}>Not a Fit</Btn></>}
- {lead.status === "accepted" && <><Btn size="sm" variant="blush" onClick={() => markHappened(lead.id)}>Call Done</Btn><Btn size="sm" variant="ghost" onClick={() => undoLead(lead.id)}>Move Back</Btn></>}
- {lead.status === "happened" && <><Btn size="sm" variant="blush" onClick={() => enroll(lead.id)}>Enroll</Btn><Btn size="sm" variant="ghost" onClick={() => followup(lead.id)}>Later</Btn><Btn size="sm" variant="ghost" onClick={() => decline(lead.id)}>Not a Fit</Btn></>}
- {lead.status === "enrolled" && <Btn size="sm" variant="blush" onClick={() => {}}>Invite</Btn>}
- </div>
- </td>
- </tr>
- );
- })}
- </tbody>
- </table>
- {mainLeads.length === 0 && (
- <div style={{ padding: "40px", textAlign: "center", color: B.silver, fontSize: 13, fontWeight: 300 }}>Your board is clear — you are all caught up.</div>
- )}
- </div>
- );
+  <div>
+    {/* Status summary chips at top — visible on both desktop and mobile */}
+    <div style={{ display: "grid", gridTemplateColumns: crmIsMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
+      {boardCols.map(col => {
+        const count = col.key === "archived" ? archivedLeads.length : mainLeads.filter(l => l.status === col.key).length;
+        const isExpanded = expandedListSection === col.key;
+        return (
+          <button key={col.key} onClick={() => setExpandedListSection(isExpanded ? null : col.key)} style={{ background: isExpanded ? col.color : col.pale, border: "2px solid " + col.color, padding: "12px 14px", cursor: "pointer", fontFamily: FONTS.body, textAlign: "left", display: "flex", flexDirection: "column", gap: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: isExpanded ? B.white : col.color, letterSpacing: 1.5, textTransform: "uppercase" }}>{col.label}</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: isExpanded ? B.white : col.color, fontFamily: FONTS.display, lineHeight: 1 }}>{count}</div>
+          </button>
+        );
+      })}
+    </div>
+
+    {/* Collapsible sections */}
+    {boardCols.map(col => {
+      const isExpanded = expandedListSection === col.key;
+      if (!isExpanded) return null;
+      const sourceList = col.key === "archived" ? archivedLeads : mainLeads.filter(l => l.status === col.key);
+      const colLeads = [...sourceList].sort((a, b) => {
+        const aDate = a.scheduledAt ? new Date(a.scheduledAt).getTime() : Infinity;
+        const bDate = b.scheduledAt ? new Date(b.scheduledAt).getTime() : Infinity;
+        return aDate - bDate;
+      });
+      return (
+        <div key={col.key} style={{ marginBottom: 12 }}>
+          {colLeads.length === 0 ? (
+            <div style={{ padding: "32px 20px", textAlign: "center", color: B.silver, fontSize: 12, fontWeight: 300, border: "1px dashed " + B.cloud }}>No leads here</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {colLeads.map(lead => (
+                <div key={lead.id} onClick={() => { setSelLead(lead); setShowDetail(true); }} style={{ background: B.white, border: "1px solid " + B.cloud, borderLeft: "3px solid " + col.color, padding: "14px 16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: B.black, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.name}</div>
+                    <div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 2 }}>{lead.slot.date} · {lead.slot.time}</div>
+                    <div style={{ fontSize: 10, color: B.mid, fontWeight: 300, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.tier}</div>
+                  </div>
+                  <Ic n="back" size={14} color={B.mid} style={{ transform: "rotate(180deg)", flexShrink: 0 }} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    })}
+
+    {!expandedListSection && (
+      <div style={{ padding: "40px 20px", textAlign: "center", color: B.mid, fontSize: 13, fontWeight: 300 }}>Tap a status above to see those leads</div>
+    )}
+  </div>
+);
 
  const LeadsView = (
  <div style={{ display: "flex", height: useSidebar ? "calc(100vh - 56px)" : "auto", overflow: "hidden" }}>
