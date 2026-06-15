@@ -4924,11 +4924,14 @@ const AdminDashboard = ({ onLogout }) => {
             name: l.name || "Unknown",
             firstName: (l.name || "").split(" ")[0] || "Unknown",
             email: l.email || "",
+            ig: l.email || "",
             scheduledAt: l.scheduled_at,
-            date: l.scheduled_at ? new Date(l.scheduled_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }) : "",
-            time: l.scheduled_at ? new Date(l.scheduled_at).toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" }) : "",
+            slot: {
+              date: l.scheduled_at ? new Date(l.scheduled_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }) : "TBD",
+              time: l.scheduled_at ? new Date(l.scheduled_at).toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" }) : "TBD"
+            },
             challenge: l.challenge || "",
-            goal: l.goal || "",
+            goal: l.goal || "No goal specified",
             licensed: l.licensed || "",
             tier: l.interested_in || "Just exploring",
             status: l.status || "pending",
@@ -4936,6 +4939,7 @@ const AdminDashboard = ({ onLogout }) => {
             outcome: l.outcome || "",
             source: l.source || "calendly",
             avatar: ((l.name || "").split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2)) || "?",
+            invited: false,
           })));
         }
         setLeadsLoading(false);
