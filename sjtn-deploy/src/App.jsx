@@ -5568,11 +5568,11 @@ const AdminDashboard = ({ onLogout }) => {
  ];
 
  const BoardView = (
- <div style={{ display: "flex", gap: 2, overflowX: "auto", paddingBottom: 16, minHeight: 400 }}>
+ <div style={{ display: "flex", flexDirection: crmIsMobile ? "column" : "row", gap: crmIsMobile ? 12 : 2, overflowX: crmIsMobile ? "visible" : "auto", paddingBottom: 16, minHeight: crmIsMobile ? "auto" : 400 }}>
  {boardCols.map(col => {
  const colLeads = mainLeads.filter(l => l.status === col.key);
  return (
- <div key={col.key} style={{ flex: "0 0 260px", display: "flex", flexDirection: "column" }}>
+ <div key={col.key} style={{ flex: crmIsMobile ? "1 1 100%" : "0 0 260px", width: crmIsMobile ? "100%" : "auto", display: "flex", flexDirection: "column" }}>
  <div style={{ padding: "10px 14px", background: col.pale, borderTop: `3px solid ${col.color}`, marginBottom: 2 }}>
  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
  <span style={{ fontSize: 9, fontWeight: 700, color: col.color, letterSpacing: 2, textTransform: "uppercase" }}>{col.label}</span>
