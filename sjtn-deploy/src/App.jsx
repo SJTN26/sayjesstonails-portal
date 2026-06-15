@@ -2998,6 +2998,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  const [postCat, setPostCat] = useState("win");
  const [posts, setPosts] = useState([]);
   const [likedPosts, setLikedPosts] = useState([]);
+  const [hoveredStat, setHoveredStat] = useState(null);
 
 
   useEffect(() => { try { localStorage.setItem("sjtn_liked_" + user.email, JSON.stringify(likedPosts)); } catch {} }, [likedPosts.length]);
@@ -3009,6 +3010,27 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  const [showGradWelcome, setShowGradWelcome] = useState(false);
  const gradWelcomeKey = `sjtn_grad_welcome_${user.email}`;
  const [jessVoice, setJessVoice] = useState(null);
+  const [communityStats, setCommunityStats] = useState({ active: 0, graduates: 0, members: [], graduateList: [] });
+  useEffect(() => {
+    const fetchStats = () => {
+      supabase.functions.invoke("assign-task", { body: { action: "get_applications" } }).then(({ data }) => {
+        const approved = (data?.applications || []).filter(a => a.status === "approved");
+        supabase.functions.invoke("assign-task", { body: { action: "fetch_all" } }).then(({ data: menteeData }) => {
+          const allMentees = menteeData?.mentees || [];
+          const grads = allMentees.filter(m => m.graduated);
+          setCommunityStats({
+            active: approved.length + grads.length,
+            graduates: grads.length,
+            members: approved.map(a => ({ name: a.first_name, email: a.email })),
+            graduateList: grads.map(m => ({ name: m.first_name || m.name, email: m.email }))
+          });
+        });
+      });
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 60000);
+    return () => clearInterval(interval);
+  }, []);
  useEffect(() => {
  supabase.functions.invoke('jess-voice', { body: { action: 'get' } })
 .then(({ data }) => { if (data?.voice) setJessVoice({ text: data.voice.title, audioUrl: data.voice.audio_url }); });
@@ -3133,6 +3155,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
 
  // Trial detection — graduates and paid members are never on trial
  const isTrial = !user.paid && !user.graduated && user.tierKey !== "graduate" && user.tierKey !== "community_paid";
+  const isExpired = isTrial && trialEndDate && new Date(trialEndDate) < new Date();
  const trialDaysLeft = isTrial && trialEndDate
  ? Math.max(0, Math.ceil((new Date(trialEndDate) - Date.now()) / (1000 * 60 * 60 * 24)))
  : isTrial ? 7 : 0;
@@ -3207,9 +3230,63 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const refCode = (user.firstName||"").toLowerCase().replace(/ +/g,"") + (user.avatar||"").toLowerCase();
   const refLink = "https://portal.sayjesstonails.com/?ref=" + (user.firstName||"").toLowerCase().replace(/ +/g,"") + (user.avatar||"").toLowerCase();
  const views = {
-    feed: (
+    feed: isExpired ? (
+      <Pg title="Community Feed" sub="Trial Ended">
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:500, padding:"48px 24px", textAlign:"center" }}>
+          <div style={{ width:72, height:72, background:B.blushPale, border:"2px solid " + B.blush, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:28 }}>
+            <Ic n="lock" size={32} color={B.blush} />
+          </div>
+          <h3 style={{ fontFamily:FONTS.display, fontWeight:900, fontSize:36, textTransform:"uppercase", color:B.black, margin:"0 0 16px", letterSpacing:"-0.5px", lineHeight:0.95 }}>Your Trial<br/>Has Ended</h3>
+          <p style={{ color:B.mid, fontSize:14, maxWidth:420, lineHeight:1.8, margin:"0 0 36px", fontWeight:300 }}>
+            We loved having you try the Inner Circle. Pick the option that fits where youre at and lets keep going.
+          </p>
+          <div style={{ display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:380 }}>
+            <button onClick={() => window.open("https://buy.stripe.com/6oUfZj5H86GPfoieo67wA06", "_blank")} style={{ background:B.blush, color:B.white, padding:"18px 24px", border:"none", cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, fontSize:12, letterSpacing:2, textTransform:"uppercase", textAlign:"left", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span>Join Inner Circle<br/><span style={{ fontSize:9, fontWeight:300, letterSpacing:1, textTransform:"none", opacity:0.85 }}>Full community access</span></span>
+              <span style={{ fontFamily:FONTS.display, fontSize:22, fontWeight:900 }}>$27<span style={{ fontSize:10, fontWeight:300 }}>/mo</span></span>
+            </button>
+            <button onClick={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} style={{ background:B.black, color:B.ivory, padding:"18px 24px", border:"none", cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, fontSize:12, letterSpacing:2, textTransform:"uppercase", textAlign:"left" }}>
+              Book a Discovery Call<br/><span style={{ fontSize:9, fontWeight:300, letterSpacing:1, textTransform:"none", opacity:0.7 }}>Free 20 min with Jess</span>
+            </button>
+            <button onClick={() => setView("upgrade")} style={{ background:"transparent", color:B.black, padding:"16px 24px", border:"1px solid " + B.cloud, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, fontSize:11, letterSpacing:2, textTransform:"uppercase" }}>
+              Explore Mentorship Options
+            </button>
+          </div>
+        </div>
+      </Pg>
+    ) : (
       <Pg title="Community Feed" sub="The Inner Circle">
-        <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 20px", fontWeight: 300 }}>Real nail techs. Real growth. All in one place.</p>
+        <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 16px", fontWeight: 300 }}>Real nail techs. Real growth. All in one place.</p>
+        <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+          <div style={{ position: "relative", flex: "1 1 140px" }}>
+            <div onClick={() => { if (!isTrial && communityStats.members.length > 0) setHoveredStat(hoveredStat === "members" ? null : "members"); }} style={{ background: B.black, padding: "14px 16px", borderLeft: "3px solid " + B.blush, cursor: !isTrial && communityStats.members.length > 0 ? "pointer" : "default" }}>
+              <div style={{ fontSize: 22, fontWeight: 900, color: B.ivory, fontFamily: FONTS.display, letterSpacing: "-0.5px" }}>{communityStats.active}</div>
+              <div style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Inner Circle</div>
+            </div>
+            {hoveredStat === "members" && !isTrial && communityStats.members.length > 0 && (
+              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: B.black, border: "1px solid " + B.charcoal, padding: "12px 16px", zIndex: 50, maxHeight: 240, overflowY: "auto" }}>
+                <div style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Members</div>
+                {communityStats.members.map((m, i) => (
+                  <div key={i} style={{ fontSize: 12, color: B.ivory, fontWeight: 300, padding: "4px 0" }}>{m.name}</div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div style={{ position: "relative", flex: "1 1 140px" }}>
+            <div onClick={() => { if (!isTrial && communityStats.graduateList.length > 0) setHoveredStat(hoveredStat === "graduates" ? null : "graduates"); }} style={{ background: B.black, padding: "14px 16px", borderLeft: "3px solid #2D7D4E", cursor: !isTrial && communityStats.graduateList.length > 0 ? "pointer" : "default" }}>
+              <div style={{ fontSize: 22, fontWeight: 900, color: B.ivory, fontFamily: FONTS.display, letterSpacing: "-0.5px" }}>{communityStats.graduates}</div>
+              <div style={{ fontSize: 9, color: "#7DBA8E", fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Graduates</div>
+            </div>
+            {hoveredStat === "graduates" && !isTrial && communityStats.graduateList.length > 0 && (
+              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: B.black, border: "1px solid " + B.charcoal, padding: "12px 16px", zIndex: 50, maxHeight: 240, overflowY: "auto" }}>
+                <div style={{ fontSize: 9, color: "#7DBA8E", fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Graduates</div>
+                {communityStats.graduateList.map((m, i) => (
+                  <div key={i} style={{ fontSize: 12, color: B.ivory, fontWeight: 300, padding: "4px 0" }}>{m.name}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
         <div style={{ background: B.white, border: "1px solid " + B.cloud, padding: "18px 20px", marginBottom: 16, borderTop: "3px solid " + B.blush }}>
           <div style={{ display: "flex", gap: 2, marginBottom: 12, flexWrap: "nowrap", overflowX: "auto" }}>
             {["win","tip","question","resource","intro"].map(k => (
@@ -3341,7 +3418,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  </Pg>
  ),
 
-    messages: (
+    messages: isExpired ? <LockedGate section="Messages" /> : (
       <Pg title="Messages" sub="Direct Line to Jess">
         <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 200px)", minHeight:400 }}>
           <div style={{ flex:1, overflowY:"auto", padding:"8px 0", display:"flex", flexDirection:"column", gap:8 }}>
@@ -3377,7 +3454,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
       </Pg>
     ),
 
-    refer: (
+    refer: isExpired ? <LockedGate section="Refer" /> : (
  <Pg title="Refer a Friend" sub="Grow the Inner Circle">
  <p style={{ color:B.mid, fontSize:13, margin:"-12px 0 24px", fontWeight:300 }}>Know a nail tech who needs this community? Send them your link and help them find their people.</p>
  <div style={{ background:B.black, borderLeft:"3px solid " + B.blush, padding:"22px 24px", marginBottom:16 }}>
@@ -3897,7 +3974,7 @@ const ApplicationsView = () => {
  const app = applications.find(a => a.id === id);
  if (!app) return;
  const trialStart = new Date();
- const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+ const trialEnd = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000);
  // Update application status
  await supabase.functions.invoke('assign-task', { body: { action: 'update_application', id,
  status: "approved",
@@ -4680,7 +4757,12 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  </div>
  </div>
  <div style={{ display:"flex", gap:6, alignItems:"center" }}>
- <span style={{ fontSize:8, fontWeight:700, color:B.steel, border:`1px solid ${B.cloud}`, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>{m.paid || m.graduated ? "Member" : "Trial"}</span>
+ <span style={{ fontSize:8, fontWeight:700, color: m.expired ? B.white : B.steel, background: m.expired ? "#C62828" : "transparent", border:`1px solid ${m.expired ? "#C62828" : B.cloud}`, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>{m.expired ? "Expired" : m.paid || m.graduated ? "Member" : "Trial"}</span>
+ {!m.paid && !m.graduated && m.daysLeft !== null && !m.expired && (
+   <span style={{ fontSize:8, fontWeight:700, color: m.daysLeft <= 2 ? "#C62828" : m.daysLeft <= 4 ? "#F57C00" : B.steel, border:`1px solid ${m.daysLeft <= 2 ? "#C62828" : m.daysLeft <= 4 ? "#F57C00" : B.cloud}`, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>
+     {m.daysLeft === 0 ? "Ends today" : m.daysLeft === 1 ? "1 day left" : m.daysLeft + " days left"}
+   </span>
+ )}
  {m.graduated && <span style={{ fontSize:7, background:"#2D7D4E", color:B.white, padding:"2px 8px", fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Grad</span>}
  <button style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
  </div>
@@ -4929,8 +5011,23 @@ const AdminDashboard = ({ onLogout }) => {
  graduated: m.graduated || false,
  paid: m.paid || false,
  joinDate: m.start_date || "",
+ trialEnd: m.trial_end || null,
+ daysLeft: m.trial_end ? Math.max(0, Math.ceil((new Date(m.trial_end) - Date.now()) / (1000 * 60 * 60 * 24))) : null,
+ expired: m.trial_end && !m.paid && !m.graduated && new Date(m.trial_end) < new Date(),
  }));
- setCommunityList(community);
+ // Also pull trial dates from community_applications
+ supabase.functions.invoke("assign-task", { body: { action: "get_applications" } }).then(({ data: appData }) => {
+   const apps = appData?.applications || [];
+   const merged = community.map(m => {
+     const app = apps.find(a => a.email?.toLowerCase() === m.email?.toLowerCase());
+     if (app && app.trial_end && !m.trialEnd) {
+       const daysLeft = Math.max(0, Math.ceil((new Date(app.trial_end) - Date.now()) / (1000 * 60 * 60 * 24)));
+       return { ...m, trialEnd: app.trial_end, daysLeft, expired: !m.paid && !m.graduated && new Date(app.trial_end) < new Date() };
+     }
+     return m;
+   });
+   setCommunityList(merged);
+ });
  }
  });
  }, []);
@@ -6955,6 +7052,8 @@ export default function App() {
  sessionStorage.setItem("sjtn_user", JSON.stringify(userWithEmail));
  const dest = userData.role === "admin" ? "admin" : userData.role === "community" ? "community" : "portal";
  setScreen(dest);
+ // Trigger trial expiry check (fires for any user who logs in, processes expired trials in background)
+ try { supabase.functions.invoke("check-trial-expiry").catch(() => {}); } catch {}
  }, []);
 
  const handleLogout = useCallback(() => {
