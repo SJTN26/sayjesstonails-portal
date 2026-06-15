@@ -4919,7 +4919,18 @@ const AdminDashboard = ({ onLogout }) => {
     const fetchLeads = () => {
       supabase.functions.invoke("assign-task", { body: { action: "get_leads" } }).then(({ data }) => {
         if (data?.leads) {
-          setLeads(data.leads.map(l => ({
+          const sorted = [...data.leads].sort((a, b) => {
+            const aDate = a.scheduled_at ? new Date(a.scheduled_at).getTime() : Infinity;
+            const bDate = b.scheduled_at ? new Date(b.scheduled_at).getTime() : Infinity;
+            const now = Date.now();
+            const aUpcoming = aDate >= now;
+            const bUpcoming = bDate >= now;
+            if (aUpcoming && !bUpcoming) return -1;
+            if (!aUpcoming && bUpcoming) return 1;
+            if (aUpcoming && bUpcoming) return aDate - bDate; // soonest upcoming first
+            return bDate - aDate; // past: most recent first
+          });
+          setLeads(sorted.map(l => ({
             id: l.id,
             name: l.name || "Unknown",
             firstName: (l.name || "").split(" ")[0] || "Unknown",
@@ -5618,6 +5629,7 @@ const AdminDashboard = ({ onLogout }) => {
  <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
  </div>
  )}
+          </div>
  </div>
  ))}
  </div>
