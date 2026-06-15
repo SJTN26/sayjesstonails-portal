@@ -4930,28 +4930,41 @@ const AdminDashboard = ({ onLogout }) => {
             if (aUpcoming && bUpcoming) return aDate - bDate; // soonest upcoming first
             return bDate - aDate; // past: most recent first
           });
-          setLeads(sorted.map(l => ({
-            id: l.id,
-            name: l.name || "Unknown",
-            firstName: (l.name || "").split(" ")[0] || "Unknown",
-            email: l.email || "",
-            ig: l.email || "",
-            scheduledAt: l.scheduled_at,
-            slot: {
-              date: l.scheduled_at ? new Date(l.scheduled_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }) : "TBD",
-              time: l.scheduled_at ? new Date(l.scheduled_at).toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" }) : "TBD"
-            },
-            challenge: l.challenge || "",
-            goal: l.goal || "No goal specified",
-            licensed: l.licensed || "",
-            tier: l.interested_in || "Just exploring",
-            status: l.status || "pending",
-            notes: l.notes || "",
-            outcome: l.outcome || "",
-            source: l.source || "calendly",
-            avatar: ((l.name || "").split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2)) || "?",
-            invited: false,
-          })));
+          setLeads(sorted.map(l => {
+            // Auto-derive status based on scheduled time
+            const isPastCall = l.scheduled_at && new Date(l.scheduled_at).getTime() < Date.now();
+            let derivedStatus = l.status || "pending";
+            // If still in "pending" or "accepted" but call time has passed, auto-promote to "happened"
+            if ((derivedStatus === "pending" || derivedStatus === "accepted") && isPastCall) {
+              derivedStatus = "happened";
+              // Persist this auto-promotion to DB in background
+              supabase.functions.invoke("assign-task", { body: { action: "update_lead", id: l.id, updates: { status: "happened" } } });
+            }
+            // Treat new bookings as "accepted" (confirmed) instead of "pending"
+            if (derivedStatus === "pending") derivedStatus = "accepted";
+            return {
+              id: l.id,
+              name: l.name || "Unknown",
+              firstName: (l.name || "").split(" ")[0] || "Unknown",
+              email: l.email || "",
+              ig: l.email || "",
+              scheduledAt: l.scheduled_at,
+              slot: {
+                date: l.scheduled_at ? new Date(l.scheduled_at).toLocaleDateString("en-US", { month:"short", day:"numeric" }) : "TBD",
+                time: l.scheduled_at ? new Date(l.scheduled_at).toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" }) : "TBD"
+              },
+              challenge: l.challenge || "",
+              goal: l.goal || "No goal specified",
+              licensed: l.licensed || "",
+              tier: l.interested_in || "Just exploring",
+              status: derivedStatus,
+              notes: l.notes || "",
+              outcome: l.outcome || "",
+              source: l.source || "calendly",
+              avatar: ((l.name || "").split(" ").map(p => p[0]).join("").toUpperCase().slice(0, 2)) || "?",
+              invited: false,
+            };
+          }));
         }
         setLeadsLoading(false);
       });
@@ -4965,6 +4978,7 @@ const AdminDashboard = ({ onLogout }) => {
  const [leadFilter, setLeadFilter] = useState("all");
  const { isMobile: crmIsMobile } = useLayout();
  const [crmView, setCrmView] = useState("board");
+ const [activeBoardTab, setActiveBoardTab] = useState("accepted");
  const [selChat, setSelChat] = useState(null);
  const [showChatList, setShowChatList] = useState(true);
  const [contacts, setContacts] = useState([]);
@@ -4974,8 +4988,8 @@ const AdminDashboard = ({ onLogout }) => {
  const chatImageRef = useRef(null);
  const chatEnd = useRef(null);
 
- const pending = leads.filter(l => l.status === "pending");
- const mainLeads = leads.filter(l => ["pending","accepted","happened","enrolled"].includes(l.status));
+ const pending = leads.filter(l => l.status === "happened");
+ const mainLeads = leads.filter(l => ["accepted","happened","enrolled"].includes(l.status));
  const archivedLeads = leads.filter(l => l.status === "declined" || l.status === "followup");
  const filtered = leadFilter === "all" ? mainLeads : mainLeads.filter(l => l.status === leadFilter);
  const [showArchive, setShowArchive] = useState(false);
@@ -5561,16 +5575,34 @@ const AdminDashboard = ({ onLogout }) => {
 
  // ── Board View — 4 active columns ───────────────────────────────────────
  const boardCols = [
- { key: "pending", label: "Waiting on Me", color: B.amber, pale: B.amberPale, desc: "Booked — awaiting confirmation" },
- { key: "accepted", label: "Call Confirmed", color: B.success, pale: B.successPale, desc: "Scheduled — call hasn't happened yet" },
- { key: "happened", label: "Call Happened", color: "#7B5EA7", pale: "#F3EEF9", desc: "Call done — decide the outcome" },
+ { key: "accepted", label: "Upcoming", color: B.success, pale: B.successPale, desc: "Calls scheduled — plan your day" },
+ { key: "happened", label: "Needs Decision", color: "#7B5EA7", pale: "#F3EEF9", desc: "Call done — decide the outcome" },
  { key: "enrolled", label: "Enrolled", color: B.blush, pale: B.blushPale, desc: "They said yes — ready to invite" },
  ];
 
  const BoardView = (
+ <>
+ {crmIsMobile && (
+   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 14 }}>
+     {boardCols.map(col => {
+       const count = mainLeads.filter(l => l.status === col.key).length;
+       const active = activeBoardTab === col.key;
+       return (
+         <button key={col.key} onClick={() => setActiveBoardTab(col.key)} style={{ background: active ? col.color : col.pale, border: "2px solid " + col.color, padding: "12px 10px", cursor: "pointer", fontFamily: FONTS.body, textAlign: "left", display: "flex", flexDirection: "column", gap: 4 }}>
+           <div style={{ fontSize: 9, fontWeight: 700, color: active ? B.white : col.color, letterSpacing: 1.5, textTransform: "uppercase" }}>{col.label}</div>
+           <div style={{ fontSize: 24, fontWeight: 900, color: active ? B.white : col.color, fontFamily: FONTS.display, lineHeight: 1 }}>{count}</div>
+         </button>
+       );
+     })}
+   </div>
+ )}
  <div style={{ display: "flex", flexDirection: crmIsMobile ? "column" : "row", gap: crmIsMobile ? 12 : 2, overflowX: crmIsMobile ? "visible" : "auto", paddingBottom: 16, minHeight: crmIsMobile ? "auto" : 400 }}>
- {boardCols.map(col => {
- const colLeads = mainLeads.filter(l => l.status === col.key);
+ {boardCols.filter(col => crmIsMobile ? col.key === activeBoardTab : true).map(col => {
+ const colLeads = mainLeads.filter(l => l.status === col.key).sort((a, b) => {
+   const aDate = a.scheduledAt ? new Date(a.scheduledAt).getTime() : Infinity;
+   const bDate = b.scheduledAt ? new Date(b.scheduledAt).getTime() : Infinity;
+   return aDate - bDate;
+ });
  return (
  <div key={col.key} style={{ flex: crmIsMobile ? "1 1 100%" : "0 0 260px", width: crmIsMobile ? "100%" : "auto", display: "flex", flexDirection: "column" }}>
  <div style={{ padding: "10px 14px", background: col.pale, borderTop: `3px solid ${col.color}`, marginBottom: 2 }}>
@@ -5636,6 +5668,7 @@ const AdminDashboard = ({ onLogout }) => {
  );
  })}
  </div>
+ </>
  );
 
  // ── List View ────────────────────────────────────────────────────────────
