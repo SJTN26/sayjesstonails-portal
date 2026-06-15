@@ -5732,27 +5732,7 @@ const AdminDashboard = ({ onLogout }) => {
  </div>
  </div>
 
- {/* Stats bar */}
- <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 2, marginBottom: 20 }}>
- {[
- { label: "Waiting on Me", value: leads.filter(l => l.status === "pending").length, color: B.amber },
- { label: "Call Confirmed", value: leads.filter(l => l.status === "accepted").length, color: B.success },
- { label: "Call Happened", value: leads.filter(l => l.status === "happened").length, color: "#7B5EA7" },
- { label: "Enrolled", value: leads.filter(l => l.status === "enrolled").length, color: B.blush },
- ].map(s => (
- <div key={s.label} style={{ padding: "12px 16px", background: B.white, border: `1px solid ${B.cloud}`, borderTop: `3px solid ${s.color}` }}>
- <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: s.color }}>{s.value}</div>
- <div style={{ fontSize: 8, fontWeight: 700, color: B.mid, letterSpacing: 1.5, textTransform: "uppercase", lineHeight: 1.4 }}>{s.label}</div>
- </div>
- ))}
- </div>
 
- {/* Main view */}
- {crmIsMobile && crmView === "board" ? (
- <div style={{ padding:"8px 0 12px", fontSize:10, color:B.mid, fontWeight:300 }}>
- 💡 Tip: List view is easier on mobile — try switching above.
- </div>
- ) : null}
  {crmView === "board" ? BoardView : ListView}
 
  {/* Archive */}
