@@ -5641,22 +5641,20 @@ const AdminDashboard = ({ onLogout }) => {
  <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
  </div>
  )}
- {col.key === "happened" && (
- <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
- <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); enroll(lead.id); }}>They Said Yes — Enroll</Btn>
- <div style={{ display: "flex", gap: 2 }}>
- <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); followup(lead.id); }}>Follow Up Later</Btn>
- <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); decline(lead.id); }}>Not a Fit</Btn>
- </div>
- <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
- </div>
- )}
- {col.key === "enrolled" && (
- <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
- <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); inviteMenteeFromLead(lead); }} disabled={!!lead.invited || invitingLead === lead.id}>{invitingLead === lead.id ? "Sending…" : lead.invited ? "Invited" : "Invite as Mentee"}</Btn>
- <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back</Btn>
- </div>
- )}
+              {col.key === "happened" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                  <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); enroll(lead.id); }}>They Said Yes — Enroll</Btn>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                    <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); followup(lead.id); }}>Follow Up Later</Btn>
+                    <Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); decline(lead.id); }}>Not a Fit</Btn>
+                  </div>
+                </div>
+              )}
+              {col.key === "enrolled" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                  <Btn size="sm" variant="blush" onClick={ev => { ev.stopPropagation(); inviteMenteeFromLead(lead); }} disabled={!!lead.invited || invitingLead === lead.id}>{invitingLead === lead.id ? "Sending…" : lead.invited ? "Invited" : "Invite as Mentee"}</Btn>
+                </div>
+              )}
               {col.key === "archived" && (<div style={{ display: "flex", flexDirection: "column", gap: 2 }}><div style={{ fontSize: 9, color: B.mid, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{lead.status === "declined" ? "Not a Fit" : "Follow Up Later"}</div><Btn size="sm" variant="ghost" onClick={ev => { ev.stopPropagation(); undoLead(lead.id); }}>Move Back to Active</Btn></div>)}
  </div>
  ))}
