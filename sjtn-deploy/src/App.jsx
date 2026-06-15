@@ -3010,17 +3010,17 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
  const [showGradWelcome, setShowGradWelcome] = useState(false);
  const gradWelcomeKey = `sjtn_grad_welcome_${user.email}`;
  const [jessVoice, setJessVoice] = useState(null);
-  const [communityStats, setCommunityStats] = useState({ active: 0, graduates: 0, members: [], graduateList: [] });
+  const [communityStats, setCommunityStats] = useState({ community: 0, graduates: 0, total: 0, members: [], graduateList: [] });
   useEffect(() => {
     const fetchStats = () => {
       supabase.functions.invoke("assign-task", { body: { action: "get_all_profiles" } }).then(({ data }) => {
         const profiles = data?.profiles || [];
-        const communityMembers = profiles.filter(p => p.role === "community" || p.graduated);
         const grads = profiles.filter(p => p.graduated);
-        const nonGradMembers = communityMembers.filter(p => !p.graduated);
+        const nonGradMembers = profiles.filter(p => p.role === "community" && !p.graduated);
         setCommunityStats({
-          active: communityMembers.length,
+          community: nonGradMembers.length,
           graduates: grads.length,
+          total: nonGradMembers.length + grads.length,
           members: nonGradMembers.map(p => ({ name: p.first_name || p.email.split("@")[0], email: p.email })),
           graduateList: grads.map(p => ({ name: p.first_name || p.email.split("@")[0], email: p.email }))
         });
@@ -3257,10 +3257,10 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
       <Pg title="Community Feed" sub="The Inner Circle">
         <p style={{ color: B.mid, fontSize: 13, margin: "-12px 0 16px", fontWeight: 300 }}>Real nail techs. Real growth. All in one place.</p>
         <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: "1 1 140px" }}>
+          <div style={{ position: "relative", flex: "1 1 100px" }}>
             <div onClick={() => { if (!isTrial && communityStats.members.length > 0) setHoveredStat(hoveredStat === "members" ? null : "members"); }} style={{ background: B.black, padding: "14px 16px", borderLeft: "3px solid " + B.blush, cursor: !isTrial && communityStats.members.length > 0 ? "pointer" : "default" }}>
-              <div style={{ fontSize: 22, fontWeight: 900, color: B.ivory, fontFamily: FONTS.display, letterSpacing: "-0.5px" }}>{communityStats.active}</div>
-              <div style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Inner Circle</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: B.ivory, fontFamily: FONTS.display, letterSpacing: "-0.5px" }}>{communityStats.community}</div>
+              <div style={{ fontSize: 9, color: B.blushLight, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Community</div>
             </div>
             {hoveredStat === "members" && !isTrial && communityStats.members.length > 0 && (
               <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: B.black, border: "1px solid " + B.charcoal, padding: "12px 16px", zIndex: 50, maxHeight: 240, overflowY: "auto" }}>
@@ -3271,7 +3271,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
               </div>
             )}
           </div>
-          <div style={{ position: "relative", flex: "1 1 140px" }}>
+          <div style={{ position: "relative", flex: "1 1 100px" }}>
             <div onClick={() => { if (!isTrial && communityStats.graduateList.length > 0) setHoveredStat(hoveredStat === "graduates" ? null : "graduates"); }} style={{ background: B.black, padding: "14px 16px", borderLeft: "3px solid #2D7D4E", cursor: !isTrial && communityStats.graduateList.length > 0 ? "pointer" : "default" }}>
               <div style={{ fontSize: 22, fontWeight: 900, color: B.ivory, fontFamily: FONTS.display, letterSpacing: "-0.5px" }}>{communityStats.graduates}</div>
               <div style={{ fontSize: 9, color: "#7DBA8E", fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Graduates</div>
@@ -3284,6 +3284,12 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
                 ))}
               </div>
             )}
+          </div>
+          <div style={{ flex: "1 1 100px" }}>
+            <div style={{ background: B.black, padding: "14px 16px", borderLeft: "3px solid " + B.ivory }}>
+              <div style={{ fontSize: 22, fontWeight: 900, color: B.ivory, fontFamily: FONTS.display, letterSpacing: "-0.5px" }}>{communityStats.total}</div>
+              <div style={{ fontSize: 9, color: B.ivory, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Total</div>
+            </div>
           </div>
         </div>
         <div style={{ background: B.white, border: "1px solid " + B.cloud, padding: "18px 20px", marginBottom: 16, borderTop: "3px solid " + B.blush }}>
