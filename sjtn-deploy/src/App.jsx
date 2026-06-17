@@ -3013,15 +3013,27 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
   const [communityStats, setCommunityStats] = useState({ community: 0, graduates: 0, total: 0, members: [], graduateList: [] });
   useEffect(() => {
     const fetchStats = () => {
-      supabase.functions.invoke("assign-task", { body: { action: "get_all_profiles" } }).then(({ data }) => {
-        const profiles = data?.profiles || [];
+      Promise.all([
+        supabase.functions.invoke("assign-task", { body: { action: "get_all_profiles" } }),
+        supabase.functions.invoke("assign-task", { body: { action: "get_applications" } })
+      ]).then(([{ data: profileData }, { data: appData }]) => {
+        const profiles = profileData?.profiles || [];
+        const apps = appData?.applications || [];
         const grads = profiles.filter(p => p.graduated);
-        const nonGradMembers = profiles.filter(p => p.role === "community" && !p.graduated);
+        // For community members, exclude those whose trial expired without paying
+        const activeMembers = profiles.filter(p => {
+          if (p.role !== "community" || p.graduated) return false;
+          if (p.paid) return true; // paid members always active
+          // Check trial status
+          const app = apps.find(a => a.email?.toLowerCase() === p.email?.toLowerCase());
+          if (!app || !app.trial_end) return true; // no trial date means treat as active
+          return new Date(app.trial_end) > new Date(); // active only if trial not expired
+        });
         setCommunityStats({
-          community: nonGradMembers.length,
+          community: activeMembers.length,
           graduates: grads.length,
-          total: nonGradMembers.length + grads.length,
-          members: nonGradMembers.map(p => ({ name: p.first_name || p.email.split("@")[0], email: p.email })),
+          total: activeMembers.length + grads.length,
+          members: activeMembers.map(p => ({ name: p.first_name || p.email.split("@")[0], email: p.email })),
           graduateList: grads.map(p => ({ name: p.first_name || p.email.split("@")[0], email: p.email }))
         });
       });
@@ -7050,8 +7062,8 @@ export default function App() {
   const [connError, setConnError] = useState(false);
   useEffect(() => {
     const timeout = setTimeout(() => {
-      supabase.functions.invoke("assign-task", { body: { action: "ping" } })
-        .then(() => setConnError(false))
+      supabase.functions.invoke("assign-task", { body: { action: "get_applications" } })
+        .then(({ error }) => setConnError(!!error))
         .catch(() => setConnError(true));
     }, 3000);
     return () => clearTimeout(timeout);
