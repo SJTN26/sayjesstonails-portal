@@ -7050,7 +7050,7 @@ export default function App() {
   const [connError, setConnError] = useState(false);
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetch("https://eytysuurxsfsbimgpion.supabase.co/rest/v1/", { method: "HEAD" })
+      supabase.functions.invoke("assign-task", { body: { action: "ping" } })
         .then(() => setConnError(false))
         .catch(() => setConnError(true));
     }, 3000);
