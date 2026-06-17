@@ -4974,6 +4974,16 @@ const AdminDashboard = ({ onLogout }) => {
     return () => clearInterval(interval);
   }, []);
  const [selLead, setSelLead] = useState(null);
+ const [leadNotes, setLeadNotes] = useState("");
+ const [notesSaved, setNotesSaved] = useState(false);
+ useEffect(() => { setLeadNotes(selLead?.notes || ""); setNotesSaved(false); }, [selLead?.id]);
+ const saveLeadNotes = async () => {
+   if (!selLead) return;
+   await supabase.functions.invoke("assign-task", { body: { action: "update_lead", id: selLead.id, updates: { notes: leadNotes } } });
+   setLeads(p => p.map(l => l.id === selLead.id ? {...l, notes: leadNotes} : l));
+   setNotesSaved(true);
+   setTimeout(() => setNotesSaved(false), 2000);
+ };
  const [showDetail, setShowDetail] = useState(false);
  const [leadFilter, setLeadFilter] = useState("all");
  const { isMobile: crmIsMobile } = useLayout();
@@ -5505,18 +5515,6 @@ const AdminDashboard = ({ onLogout }) => {
  // ── Lead Detail Panel (shared between kanban + table) ──────────────────
  const LeadDetailPanel = selLead ? (() => {
  const [sc, scPale] = scMap[selLead.status] || [B.mid, B.off];
- const [localNotes, setLocalNotes] = useState(selLead.notes || "");
- const [notesSaving, setNotesSaving] = useState(false);
- const [notesSaved, setNotesSaved] = useState(false);
- useEffect(() => { setLocalNotes(selLead.notes || ""); }, [selLead.id]);
- const saveNotes = async () => {
-   setNotesSaving(true);
-   await supabase.functions.invoke("assign-task", { body: { action: "update_lead", id: selLead.id, updates: { notes: localNotes } } });
-   setLeads(p => p.map(l => l.id === selLead.id ? {...l, notes: localNotes} : l));
-   setNotesSaving(false);
-   setNotesSaved(true);
-   setTimeout(() => setNotesSaved(false), 2000);
- };
  return (
  <div style={{ width: isMobile ? "100%" : 320, position: isMobile ? "fixed" : "relative", inset: isMobile ? 0 : undefined, background: B.white, borderLeft: isMobile ? "none" : `1px solid ${B.cloud}`, zIndex: isMobile ? 200 : undefined, display: "flex", flexDirection: "column", overflowY: "auto", flexShrink: 0 }}>
  <div style={{ padding: "13px 18px", borderBottom: `1px solid ${B.cloud}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: B.white, zIndex: 10 }}>
@@ -5550,13 +5548,13 @@ const AdminDashboard = ({ onLogout }) => {
      {notesSaved && <div style={{ fontSize: 9, color: B.success, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Saved</div>}
    </div>
    <textarea
-     value={localNotes}
-     onChange={e => setLocalNotes(e.target.value)}
-     onBlur={() => { if (localNotes !== (selLead.notes || "")) saveNotes(); }}
+     value={leadNotes}
+     onChange={e => setLeadNotes(e.target.value)}
+     onBlur={() => { if (leadNotes !== (selLead.notes || "")) saveLeadNotes(); }}
      placeholder="Summary, key points, follow-up actions..."
      style={{ width: "100%", minHeight: 100, padding: "12px 14px", border: "1px solid " + B.cloud, fontFamily: FONTS.body, fontSize: 12, lineHeight: 1.6, fontWeight: 300, color: B.charcoal, resize: "vertical", outline: "none", background: B.white, boxSizing: "border-box" }}
    />
-   <div style={{ fontSize: 9, color: B.silver, fontWeight: 300, marginTop: 4 }}>{notesSaving ? "Saving..." : "Saves automatically when you tap away"}</div>
+   <div style={{ fontSize: 9, color: B.silver, fontWeight: 300, marginTop: 4 }}>Saves automatically when you tap away</div>
  </div>
  {selLead.status === "pending" && (
  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
