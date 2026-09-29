@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from './supabase';
 import { signIn, signUp, signOut, getCurrentUser, inviteMentee } from './auth';
 
+// The free community + 7-day trial lives on Skool (not the portal). The
+// landing-page community tier and the ?apply=community link both send here.
+const SKOOL_URL = "https://www.skool.com/say-jess-to-nails-squad-8964/about";
+
 /* ─── SECURITY ──────────────────────────────────────────────────────────── */
 const Sec = {
  createSession: u => ({ token: btoa(`${u.email}:${Date.now()}:${Math.random().toString(36)}`), expires: Date.now() + 8 * 60 * 60 * 1000, role: u.role, userId: u.email }),
@@ -235,7 +239,7 @@ const Landing = ({ onSignIn, onBook, onApply }) => {
  }, []);
 
  const tiers = [
- { name: "Community", price: "$27", sub: "/month after free trial", value: "", saving: "7 days free", features: ["7-day free trial — no credit card required", "Private community feed — all nail techs welcome", "Jess's weekly audio check-in", "Free resources & templates", "Peer wins, encouragement & accountability", "Visibility into what full mentorship looks like", "Direct path to upgrade when you're ready"], accent: false, community: true },
+ { name: "Community", price: "$27", sub: "/month after free trial", value: "", saving: "7 days free", features: ["7-day free trial — full access from day one", "The Squad — our private community of nail techs", "Jess active in the community — real answers to real questions", "Trainings, resources & templates inside", "Peer wins, encouragement & accountability", "See what 1:1 mentorship looks like", "When you're ready for more, Jess invites you into 1:1 mentorship"], accent: false, community: true },
  { name: "Hourly Session", price: "$250", value: "$750", saving: "Save $500", sub: "One session, total clarity", features: ["60-min focused session with Jess", "You set the agenda — she brings the answers", "Written action plan after every session", "No commitment required — start here", "Payment plans available"], accent: false },
  { name: "30-Day Intensive", price: "$1,120", value: "$3,600", saving: "Save $2,480", sub: "Real momentum, one month", features: ["Structured 30-day roadmap built around you", "Live sessions + guided check-ins", "Pricing strategy & client attraction coaching", "Direct access to Jess throughout the month", "Resources and tools curated to your goals", "Payment plans available"], accent: false },
  { name: "3-Month Elite", price: "$3,360", value: "$8,550", saving: "Save $5,190", sub: "Complete transformation", features: ["Full 90-day personalized growth plan", "Deep-dive sessions at every stage", "Milestone tracking & accountability built in", "Community access for ongoing support", "Monthly reviews to keep you on track", "End-of-quarter strategy audit", "Payment plans available"], accent: true },
@@ -7169,12 +7173,12 @@ export default function App() {
  }
  }
 
- // Check for ?apply=community param — route straight to application
+ // Check for ?apply=community param — the community trial now lives on Skool,
+ // so send these links straight there instead of the in-portal application.
  const refParams = new URLSearchParams(window.location.search);
  if (refParams.get('apply') === 'community') {
- setScreen('apply');
- window.history.replaceState({}, '', window.location.pathname);
-
+ window.location.href = SKOOL_URL;
+ return;
  }
 
  // Referral tracking — log visit if ?ref= param in URL
@@ -7244,7 +7248,7 @@ export default function App() {
  <>
     {connError && (<div style={{ position:"fixed", top:0, left:0, right:0, zIndex:9999, background:"#b8667a", color:"white", padding:"12px 20px", textAlign:"center", fontSize:13, fontWeight:300, fontFamily:"DM Sans, sans-serif" }}>We are experiencing a brief connection issue. Your data is safe — please refresh in a few minutes.</div>)}
  {screen === "setpassword" && <SetPassword onDone={() => setScreen("auth")} />}
- {screen === "landing" && <Landing onSignIn={() => setScreen("auth")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} onApply={() => setScreen("apply")} />}
+ {screen === "landing" && <Landing onSignIn={() => setScreen("auth")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} onApply={() => window.open(SKOOL_URL, "_blank")} />}
  {screen === "auth" && <AuthPortal onLogin={handleLogin} onBack={() => setScreen("landing")} onBook={() => window.open("https://calendly.com/sayjesstonails-info/free-discovery-call", "_blank")} />}
  {screen === "apply" && <CommunityApply onBack={() => setScreen("landing")} onSubmit={() => setScreen("landing")} />}
  {screen === "booking" && <Booking onConfirm={f => { setBookedForm(f); setScreen("confirmation"); }} onBack={() => setScreen("landing")} />}
