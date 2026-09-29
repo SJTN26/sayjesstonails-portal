@@ -126,7 +126,7 @@ serve(async (req) => {
 
     // ── COMMUNITY APPLICATIONS ────────────────────────────────────────────
     if (action === 'get_applications') {
-      const { data, error } = await supabase.from('community_applications').select('*').order('created_at', { ascending: false })
+      const { data, error } = await supabase.from('community_applications').select('*').order('applied_at', { ascending: false })
       if (error) throw error
       return new Response(JSON.stringify({ success: true, applications: data }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
     }
@@ -134,12 +134,27 @@ serve(async (req) => {
       const updates: Record<string, unknown> = {}
       if (body.status !== undefined) updates.status = body.status
       if (body.paid !== undefined) updates.paid = body.paid
+      if (body.trial_start !== undefined) updates.trial_start = body.trial_start
+      if (body.trial_end !== undefined) updates.trial_end = body.trial_end
       const { error } = await supabase.from('community_applications').update(updates).eq('id', body.id)
       if (error) throw error
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
     }
     if (action === 'insert_application') {
       const { error } = await supabase.from('community_applications').insert([body.application])
+      if (error) throw error
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
+    }
+
+    // ── LEADS (Calendly bookings) ─────────────────────────────────────────
+    if (action === 'get_leads') {
+      const { data, error } = await supabase.from('leads').select('*').order('scheduled_at', { ascending: false })
+      if (error) throw error
+      return new Response(JSON.stringify({ success: true, leads: data }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
+    }
+    if (action === 'update_lead') {
+      const updates = { ...body.updates, updated_at: new Date().toISOString() }
+      const { error } = await supabase.from('leads').update(updates).eq('id', body.id)
       if (error) throw error
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
     }
