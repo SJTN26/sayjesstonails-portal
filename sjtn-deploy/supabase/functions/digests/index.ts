@@ -76,10 +76,12 @@ serve(async (req) => {
       const sinceMs = Date.now() - 24 * 60 * 60 * 1000
       const since = new Date(sinceMs).toISOString()
       // Posts are fetched regardless of age so we can see replies on older posts too.
-      const [{ data: posts }, { data: apps }, { data: profiles }] = await Promise.all([
+      // New community members are tracked via community_applications.applied_at.
+      // (mentee_profiles has no timestamp column, so it can't be date-filtered;
+      // direct-invite members are Jess's own action and don't need a daily alert.)
+      const [{ data: posts }, { data: apps }] = await Promise.all([
         supabase.from('community_posts').select('author, text, is_jess, created_at, replies').order('created_at', { ascending: false }).limit(500),
-        supabase.from('community_applications').select('first_name, email, created_at').eq('status', 'approved').gte('created_at', since),
-        supabase.from('mentee_profiles').select('first_name, email, created_at').gte('created_at', since),
+        supabase.from('community_applications').select('first_name, email, applied_at').eq('status', 'approved').gte('applied_at', since),
       ])
       const memberPosts = (posts || []).filter(p => !p.is_jess && new Date(p.created_at).getTime() >= sinceMs)
       const memberReplies: { author?: string; text?: string; postAuthor?: string }[] = []
@@ -89,7 +91,7 @@ serve(async (req) => {
         }
       }
       const seen = new Set<string>()
-      const uniqueNew = [...(apps || []), ...(profiles || [])].filter(m => { const e = (m.email || '').toLowerCase(); if (!e || seen.has(e)) return false; seen.add(e); return true })
+      const uniqueNew = (apps || []).filter(m => { const e = (m.email || '').toLowerCase(); if (!e || seen.has(e)) return false; seen.add(e); return true })
 
       if (memberPosts.length === 0 && memberReplies.length === 0 && uniqueNew.length === 0) {
         return new Response(JSON.stringify({ success: true, sent: false, reason: 'no activity' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
@@ -122,15 +124,16 @@ serve(async (req) => {
     const [{ data: posts }, { data: apps }, { data: profiles }, { data: optOuts }] = await Promise.all([
       // All posts (with replies) so we can count replies on older posts too.
       supabase.from('community_posts').select('author, text, is_jess, created_at, replies').order('created_at', { ascending: false }).limit(500),
-      supabase.from('community_applications').select('first_name, email, created_at').eq('status', 'approved'),
-      supabase.from('mentee_profiles').select('first_name, email, created_at'),
+      supabase.from('community_applications').select('first_name, email, applied_at').eq('status', 'approved'),
+      supabase.from('mentee_profiles').select('first_name, email'),
       supabase.from('email_opt_outs').select('email'),
     ])
 
     const isNew = (d: string) => d && new Date(d).getTime() >= weekAgoMs
     const newPosts = (posts || []).filter(p => isNew(p.created_at)).length
     const newReplies = (posts || []).reduce((n, p) => n + (Array.isArray(p.replies) ? p.replies.filter((r: { created_at?: string }) => r?.created_at && isNew(r.created_at)).length : 0), 0)
-    const newMemberCount = [...(apps || []), ...(profiles || [])].filter(m => isNew(m.created_at)).length
+    // New members = approved applications that came in this week (applied_at).
+    const newMemberCount = (apps || []).filter(m => isNew(m.applied_at)).length
 
     // Only send when the week actually had something worth reporting.
     if (newPosts === 0 && newReplies === 0 && newMemberCount === 0) {
