@@ -4496,7 +4496,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
     setCommunityPosts(p => p.map(x => x.id === postId ? {...x, replies:[...(x.replies||[]), {author:"Jess", avatar:"J", text:adminReplyText, is_jess:true, id:Date.now()}]} : x));
     setAdminReplyText(""); setAdminReplyTo(null);
   };
- const [trialList, setTrialList] = useState([]);
+ const [apps, setApps] = useState([]);
  const [communityInvite, setCommunityInvite] = useState({ name:"", email:"" });
  const [communityInviting, setCommunityInviting] = useState(false);
  const [communityInviteSent, setCommunityInviteSent] = useState(false);
@@ -4531,19 +4531,11 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  };
 
  useEffect(() => {
- supabase.functions.invoke('assign-task', { body: { action: 'get_applications' } })
-.then(({ data }) => {
- const trials = (data?.applications || [])
-.filter(a => a.status === 'approved' && !a.paid)
-.map(a => ({
- id: a.id,
- name: a.first_name,
- email: a.email,
- trialEnd: a.trial_end ? new Date(a.trial_end).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "Unknown",
- daysLeft: a.trial_end ? Math.max(0, Math.ceil((new Date(a.trial_end) - Date.now()) / (1000 * 60 * 60 * 24))) : 7,
- }));
- setTrialList(trials);
- });
+ const fetchApps = () => supabase.functions.invoke('assign-task', { body: { action: 'get_applications' } })
+.then(({ data }) => { setApps(data?.applications || []); });
+ fetchApps();
+ const interval = setInterval(fetchApps, 60000);
+ return () => clearInterval(interval);
  }, []);
  const [jessVoiceAdmin, setJessVoiceAdmin] = useState(null);
  const [postImage, setPostImage] = useState(null);
@@ -4616,6 +4608,57 @@ const AdminCommunity = ({ menteeList, communityList }) => {
 
  // ── Admin Community state moved to standalone AdminCommunity component ──
 
+  // ── Unified member roster: merge community profiles + approved applications,
+  //    then bucket each person into exactly one status: active / trial / expired.
+  //    Graduates and paying members are "active" (graduates keep their badge). ──
+  const { activeMembers, trialMembers, expiredMembers } = (() => {
+    const now = Date.now();
+    const byEmail = new Map();
+    for (const m of communityList) {
+      const key = (m.email || "").toLowerCase();
+      if (key) byEmail.set(key, { ...m, appId: null });
+    }
+    for (const a of apps) {
+      if (a.status !== "approved") continue;
+      const key = (a.email || "").toLowerCase();
+      if (!key) continue;
+      const existing = byEmail.get(key);
+      if (existing) {
+        existing.appId = a.id;
+        if (!existing.trialEnd && a.trial_end) existing.trialEnd = a.trial_end;
+        if (a.paid) existing.paid = true;
+      } else if (!a.paid) {
+        byEmail.set(key, {
+          email: a.email, name: a.first_name || a.email.split("@")[0],
+          firstName: a.first_name || a.email.split("@")[0],
+          avatar: (a.first_name || a.email.split("@")[0]).slice(0, 2).toUpperCase(),
+          paid: false, graduated: false, trialEnd: a.trial_end || null, appId: a.id,
+          tier: "Community Member",
+        });
+      }
+    }
+    const active = [], trial = [], expired = [];
+    for (const m of byEmail.values()) {
+      const hasTrial = !!m.trialEnd && !m.paid && !m.graduated;
+      const daysLeft = m.trialEnd ? Math.max(0, Math.ceil((new Date(m.trialEnd).getTime() - now) / 86400000)) : null;
+      const rec = { ...m, daysLeft };
+      if (!hasTrial) active.push(rec);
+      else if (new Date(m.trialEnd).getTime() < now) expired.push(rec);
+      else trial.push(rec);
+    }
+    active.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    trial.sort((a, b) => (a.daysLeft ?? 99) - (b.daysLeft ?? 99));
+    expired.sort((a, b) => new Date(b.trialEnd || 0) - new Date(a.trialEnd || 0));
+    return { activeMembers: active, trialMembers: trial, expiredMembers: expired };
+  })();
+
+  // Mark a trial/expired member as a full paying member (moves them to Active).
+  const grantFullAccess = async (m) => {
+    await supabase.functions.invoke("assign-task", { body: { action: "upsert_profile", profile: { email: m.email, paid: true } } });
+    if (m.appId) await supabase.functions.invoke("assign-task", { body: { action: "update_application", id: m.appId, paid: true } });
+    setApps(p => p.map(a => a.id === m.appId ? { ...a, paid: true } : a));
+  };
+
   return (
     <div style={{ padding: isMobile ? "20px 18px 100px" : "28px 32px", maxWidth: 1020, width: "100%" }}>
       <div style={{ marginBottom: 20 }}>
@@ -4625,7 +4668,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
 
       {/* Sub tabs */}
       <div style={{ display:"flex", flexWrap:"wrap", gap:2, marginBottom:20 }}>
-        {[["feed","Feed"], ["members","Members"], ["trial","Trial"], ["wins","Wins"], ["resources","Resources"]].map(([id, label]) => (
+        {[["feed","Feed"], ["active",`Active${activeMembers.length ? ` · ${activeMembers.length}` : ""}`], ["trial",`Trial${trialMembers.length ? ` · ${trialMembers.length}` : ""}`], ["expired",`Expired${expiredMembers.length ? ` · ${expiredMembers.length}` : ""}`], ["wins","Wins"], ["resources","Resources"]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{ padding: isMobile ? "7px 12px" : "8px 18px", border:"1px solid " + (tab===id ? B.blush : B.cloud), background: tab===id ? B.blush : B.white, color: tab===id ? B.white : B.steel, fontSize: isMobile ? 9 : 10, fontWeight:700, cursor:"pointer", fontFamily:FONTS.body, letterSpacing:1.5, textTransform:"uppercase", whiteSpace:"nowrap" }}>{label}</button>
         ))}
       </div>
@@ -4751,7 +4794,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  </div>
  )}
 
- {tab === "members" && (
+ {tab === "active" && (
  <div>
  {/* Direct invite form */}
  <div style={{ background:B.off, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${B.blush}`, padding:"16px 18px", marginBottom:16 }}>
@@ -4765,24 +4808,21 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  </div>
  <div style={{ fontSize:10, color:B.mid, fontWeight:300, marginTop:8 }}>They'll receive an email to set their password and get instant full access — no trial, no payment required.</div>
  </div>
- <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{communityList.length} community members</div>
- {communityList.map((m, i) => (
- <div key={i} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"14px 18px", marginBottom:2, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+ <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{activeMembers.length} active member{activeMembers.length !== 1 ? "s" : ""} — paying members &amp; graduates</div>
+ {activeMembers.length === 0 && <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No active members yet.</div>}
+ {activeMembers.map((m, i) => (
+ <div key={m.email || i} style={{ background:B.white, border:`1px solid ${B.cloud}`, borderLeft:`3px solid ${m.graduated ? "#2D7D4E" : B.success}`, padding:"14px 18px", marginBottom:2, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
  <div style={{ display:"flex", alignItems:"center", gap:12 }}>
- <div style={{ width:36, height:36, background:B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:B.white }}>{m.avatar}</div>
+ <div style={{ width:36, height:36, background: m.graduated ? "#2D7D4E" : B.steel, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:B.white }}>{m.avatar}</div>
  <div>
  <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{m.name}</div>
  <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{m.email}</div>
  </div>
  </div>
  <div style={{ display:"flex", gap:6, alignItems:"center" }}>
- <span style={{ fontSize:8, fontWeight:700, color: m.expired ? B.white : B.steel, background: m.expired ? "#C62828" : "transparent", border:`1px solid ${m.expired ? "#C62828" : B.cloud}`, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>{m.expired ? "Expired" : m.paid || m.graduated ? "Member" : "Trial"}</span>
- {!m.paid && !m.graduated && m.daysLeft !== null && !m.expired && (
-   <span style={{ fontSize:8, fontWeight:700, color: m.daysLeft <= 2 ? "#C62828" : m.daysLeft <= 4 ? "#F57C00" : B.steel, border:`1px solid ${m.daysLeft <= 2 ? "#C62828" : m.daysLeft <= 4 ? "#F57C00" : B.cloud}`, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>
-     {m.daysLeft === 0 ? "Ends today" : m.daysLeft === 1 ? "1 day left" : m.daysLeft + " days left"}
-   </span>
- )}
- {m.graduated && <span style={{ fontSize:7, background:"#2D7D4E", color:B.white, padding:"2px 8px", fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Grad</span>}
+ {m.graduated
+   ? <span style={{ fontSize:8, fontWeight:700, background:"#2D7D4E", color:B.white, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>🎓 Graduate</span>
+   : <span style={{ fontSize:8, fontWeight:700, color:"#2D7D4E", border:"1px solid #2D7D4E", padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>Member</span>}
  <button style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
  </div>
  </div>
@@ -4815,23 +4855,44 @@ const AdminCommunity = ({ menteeList, communityList }) => {
 
  {tab === "trial" && (
  <div>
- <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{trialList.length} member{trialList.length !== 1 ? "s" : ""} on free trial</div>
- {trialList.length === 0 && <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No active trial members right now.</div>}
- {trialList.map((m, i) => (
- <div key={i} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"14px 18px", marginBottom:2, display:"flex", justifyContent:"space-between", alignItems:"center", borderLeft:`3px solid ${B.amber}` }}>
+ <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{trialMembers.length} member{trialMembers.length !== 1 ? "s" : ""} on an active free trial</div>
+ {trialMembers.length === 0 && <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No active trial members right now.</div>}
+ {trialMembers.map((m, i) => (
+ <div key={m.email || i} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"14px 18px", marginBottom:2, display:"flex", justifyContent:"space-between", alignItems:"center", borderLeft:`3px solid ${m.daysLeft <= 2 ? "#C62828" : B.amber}` }}>
  <div>
  <div style={{ fontSize:12, fontWeight:700, color:B.black }}>{m.name}</div>
  <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{m.email}</div>
  </div>
  <div style={{ textAlign:"right" }}>
- <div style={{ fontSize:16, fontWeight:700, color: m.daysLeft <= 2 ? B.blush : B.amber }}>{m.daysLeft}</div>
- <div style={{ fontSize:8, color:B.mid, letterSpacing:1, textTransform:"uppercase" }}>Days Left</div>
- <div style={{ fontSize:9, color:B.mid, fontWeight:300, marginTop:4 }}>Ends {m.trialEnd}</div>
- <button onClick={async () => {
- await supabase.functions.invoke('assign-task', { body: { action: 'upsert_profile', profile: { email: m.email, paid: true } } });
- await supabase.functions.invoke('assign-task', { body: { action: 'update_application', id: m.id, paid: true } });
- setTrialList(p => p.filter(x => x.email !== m.email));
- }} style={{ marginTop:6, fontSize:8, padding:"3px 8px", background:B.success, border:"none", color:B.white, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Grant Full Access</button>
+ <div style={{ fontSize:16, fontWeight:700, color: m.daysLeft <= 2 ? "#C62828" : B.amber }}>{m.daysLeft}</div>
+ <div style={{ fontSize:8, color:B.mid, letterSpacing:1, textTransform:"uppercase" }}>{m.daysLeft === 1 ? "Day Left" : "Days Left"}</div>
+ <div style={{ fontSize:9, color:B.mid, fontWeight:300, marginTop:4 }}>Ends {m.trialEnd ? new Date(m.trialEnd).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "—"}</div>
+ <button onClick={() => grantFullAccess(m)} style={{ marginTop:6, fontSize:8, padding:"3px 8px", background:B.success, border:"none", color:B.white, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Grant Full Access</button>
+ </div>
+ </div>
+ ))}
+ </div>
+ )}
+
+ {tab === "expired" && (
+ <div>
+ <div style={{ fontSize:11, color:B.mid, fontWeight:300, marginBottom:16 }}>{expiredMembers.length} member{expiredMembers.length !== 1 ? "s" : ""} whose trial ended without upgrading</div>
+ {expiredMembers.length === 0 && <div style={{ color:B.mid, fontSize:13, fontWeight:300, fontStyle:"italic" }}>No expired trials — nice.</div>}
+ {expiredMembers.map((m, i) => (
+ <div key={m.email || i} style={{ background:B.white, border:`1px solid ${B.cloud}`, padding:"14px 18px", marginBottom:2, display:"flex", justifyContent:"space-between", alignItems:"center", borderLeft:`3px solid #C62828`, opacity:0.92 }}>
+ <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+ <div style={{ width:36, height:36, background:"#C62828", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:700, color:B.white }}>{m.avatar || (m.name || "?").slice(0,2).toUpperCase()}</div>
+ <div>
+ <div style={{ fontSize:13, fontWeight:700, color:B.black }}>{m.name}</div>
+ <div style={{ fontSize:10, color:B.mid, fontWeight:300 }}>{m.email}</div>
+ </div>
+ </div>
+ <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+ <div style={{ textAlign:"right" }}>
+ <span style={{ fontSize:8, fontWeight:700, color:B.white, background:"#C62828", padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>Expired</span>
+ <div style={{ fontSize:9, color:B.mid, fontWeight:300, marginTop:4 }}>Ended {m.trialEnd ? new Date(m.trialEnd).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" }) : "—"}</div>
+ </div>
+ <button onClick={() => grantFullAccess(m)} style={{ fontSize:8, padding:"6px 10px", background:B.success, border:"none", color:B.white, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase", whiteSpace:"nowrap" }}>Grant Access</button>
  </div>
  </div>
  ))}
