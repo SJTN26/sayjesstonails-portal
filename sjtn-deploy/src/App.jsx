@@ -239,7 +239,7 @@ const Landing = ({ onSignIn, onBook, onApply }) => {
  }, []);
 
  const tiers = [
- { name: "Community", price: "$27", sub: "/month after free trial", value: "", saving: "7 days free", features: ["7-day free trial — full access from day one", "The Squad — our private community of nail techs", "Jess active in the community — real answers to real questions", "Trainings, resources & templates inside", "Peer wins, encouragement & accountability", "See what 1:1 mentorship looks like", "When you're ready for more, Jess invites you into 1:1 mentorship"], accent: false, community: true },
+ { name: "Community", price: "Free", sub: "7-day trial, then $27/mo", value: "", saving: "", features: ["7-day free trial — full access from day one", "The Squad — our private community of nail techs", "Jess active in the community — real answers to real questions", "Trainings, resources & templates inside", "Peer wins, encouragement & accountability", "See what 1:1 mentorship looks like", "When you're ready for more, Jess invites you into 1:1 mentorship"], accent: false, community: true },
  { name: "Hourly Session", price: "$250", value: "$750", saving: "Save $500", sub: "One session, total clarity", features: ["60-min focused session with Jess", "You set the agenda — she brings the answers", "Written action plan after every session", "No commitment required — start here", "Payment plans available"], accent: false },
  { name: "30-Day Intensive", price: "$1,120", value: "$3,600", saving: "Save $2,480", sub: "Real momentum, one month", features: ["Structured 30-day roadmap built around you", "Live sessions + guided check-ins", "Pricing strategy & client attraction coaching", "Direct access to Jess throughout the month", "Resources and tools curated to your goals", "Payment plans available"], accent: false },
  { name: "3-Month Elite", price: "$3,360", value: "$8,550", saving: "Save $5,190", sub: "Complete transformation", features: ["Full 90-day personalized growth plan", "Deep-dive sessions at every stage", "Milestone tracking & accountability built in", "Community access for ongoing support", "Monthly reviews to keep you on track", "End-of-quarter strategy audit", "Payment plans available"], accent: true },
@@ -439,7 +439,7 @@ const Landing = ({ onSignIn, onBook, onApply }) => {
  <Section style={{ marginBottom: 12 }}>Investment</Section>
  <h2 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: isMobile ? 44 : 64, textTransform: "uppercase", lineHeight: 0.95, letterSpacing: "-1px" }}>Four Ways<br/>To Say Yes.</h2>
  </div>
- <p style={{ color: B.steel, fontSize: 14, maxWidth: 320, lineHeight: 1.7, fontWeight: 300 }}>Try the community free for 7 days, then $27/month. Grow into 1:1 mentorship when you're ready — every path leads to the same place.</p>
+ <p style={{ color: B.steel, fontSize: 14, maxWidth: 320, lineHeight: 1.7, fontWeight: 300 }}>Start with a free 7-day trial in the community. Grow into 1:1 mentorship when you're ready — every path leads to the same place.</p>
  </div>
 
  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)", gap: 2 }}>
