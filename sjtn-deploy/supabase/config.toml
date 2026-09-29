@@ -1,0 +1,8 @@
+[functions.invite-mentee]
+verify_jwt = false
+
+[functions.notify-new-application]
+verify_jwt = false
+
+[functions.create-video-room]
+verify_jwt = false

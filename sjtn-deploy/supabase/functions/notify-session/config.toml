@@ -1,0 +1,2 @@
+[functions.notify-session]
+verify_jwt = false

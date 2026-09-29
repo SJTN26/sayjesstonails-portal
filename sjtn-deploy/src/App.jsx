@@ -1773,7 +1773,7 @@ const MenteePortal = ({ user, onLogout }) => {
  setMsgs(p => [...p, { from: "You", time: "Just now", text: msgInput || "", imageUrl }]);
  setMsgInput("");
  if (!email) return;
- await supabase.functions.invoke("send-message", { body: { mentee_email: email, sender: "mentee", text: msgInput || (imageUrl ? "📷 Image" : ""), audio_url: imageUrl ? `__IMAGE__${imageUrl}` : null } });
+ await supabase.functions.invoke("send-message", { body: { mentee_email: email, sender: "mentee", text: msgInput || (imageUrl ? "📷 Image" : ""), audio_url: imageUrl ? `__IMAGE__${imageUrl}` : null, notify_email: true } });
  };
  useEffect(() => { msgEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
@@ -3110,7 +3110,7 @@ const CommunityPortal = ({ user, onLogout, onUpgrade }) => {
     const text = cMsgInput;
     setCMsgInput("");
     setCMsgs(p => [...p, { from:"You", sender:"mentee", text, time:"now" }]);
-    await supabase.functions.invoke("send-message", { body: { mentee_email: user.email, sender:"mentee", text } });
+    await supabase.functions.invoke("send-message", { body: { mentee_email: user.email, sender:"mentee", text, notify_email: true } });
   };
 
  const [resources, setResources] = useState([]);
@@ -5276,7 +5276,8 @@ const AdminDashboard = ({ onLogout }) => {
  body: {
  mentee_email: contact.email, sender: "jess",
  text: text || (imageUrl ? "📷 Image" : ""),
- audio_url: imageUrl ? `__IMAGE__${imageUrl}` : null
+ audio_url: imageUrl ? `__IMAGE__${imageUrl}` : null,
+ notify_email: true
  }
  });
  };
@@ -5338,7 +5339,7 @@ const AdminDashboard = ({ onLogout }) => {
  const contact = contacts[selChat];
  setChatMsgs(p => ({...p, [selChat]: [...(p[selChat] || []), { from: "Jess", text: "🎤 Voice note", audioUrl, t: "now" }] }));
  await supabase.functions.invoke('send-message', {
- body: { mentee_email: contact.email, sender: "jess", text: "🎤 Voice note", audio_url: audioUrl }
+ body: { mentee_email: contact.email, sender: "jess", text: "🎤 Voice note", audio_url: audioUrl, notify_email: true }
  });
  };
 

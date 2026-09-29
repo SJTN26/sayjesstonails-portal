@@ -1,0 +1,2 @@
+[functions.community-post]
+verify_jwt = false
