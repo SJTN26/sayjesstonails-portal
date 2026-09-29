@@ -4497,6 +4497,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
     setAdminReplyText(""); setAdminReplyTo(null);
   };
  const [apps, setApps] = useState([]);
+ const [removedEmails, setRemovedEmails] = useState(() => new Set());
  const [communityInvite, setCommunityInvite] = useState({ name:"", email:"" });
  const [communityInviting, setCommunityInviting] = useState(false);
  const [communityInviteSent, setCommunityInviteSent] = useState(false);
@@ -4639,6 +4640,7 @@ const AdminCommunity = ({ menteeList, communityList }) => {
     }
     const active = [], trial = [], expired = [];
     for (const m of byEmail.values()) {
+      if (removedEmails.has((m.email || "").toLowerCase())) continue; // just removed — hide immediately
       const hasTrial = !!m.trialEnd && !m.paid && !m.graduated;
       const daysLeft = m.trialEnd ? Math.max(0, Math.ceil((new Date(m.trialEnd).getTime() - now) / 86400000)) : null;
       const rec = { ...m, daysLeft };
@@ -4823,7 +4825,12 @@ const AdminCommunity = ({ menteeList, communityList }) => {
  {m.graduated
    ? <span style={{ fontSize:8, fontWeight:700, background:"#2D7D4E", color:B.white, padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>🎓 Graduate</span>
    : <span style={{ fontSize:8, fontWeight:700, color:"#2D7D4E", border:"1px solid #2D7D4E", padding:"2px 8px", letterSpacing:1, textTransform:"uppercase" }}>Member</span>}
- <button style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
+ <button onClick={async () => {
+   if (!window.confirm(`Remove ${m.name} from the community?\n\nThey'll lose access to the community portal immediately. You can re-invite them anytime using the invite form above.`)) return;
+   setRemovedEmails(prev => new Set(prev).add((m.email || "").toLowerCase()));
+   const { error } = await supabase.functions.invoke('invite-mentee', { body: { action: 'remove', email: m.email } });
+   if (error) { alert("Could not remove this member. Please try again."); setRemovedEmails(prev => { const n = new Set(prev); n.delete((m.email || "").toLowerCase()); return n; }); }
+ }} style={{ fontSize:8, padding:"3px 8px", border:`1px solid ${B.cloud}`, background:"none", color:B.mid, cursor:"pointer", fontFamily:FONTS.body, fontWeight:700, letterSpacing:1, textTransform:"uppercase" }}>Remove</button>
  </div>
  </div>
  ))}
